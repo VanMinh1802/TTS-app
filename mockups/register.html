@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - GenVoice AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Space Grotesk', sans-serif; background-color: #ffffff; color: #000000; }
+        .teal-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; background-image: radial-gradient(circle 800px at 0% 10%, rgba(167,243,208, 0.6), transparent 70%), radial-gradient(circle 800px at 100% 90%, rgba(167,243,208, 0.6), transparent 70%); }
+        .brutal-card { background: #ffffff; border: 4px solid #000000; border-radius: 16px; box-shadow: 8px 8px 0px #000000; }
+        .brutal-btn { background: #00e676; color: #000; font-weight: 800; border: 3px solid #000; border-radius: 12px; box-shadow: 4px 4px 0px #000; transition: all 0.1s ease; text-transform: uppercase; cursor: pointer; }
+        .brutal-btn:active { box-shadow: 0px 0px 0px #000; transform: translate(4px, 4px); }
+        .brutal-input { width: 100%; padding: 12px 16px; background: #fff; border: 3px solid #000; border-radius: 8px; outline: none; font-weight: 500; transition: 0.1s; }
+        .brutal-input:focus { box-shadow: 4px 4px 0px #000; background: #f8fafc; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="teal-bg"></div>
+    
+    <div class="w-full max-w-md brutal-card p-8 md:p-10">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold uppercase tracking-tighter mb-2">GenVoice.</h1>
+            <p class="text-gray-600 font-medium border-b-4 border-black pb-4 inline-block px-4">Create your Workspace</p>
+        </div>
+
+        <form class="space-y-5">
+            <div class="space-y-2 text-left">
+                <label class="block font-bold text-lg">Full Name</label>
+                <input type="text" class="brutal-input placeholder-gray-400" placeholder="John Doe">
+            </div>
+
+            <div class="space-y-2 text-left">
+                <label class="block font-bold text-lg">Email Address</label>
+                <input type="email" class="brutal-input placeholder-gray-400" placeholder="john@company.com">
+            </div>
+
+            <div class="space-y-2 text-left">
+                <label class="block font-bold text-lg">Password</label>
+                <input type="password" class="brutal-input placeholder-gray-400" placeholder="••••••••">
+            </div>
+
+            <button type="button" class="brutal-btn w-full py-4 text-xl mt-6">
+                Start for Free
+            </button>
+        </form>
+
+        <p class="text-center mt-8 font-medium">
+            Already have an account? <a href="login.html" class="text-black underline font-bold decoration-2">Login here</a>
+        </p>
+
+        <div class="mt-6 flex items-center justify-center gap-2">
+            <span class="bg-[#00e676] border-2 border-black px-3 py-1 font-bold text-sm shadow-[2px_2px_0_#000]">✓ APPROVED</span>
+        </div>
+    </div>
+</body>
+</html>

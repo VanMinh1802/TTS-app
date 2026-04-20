@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - GenVoice AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Space Grotesk', sans-serif; background-color: #ffffff; color: #000000; overflow: hidden; }
+        .teal-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; background-image: radial-gradient(circle 800px at 0% 10%, rgba(167,243,208, 0.4), transparent 70%), radial-gradient(circle 800px at 100% 90%, rgba(167,243,208, 0.4), transparent 70%); }
+        .brutal-btn { background: #ffd800; color: #000; font-weight: 800; border: 4px solid #000; border-radius: 12px; box-shadow: 6px 6px 0px #000; transition: all 0.1s ease; text-transform: uppercase; cursor: pointer; }
+        .brutal-btn:active { box-shadow: 0px 0px 0px #000; transform: translate(6px, 6px); }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="teal-bg"></div>
+    
+    <div class="text-center">
+        <!-- Brutal 404 text -->
+        <h1 class="text-[150px] md:text-[200px] leading-none font-black tracking-tighter drop-shadow-[8px_8px_0_#00e676]">404</h1>
+        
+        <div class="border-y-4 border-black py-4 my-8 bg-white rotate-2">
+            <h2 class="text-3xl md:text-4xl font-extrabold uppercase">PAGE NOT FOUND</h2>
+        </div>
+        
+        <p class="text-xl font-bold mb-10 text-gray-700">Oops! Có vẻ như âm thanh ở trang này đã bị mất hút trong không gian.</p>
+        
+        <a href="dashboard.html" class="inline-block brutal-btn px-10 py-5 text-xl tracking-wide bg-[#ffd800]">
+            VỀ QUÊ (DASHBOARD)
+        </a>
+
+        <div class="mt-8 flex items-center justify-center gap-2">
+            <span class="bg-[#00e676] border-2 border-black px-3 py-1 font-bold text-sm shadow-[2px_2px_0_#000]">✓ APPROVED</span>
+        </div>
+    </div>
+</body>
+</html>

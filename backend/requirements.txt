@@ -1,0 +1,40 @@
+# FastAPI and server
+fastapi==0.115.0
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# Database
+sqlalchemy==2.0.38
+psycopg2-binary==2.9.10
+alembic==1.14.0
+
+# Auth
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.2.1
+
+# Validation
+pydantic==2.10.3
+pydantic-settings==2.7.0
+email-validator==2.2.0
+
+# CORS (starlette is a transitive dep of fastapi)
+# starlette - let fastapi resolve version
+
+# Logging
+python-json-logger==2.0.7
+
+# Environment
+python-dotenv==1.0.1
+
+# Cloudflare R2
+boto3==1.37.0
+
+# Rate Limiting
+slowapi==0.1.9
+redis==5.2.1
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.25.2
+httpx==0.28.1

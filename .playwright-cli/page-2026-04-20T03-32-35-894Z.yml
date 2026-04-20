@@ -1,0 +1,68 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - heading "GenVoice" [level=1] [ref=e5]
+        - navigation [ref=e6]:
+          - link "Dashboard" [ref=e7] [cursor=pointer]:
+            - /url: "#"
+          - link "TTS Generator" [ref=e8] [cursor=pointer]:
+            - /url: "#"
+          - link "Projects" [ref=e9] [cursor=pointer]:
+            - /url: "#"
+          - link "Voices" [ref=e10] [cursor=pointer]:
+            - /url: "#"
+      - generic [ref=e11]:
+        - generic [ref=e12]: Free Tier
+        - generic [ref=e13]: U
+  - main [ref=e14]:
+    - generic [ref=e15]:
+      - heading "Xin chào, User!" [level=1] [ref=e16]
+      - paragraph [ref=e17]: Đây là tổng quan về hoạt động của bạn
+    - generic [ref=e18]:
+      - generic [ref=e19]:
+        - paragraph [ref=e20]: Tổng Projects
+        - paragraph [ref=e21]: "12"
+      - generic [ref=e22]:
+        - paragraph [ref=e23]: Audio Generated
+        - paragraph [ref=e24]: "156"
+      - generic [ref=e25]:
+        - paragraph [ref=e26]: Characters Used
+        - paragraph [ref=e27]: 45.2K
+      - generic [ref=e28]:
+        - paragraph [ref=e29]: Days Active
+        - paragraph [ref=e30]: "28"
+    - generic [ref=e31]:
+      - heading "Quota - Free Tier" [level=2] [ref=e32]
+      - generic [ref=e33]:
+        - generic [ref=e35]:
+          - generic [ref=e36]: Characters / Month
+          - generic [ref=e37]: 1,250 / 5,000
+        - generic [ref=e41]:
+          - generic [ref=e42]: Storage
+          - generic [ref=e43]: 25 / 100 MB
+        - generic [ref=e47]:
+          - generic [ref=e48]: API Calls / Day
+          - generic [ref=e49]: 45 / 100
+      - button "Nâng cấp lên Pro →" [ref=e52] [cursor=pointer]
+    - generic [ref=e53]:
+      - generic [ref=e54]:
+        - heading "Projects gần đây" [level=2] [ref=e55]
+        - button "Xem tất cả" [ref=e56] [cursor=pointer]
+      - generic [ref=e57]:
+        - generic [ref=e58]:
+          - generic [ref=e59]:
+            - paragraph [ref=e60]: Project 1
+            - paragraph [ref=e61]: 2 audio files • 5 min ago
+          - generic [ref=e62]: Active
+        - generic [ref=e63]:
+          - generic [ref=e64]:
+            - paragraph [ref=e65]: Project 2
+            - paragraph [ref=e66]: 5 audio files • 1 day ago
+          - generic [ref=e67]: Active
+        - generic [ref=e68]:
+          - generic [ref=e69]:
+            - paragraph [ref=e70]: Demo Voice
+            - paragraph [ref=e71]: 1 audio file • 3 days ago
+          - generic [ref=e72]: Completed
+  - paragraph [ref=e73]: Mockup v1.0 - Dashboard Page

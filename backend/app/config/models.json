@@ -1,0 +1,24 @@
+{
+  "models": [
+    {
+      "id": "piper-vi-en-medium",
+      "name": "Piper Vietnamese English Medium",
+      "description": "High quality Vietnamese & English TTS voice",
+      "size": 52345678,
+      "version": "1.0.0",
+      "voices": ["female", "male"],
+      "languages": ["vi", "en"],
+      "path": "models/piper-vi-en-medium.onnx"
+    },
+    {
+      "id": "piper-vi-female-fast",
+      "name": "Piper Vietnamese Female Fast",
+      "description": "Fast Vietnamese female voice for real-time applications",
+      "size": 35000000,
+      "version": "1.0.0",
+      "voices": ["female"],
+      "languages": ["vi"],
+      "path": "models/piper-vi-female-fast.onnx"
+    }
+  ]
+}

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - GenVoice AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Space Grotesk', sans-serif; background-color: #ffffff; color: #000000; }
+        .teal-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; background-image: radial-gradient(circle 800px at 0% 10%, rgba(167,243,208, 0.4), transparent 70%), radial-gradient(circle 800px at 100% 90%, rgba(167,243,208, 0.4), transparent 70%); }
+        .brutal-card { background: #ffffff; border: 3px solid #000000; border-radius: 12px; box-shadow: 6px 6px 0px #000000; }
+        .brutal-btn { background: #ffffff; color: #000; font-weight: 700; border: 3px solid #000; border-radius: 8px; box-shadow: 4px 4px 0px #000; transition: all 0.1s ease; text-transform: uppercase; cursor: pointer; }
+        .brutal-btn:active { box-shadow: 0px 0px 0px #000; transform: translate(4px, 4px); }
+        .btn-primary { background: #ffd800; }
+        .btn-success { background: #00e676; }
+        .nav-item { transition: 0.1s; border: 3px solid transparent; }
+        .nav-item:hover, .nav-item.active { border-color: #000; box-shadow: 3px 3px 0 #000; background: #fff; font-weight: bold; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="teal-bg"></div>
+    
+    <!-- Navbar -->
+    <nav class="bg-white border-b-4 border-black sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-8">
+                <a href="#" class="text-2xl font-extrabold uppercase tracking-tighter bg-black text-white px-3 py-1">GenVoice.</a>
+                <div class="hidden md:flex space-x-2">
+                    <a href="dashboard.html" class="nav-item active px-4 py-2 rounded-lg text-lg">Dashboard</a>
+                    <a href="tts-generator.html" class="nav-item px-4 py-2 rounded-lg text-lg">Studio</a>
+                    <a href="voice-library.html" class="nav-item px-4 py-2 rounded-lg text-lg">Voices</a>
+                    <a href="api-keys.html" class="nav-item px-4 py-2 rounded-lg text-lg">API</a>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="hidden sm:block border-3 border-black bg-[#ff4d4d] text-white px-3 py-1 font-bold text-sm shadow-[2px_2px_0_#000] rotate-2">
+                    PRO PLAN
+                </div>
+                <button class="brutal-btn p-2 rounded-full w-12 h-12 flex items-center justify-center bg-[#e0f7fa]">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-10 relative">
+        <h1 class="text-4xl md:text-5xl font-extrabold mb-10 tracking-tight uppercase">Welcome back, Admin 👋</h1>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div class="brutal-card p-6 bg-[#ffd800] relative overflow-hidden">
+                <h3 class="text-xl font-bold mb-1">TOTAL CHARACTERS</h3>
+                <p class="text-4xl font-extrabold tracking-tighter">1,204,500</p>
+                <div class="absolute -bottom-4 -right-4 opacity-20">
+                    <svg class="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2 0v20c5.07-.5 9-4.79 9-10s-3.93-9.5-9-10z"/></svg>
+                </div>
+            </div>
+            
+            <div class="brutal-card p-6 bg-[#00e676]">
+                <h3 class="text-xl font-bold mb-1">PROJECTS</h3>
+                <p class="text-4xl font-extrabold tracking-tighter">42</p>
+                <p class="text-sm font-bold mt-2 border-t-2 border-black pt-2">+3 this week</p>
+            </div>
+
+            <div class="brutal-card p-6 bg-[#e0f7fa]">
+                <h3 class="text-xl font-bold mb-1">API REQUESTS</h3>
+                <p class="text-4xl font-extrabold tracking-tighter">45.2K</p>
+                <p class="text-sm font-bold mt-2 border-t-2 border-black pt-2">99.9% Success</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Recent Projects -->
+            <div class="lg:col-span-2">
+                <div class="flex justify-between items-end mb-6">
+                    <h2 class="text-3xl font-bold uppercase">Recent Projects</h2>
+                    <a href="project-editor.html" class="brutal-btn btn-primary px-6 py-2">NEW PROJECT</a>
+                </div>
+                
+                <div class="brutal-card overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-black text-white text-lg">
+                                <th class="p-4 border-r border-[#ffffff33]">Name</th>
+                                <th class="p-4 border-r border-[#ffffff33] hidden md:table-cell">Duration</th>
+                                <th class="p-4 hidden sm:table-cell">Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-lg font-medium">
+                            <tr class="border-b-3 border-black hover:bg-gray-100 transition-colors">
+                                <td class="p-4 border-r-3 border-black flex items-center space-x-3">
+                                    <span class="w-3 h-3 bg-[#00e676] rounded-full border border-black"></span>
+                                    <span>Podcast Intro Ep.10</span>
+                                </td>
+                                <td class="p-4 border-r-3 border-black hidden md:table-cell">01:45</td>
+                                <td class="p-4 hidden sm:table-cell">Today, 10:30 AM</td>
+                            </tr>
+                            <tr class="border-b-3 border-black hover:bg-gray-100 transition-colors">
+                                <td class="p-4 border-r-3 border-black flex items-center space-x-3">
+                                    <span class="w-3 h-3 bg-[#ffd800] rounded-full border border-black"></span>
+                                    <span>Marketing Video Voiceover</span>
+                                </td>
+                                <td class="p-4 border-r-3 border-black hidden md:table-cell">03:20</td>
+                                <td class="p-4 hidden sm:table-cell">Yesterday</td>
+                            </tr>
+                            <tr class="hover:bg-gray-100 transition-colors">
+                                <td class="p-4 border-r-3 border-black flex items-center space-x-3">
+                                    <span class="w-3 h-3 border border-black rounded-full text-center text-xs">?</span>
+                                    <span>Draft: Audiobook Ch.1</span>
+                                </td>
+                                <td class="p-4 border-r-3 border-black hidden md:table-cell">--:--</td>
+                                <td class="p-4 hidden sm:table-cell">Oct 15, 2026</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div>
+                <h2 class="text-3xl font-bold uppercase mb-6">Quick Tools</h2>
+                <div class="space-y-4">
+                    <a href="tts-generator.html" class="brutal-card p-6 block hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[10px_10px_0_#000] transition-all bg-[#f3e8ff]">
+                        <h3 class="text-2xl font-bold mb-2">🎤 TTS Generator</h3>
+                        <p class="font-medium text-gray-700">Quick text to speech without project management.</p>
+                    </a>
+                    
+                    <a href="ssml-editor.html" class="brutal-card p-6 block hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[10px_10px_0_#000] transition-all bg-white">
+                        <h3 class="text-2xl font-bold mb-2">⚡ SSML Editor</h3>
+                        <p class="font-medium text-gray-700">Advanced fine-tuning with SSML markup tags.</p>
+                    </a>
+
+                    <a href="voice-library.html" class="brutal-card p-6 block hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[10px_10px_0_#000] transition-all bg-[#e0f7fa]">
+                        <h3 class="text-2xl font-bold mb-2">📚 Clone Voice</h3>
+                        <p class="font-medium text-gray-700">Train new realistic voices instantly.</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-8 flex items-center justify-center gap-2">
+            <span class="bg-[#00e676] border-2 border-black px-3 py-1 font-bold text-sm shadow-[2px_2px_0_#000]">✓ APPROVED</span>
+        </div>
+    </main>
+</body>
+</html>

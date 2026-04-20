@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Library - GenVoice AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Space Grotesk', sans-serif; background-color: #ffffff; color: #000000; }
+        .teal-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; background-image: radial-gradient(circle 800px at 0% 10%, rgba(167,243,208, 0.4), transparent 70%), radial-gradient(circle 800px at 100% 90%, rgba(167,243,208, 0.4), transparent 70%); }
+        .brutal-card { background: #ffffff; border: 3px solid #000000; border-radius: 12px; box-shadow: 6px 6px 0px #000000; transition: transform 0.1s, box-shadow 0.1s; cursor: pointer; }
+        .brutal-card:hover { transform: translate(-2px, -2px); box-shadow: 10px 10px 0px #000000; }
+        .brutal-btn { background: #ffffff; color: #000; font-weight: 700; border: 3px solid #000; border-radius: 8px; box-shadow: 4px 4px 0px #000; transition: all 0.1s ease; text-transform: uppercase; cursor: pointer; }
+        .brutal-btn:active { box-shadow: 0px 0px 0px #000; transform: translate(4px, 4px); }
+        .nav-item { transition: 0.1s; border: 3px solid transparent; }
+        .nav-item:hover, .nav-item.active { border-color: #000; box-shadow: 3px 3px 0 #000; background: #fff; font-weight: bold; }
+        .filter-chip { border: 2px solid #000; border-radius: 20px; padding: 4px 16px; font-weight: bold; cursor: pointer; }
+        .filter-chip.active { background: #000; color: #fff; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="teal-bg"></div>
+    
+    <nav class="bg-white border-b-4 border-black sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-8">
+                <a href="#" class="text-2xl font-extrabold uppercase tracking-tighter bg-black text-white px-3 py-1">GenVoice.</a>
+                <div class="hidden md:flex space-x-2">
+                    <a href="dashboard.html" class="nav-item px-4 py-2 rounded-lg text-lg">Dashboard</a>
+                    <a href="tts-generator.html" class="nav-item px-4 py-2 rounded-lg text-lg">Studio</a>
+                    <a href="voice-library.html" class="nav-item active px-4 py-2 rounded-lg text-lg">Voices</a>
+                    <a href="api-keys.html" class="nav-item px-4 py-2 rounded-lg text-lg">API</a>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="brutal-btn p-2 rounded-full w-12 h-12 flex items-center justify-center bg-[#ffd800]">U</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-10">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-4xl font-extrabold uppercase tracking-tight">Voice Library</h1>
+                <p class="font-bold text-gray-600 mt-2">Duyệt và chọn giọng đọc phù hợp cho dự án của bạn.</p>
+            </div>
+            <div class="flex space-x-4">
+                <div class="relative">
+                    <input type="text" placeholder="Tìm kiếm..." class="border-3 border-black rounded-lg py-3 px-4 w-64 md:w-80 font-bold outline-none focus:shadow-[4px_4px_0_#000]">
+                </div>
+                <button class="brutal-btn bg-[#00e676] px-6 py-3">CLONE VOICE</button>
+            </div>
+        </div>
+
+        <div class="flex overflow-x-auto space-x-4 pb-4 mb-8">
+            <span class="filter-chip active">All Voices</span>
+            <span class="filter-chip bg-white">Male</span>
+            <span class="filter-chip bg-white">Female</span>
+            <span class="filter-chip bg-white">News / Reading</span>
+            <span class="filter-chip bg-white">Podcast</span>
+            <span class="filter-chip bg-white">Kids</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            
+            <!-- Voice Card 1 -->
+            <div class="brutal-card p-6 bg-[#ffd800]">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-16 h-16 bg-white border-3 border-black shadow-[2px_2px_0_#000] rounded-full flex items-center justify-center overflow-hidden">
+                        <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix&backgroundColor=transparent" alt="Avatar" class="w-12 h-12">
+                    </div>
+                    <span class="bg-black text-white px-2 py-0.5 font-bold text-xs border-2 border-black rotate-3">MALE</span>
+                </div>
+                <h3 class="text-2xl font-bold uppercase mb-1">Mạnh Cường</h3>
+                <p class="font-medium text-gray-800 mb-6">Giọng đọc bản tin, rõ ràng, rành mạch. Phù hợp báo chí.</p>
+                
+                <div class="flex space-x-2">
+                    <button class="brutal-btn w-12 h-12 flex items-center justify-center p-0 rounded-full">
+                        <svg class="w-5 h-5 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </button>
+                    <button class="brutal-btn flex-1 bg-white text-sm">SELECT</button>
+                </div>
+            </div>
+
+            <!-- Voice Card 2 -->
+            <div class="brutal-card p-6 bg-[#f3e8ff]">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-16 h-16 bg-white border-3 border-black shadow-[2px_2px_0_#000] rounded-full flex items-center justify-center overflow-hidden">
+                        <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Luna&backgroundColor=transparent" alt="Avatar" class="w-12 h-12">
+                    </div>
+                    <span class="bg-[#ff4d4d] text-white px-2 py-0.5 font-bold text-xs border-2 border-black -rotate-3">FEMALE</span>
+                </div>
+                <h3 class="text-2xl font-bold uppercase mb-1">Ngọc Dung</h3>
+                <p class="font-medium text-gray-800 mb-6">Trầm ấm, truyền cảm. Tuyệt vời cho kể chuyện, podcast.</p>
+                
+                <div class="flex space-x-2">
+                    <button class="brutal-btn w-12 h-12 flex items-center justify-center p-0 rounded-full">
+                        <svg class="w-5 h-5 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </button>
+                    <button class="brutal-btn flex-1 bg-white text-sm">SELECT</button>
+                </div>
+            </div>
+
+            <!-- Voice Card 3 -->
+            <div class="brutal-card p-6 bg-[#e0f7fa]">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-16 h-16 bg-white border-3 border-black shadow-[2px_2px_0_#000] rounded-full flex items-center justify-center overflow-hidden text-2xl font-bold">
+                        US
+                    </div>
+                    <span class="bg-white text-black px-2 py-0.5 font-bold text-xs border-2 border-black rotate-2">ENGLISH</span>
+                </div>
+                <h3 class="text-2xl font-bold uppercase mb-1">Mark Watson</h3>
+                <p class="font-medium text-gray-800 mb-6">Native English US. Confident, corporate and engaging.</p>
+                
+                <div class="flex space-x-2">
+                    <button class="brutal-btn w-12 h-12 flex items-center justify-center p-0 rounded-full">
+                        <svg class="w-5 h-5 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </button>
+                    <button class="brutal-btn flex-1 bg-white text-sm">SELECT</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="mt-8 flex items-center justify-center gap-2">
+            <span class="bg-[#00e676] border-2 border-black px-3 py-1 font-bold text-sm shadow-[2px_2px_0_#000]">✓ APPROVED</span>
+        </div>
+    </main>
+</body>
+</html>

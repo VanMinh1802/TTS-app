@@ -1,0 +1,62 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - heading "GenVoice" [level=1] [ref=e5]
+        - navigation [ref=e6]:
+          - link "TTS Generator" [ref=e7] [cursor=pointer]:
+            - /url: "#"
+          - link "Projects" [ref=e8] [cursor=pointer]:
+            - /url: "#"
+          - link "Voices" [ref=e9] [cursor=pointer]:
+            - /url: "#"
+      - generic [ref=e10]:
+        - generic [ref=e11]: Free Tier
+        - generic [ref=e12]: U
+  - main [ref=e13]:
+    - generic [ref=e14]:
+      - generic [ref=e15]:
+        - generic [ref=e16]:
+          - heading "Nhập văn bản" [level=2] [ref=e17]
+          - textbox "Nhập văn bản cần chuyển thành giọng nói..." [ref=e18]
+          - generic [ref=e19]:
+            - generic [ref=e20]: 0 / 5000 ký tự
+            - button "Clear" [ref=e21] [cursor=pointer]
+        - generic [ref=e22]:
+          - heading "Cài đặt giọng nói" [level=2] [ref=e23]
+          - generic [ref=e24]:
+            - generic [ref=e25]:
+              - generic [ref=e26]: Giọng nói
+              - combobox [ref=e27]:
+                - option "Piper Vietnamese Female" [selected]
+                - option "Piper Vietnamese Male"
+                - option "Piper English US Female"
+            - generic [ref=e28]:
+              - generic [ref=e29]: Ngôn ngữ
+              - combobox [ref=e30]:
+                - option "Tiếng Việt" [selected]
+                - option "English"
+            - generic [ref=e31]:
+              - generic [ref=e32]: Tốc độ
+              - slider [ref=e33]: "1"
+            - generic [ref=e34]:
+              - generic [ref=e35]: Cường độ
+              - slider [ref=e36]: "1"
+        - button "Generate Speech" [ref=e37] [cursor=pointer]
+      - generic [ref=e38]:
+        - generic [ref=e39]:
+          - heading "Audio Output" [level=2] [ref=e40]
+          - generic [ref=e42]: Audio preview here
+          - generic [ref=e43]:
+            - button "Download" [ref=e44] [cursor=pointer]
+            - button "Copy Link" [ref=e45] [cursor=pointer]
+        - generic [ref=e46]:
+          - heading "Quota" [level=2] [ref=e47]
+          - generic [ref=e48]:
+            - generic [ref=e50]:
+              - generic [ref=e51]: Characters
+              - generic [ref=e52]: 1,250 / 5,000
+            - generic [ref=e56]:
+              - generic [ref=e57]: API Calls
+              - generic [ref=e58]: 45 / 100
+  - paragraph [ref=e61]: Mockup v1.0 - TTS Generator Page
