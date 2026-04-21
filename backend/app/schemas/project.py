@@ -9,6 +9,7 @@ class SegmentBase(BaseModel):
     """Base segment schema."""
     text: str = Field(..., max_length=5000)
     voice_id: str = "default"
+    emotion_params: Optional[dict] = Field(default=None)
 
 
 class SegmentCreate(SegmentBase):
@@ -29,6 +30,7 @@ class SegmentUpdate(BaseModel):
     text: Optional[str] = Field(None, max_length=5000)
     voice_id: Optional[str] = None
     order: Optional[int] = None
+    emotion_params: Optional[dict] = None
 
 
 class SceneBase(BaseModel):
