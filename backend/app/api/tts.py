@@ -50,7 +50,8 @@ async def list_voices():
             {
                 "id": voice_id,
                 "name": config["name"],
-                "language": "vi",
+                "lang": "Vietnamese",
+                "available": True,
             }
             for voice_id, config in MODELS.items()
         ]
