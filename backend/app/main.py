@@ -15,6 +15,7 @@ from app.api.normalize import router as normalize_router
 from app.api.dictionary import router as dictionary_router
 from app.api.language import router as language_router
 from app.api.voices import router as voices_router
+from app.api.projects import router as projects_router
 from app.core.redis import init_redis, close_redis
 from app.core.settings import settings
 
@@ -81,6 +82,7 @@ app.include_router(normalize_router, prefix=settings.API_V1_PREFIX)
 app.include_router(dictionary_router, prefix=settings.API_V1_PREFIX)
 app.include_router(language_router, prefix=settings.API_V1_PREFIX)
 app.include_router(voices_router, prefix=settings.API_V1_PREFIX)
+app.include_router(projects_router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get("/")

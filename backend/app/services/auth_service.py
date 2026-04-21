@@ -22,45 +22,62 @@ from app.schemas.auth import (
 )
 
 
+import logging
+from google.oauth2 import id_token
+from google.auth.transport import requests
+
+from app.core.settings import Settings
+from functools import lru_cache
+
+@lru_cache()
+def get_settings():
+    return Settings()
+
+settings = get_settings()
+
+logger = logging.getLogger(__name__)
+
 class AuthService:
     """Authentication service."""
 
     def __init__(self, db: Session):
         self.db = db
 
-    def register(self, user_data: UserCreate) -> User:
-        """Register a new user."""
-        # Check if email exists
-        existing = self.db.execute(
-            select(User).where(User.email == user_data.email)
-        ).scalar_one_or_none()
+    def verify_google_token(self, credential: str) -> dict:
+        try:
+            # Specify the CLIENT_ID of the app that accesses the backend
+            idinfo = id_token.verify_oauth2_token(credential, requests.Request(), settings.GOOGLE_CLIENT_ID)
+            return idinfo
+        except ValueError as e:
+            logger.error(f"Google token verification failed: {e}")
+            raise ValueError("Invalid Google credentials")
+
+    def google_login(self, credential: str) -> TokenResponse:
+        """Login or register via Google token."""
+        idinfo = self.verify_google_token(credential)
         
-        if existing:
-            raise ValueError("Email already registered")
+        email = idinfo.get("email")
+        if not email:
+            raise ValueError("Google token did not contain an email")
+            
+        name = idinfo.get("name", "")
 
-        # Create new user
-        user = User(
-            email=user_data.email,
-            password_hash=hash_password(user_data.password),
-            name=user_data.name,
-        )
-        self.db.add(user)
-        self.db.commit()
-        self.db.refresh(user)
-        return user
-
-    def login(self, login_data: LoginRequest) -> TokenResponse:
-        """Login and return tokens."""
-        # Find user
+        # Find or create user
         user = self.db.execute(
-            select(User).where(User.email == login_data.email)
+            select(User).where(User.email == email)
         ).scalar_one_or_none()
 
-        if not user or not verify_password(
-            login_data.password, user.password_hash
-        ):
-            raise ValueError("Invalid email or password")
-
+        if not user:
+            # Register new user from Google
+            user = User(
+                email=email,
+                name=name,
+                password_hash=None, # No password needed
+            )
+            self.db.add(user)
+            self.db.commit()
+            self.db.refresh(user)
+        
         if not user.is_active:
             raise ValueError("Account is inactive")
 

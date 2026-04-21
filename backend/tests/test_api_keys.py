@@ -1,19 +1,21 @@
 """Tests for enhanced API key features."""
 import pytest
+from unittest.mock import patch
 from fastapi import status
 
 
 class TestAPIKeyEnhanced:
 
-    def test_create_key_with_options(self, client):
+    @patch("app.services.auth_service.id_token.verify_oauth2_token")
+    def test_create_key_with_options(self, mock_verify, client):
         """Test creating API key with all options."""
-        client.post(
-            "/api/auth/register",
-            json={"email": "test@example.com", "password": "password123"},
-        )
+        mock_verify.return_value = {
+            "email": "testoptions@example.com",
+            "name": "Test Options"
+        }
         login_response = client.post(
-            "/api/auth/login",
-            json={"email": "test@example.com", "password": "password123"},
+            "/api/auth/google",
+            json={"credential": "mock_google_id_token"},
         )
         token = login_response.json()["access_token"]
 
@@ -36,15 +38,16 @@ class TestAPIKeyEnhanced:
         assert data["scopes"] == "models:read,tts:generate"
         assert "key" in data  # Full key shown once
 
-    def test_list_keys_masked(self, client):
+    @patch("app.services.auth_service.id_token.verify_oauth2_token")
+    def test_list_keys_masked(self, mock_verify, client):
         """Test listing keys shows masked data."""
-        client.post(
-            "/api/auth/register",
-            json={"email": "test@example.com", "password": "password123"},
-        )
+        mock_verify.return_value = {
+            "email": "testmask@example.com",
+            "name": "Test Mask"
+        }
         login_response = client.post(
-            "/api/auth/login",
-            json={"email": "test@example.com", "password": "password123"},
+            "/api/auth/google",
+            json={"credential": "mock_google_id_token"},
         )
         token = login_response.json()["access_token"]
 
@@ -66,15 +69,16 @@ class TestAPIKeyEnhanced:
         # After creation, listing should not show full key
         assert "key" not in keys[0]
 
-    def test_get_key_usage(self, client):
+    @patch("app.services.auth_service.id_token.verify_oauth2_token")
+    def test_get_key_usage(self, mock_verify, client):
         """Test getting API key usage stats."""
-        client.post(
-            "/api/auth/register",
-            json={"email": "test@example.com", "password": "password123"},
-        )
+        mock_verify.return_value = {
+            "email": "testusage@example.com",
+            "name": "Test Usage"
+        }
         login_response = client.post(
-            "/api/auth/login",
-            json={"email": "test@example.com", "password": "password123"},
+            "/api/auth/google",
+            json={"credential": "mock_google_id_token"},
         )
         token = login_response.json()["access_token"]
 

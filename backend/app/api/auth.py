@@ -52,32 +52,22 @@ def get_current_user(
 # ===== Auth Endpoints =====
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register(user_data: UserCreate, db: Session = Depends(get_db)):
-    """Register a new user account."""
+from pydantic import BaseModel
+
+class GoogleLoginRequest(BaseModel):
+    credential: str
+
+@router.post("/google", response_model=TokenResponse)
+def google_login(login_data: GoogleLoginRequest, db: Session = Depends(get_db)):
+    """Login or register via Google."""
     service = AuthService(db)
     try:
-        user = service.register(user_data)
-        return user
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e),
-        )
-
-
-@router.post("/login", response_model=TokenResponse)
-def login(login_data: LoginRequest, db: Session = Depends(get_db)):
-    """Login and get access token."""
-    service = AuthService(db)
-    try:
-        return service.login(login_data)
+        return service.google_login(login_data.credential)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(e),
         )
-
 
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):

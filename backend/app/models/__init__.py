@@ -7,9 +7,23 @@ class Base(DeclarativeBase):
     pass
 
 
-from app.models.project import Project, Scene, Segment
+from app.models.analytics import RequestLog, UsageSnapshot
+from app.models.project import Project, ProjectExportJob, Scene, Segment
 from app.models.quota import UserQuota, UsageHistory
 from app.models.user import APIKey, User
 from app.models.voice import Voice
 
-__all__ = ["Base", "User", "APIKey", "Project", "Scene", "Segment", "UserQuota", "UsageHistory", "Voice"]
+__all__ = [
+    "Base",
+    "User",
+    "APIKey",
+    "Project",
+    "Scene",
+    "Segment",
+    "ProjectExportJob",
+    "UserQuota",
+    "UsageHistory",
+    "Voice",
+    "RequestLog",
+    "UsageSnapshot",
+]

@@ -16,7 +16,14 @@ MODELS = {
         "name": "Vietnamese Male", 
         "path": "vi/minhquang/minhquang.onnx",
     },
+    "default": {
+        "name": "Vietnamese Female (Default)",
+        "path": "vi/minhquang/minhquang.onnx",
+    },
 }
+
+# Default voice when none specified
+DEFAULT_VOICE = "default"
 
 # Cache for PiperVoice instances
 _piper_cache = {}

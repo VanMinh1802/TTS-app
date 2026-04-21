@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # Auth - Google
+    GOOGLE_CLIENT_ID: str = ""
+
     # Auth - Password
     PASSWORD_MIN_LENGTH: int = 8
     PASSWORD_REQUIRE_LETTER: bool = True

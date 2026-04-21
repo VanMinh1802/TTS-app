@@ -1,14 +1,14 @@
 """Project Pydantic schemas."""
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SegmentBase(BaseModel):
     """Base segment schema."""
     text: str = Field(..., max_length=5000)
-    voice_id: str
+    voice_id: str = "default"
 
 
 class SegmentCreate(SegmentBase):
@@ -21,8 +21,7 @@ class SegmentResponse(SegmentBase):
     id: str
     order: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SegmentUpdate(BaseModel):
@@ -46,10 +45,9 @@ class SceneResponse(SceneBase):
     """Schema for scene response."""
     id: str
     order: int
-    segments: list[SegmentResponse] = []
+    segments: list[SegmentResponse] = Field(default_factory=list)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SceneUpdate(BaseModel):
@@ -74,12 +72,11 @@ class ProjectResponse(ProjectBase):
     id: str
     created_at: datetime
     updated_at: datetime
-    scenes: list[SceneResponse] = []
+    scenes: list[SceneResponse] = Field(default_factory=list)
     scene_count: int = 0
     segment_count: int = 0
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ProjectUpdate(BaseModel):
@@ -98,5 +95,44 @@ class ProjectListItem(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SegmentReorderRequest(BaseModel):
+    """Schema for segment reorder requests."""
+
+    scene_id: str
+    segment_ids: list[str] = Field(min_length=1)
+
+
+class SegmentReorderResponse(BaseModel):
+    """Schema for segment reorder responses."""
+
+    success: bool
+
+
+ExportFormat = Literal["single", "chapters", "segments"]
+ExportStatus = Literal["processing", "completed", "failed"]
+
+
+class ProjectExportRequest(BaseModel):
+    """Schema for project export requests."""
+
+    format: ExportFormat
+    gap_seconds: float = Field(default=1.0, ge=0.0, le=30.0)
+
+
+class ProjectExportResponse(BaseModel):
+    """Schema for project export start response."""
+
+    job_id: str
+    status: ExportStatus
+
+
+class ProjectExportStatusResponse(BaseModel):
+    """Schema for project export status polling response."""
+
+    job_id: str
+    status: ExportStatus
+    progress: int = Field(ge=0, le=100)
+    error: Optional[str] = None

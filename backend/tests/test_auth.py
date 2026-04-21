@@ -1,105 +1,85 @@
 """Tests for authentication endpoints."""
 import pytest
+from unittest.mock import patch
 from fastapi import status
 
 
 class TestAuth:
     """Authentication endpoint tests."""
 
-    def test_register_success(self, client):
-        """Test user registration."""
+    @patch("app.services.auth_service.id_token.verify_oauth2_token")
+    def test_google_login_new_user(self, mock_verify, client):
+        """Test successful login and registration of a new user via Google."""
+        mock_verify.return_value = {
+            "email": "newuser@example.com",
+            "name": "New User",
+            "sub": "google12345"
+        }
+        
         response = client.post(
-            "/api/auth/register",
-            json={
-                "email": "test@example.com",
-                "password": "password123",
-                "name": "Test User",
-            },
-        )
-        assert response.status_code == status.HTTP_201_CREATED
-        data = response.json()
-        assert data["email"] == "test@example.com"
-        assert data["name"] == "Test User"
-        assert "id" in data
-
-    def test_register_duplicate_email(self, client):
-        """Test duplicate email registration."""
-        # Register first user
-        client.post(
-            "/api/auth/register",
-            json={
-                "email": "test@example.com",
-                "password": "password123",
-            },
-        )
-
-        # Try to register again
-        response = client.post(
-            "/api/auth/register",
-            json={
-                "email": "test@example.com",
-                "password": "password123",
-            },
-        )
-        assert response.status_code == status.HTTP_409_CONFLICT
-
-    def test_login_success(self, client):
-        """Test successful login."""
-        # Register user first
-        client.post(
-            "/api/auth/register",
-            json={
-                "email": "test@example.com",
-                "password": "password123",
-            },
-        )
-
-        # Login
-        response = client.post(
-            "/api/auth/login",
-            json={
-                "email": "test@example.com",
-                "password": "password123",
-            },
+            "/api/auth/google",
+            json={"credential": "mock_google_id_token"},
         )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert "access_token" in data
         assert data["token_type"] == "bearer"
 
-    def test_login_invalid_credentials(self, client):
-        """Test login with invalid credentials."""
+    @patch("app.services.auth_service.id_token.verify_oauth2_token")
+    def test_google_login_existing_user(self, mock_verify, client):
+        """Test successful login of an existing user via Google."""
+        mock_verify.return_value = {
+            "email": "existinguser@example.com",
+            "name": "Existing User",
+            "sub": "google67890"
+        }
+        
+        # First login (registers)
+        client.post(
+            "/api/auth/google",
+            json={"credential": "mock_google_id_token"},
+        )
+
+        # Second login (existing)
         response = client.post(
-            "/api/auth/login",
-            json={
-                "email": "test@example.com",
-                "password": "wrongpassword",
-            },
+            "/api/auth/google",
+            json={"credential": "mock_google_id_token"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert "access_token" in data
+        assert data["token_type"] == "bearer"
+
+    @patch("app.services.auth_service.id_token.verify_oauth2_token")
+    def test_google_login_invalid_token(self, mock_verify, client):
+        """Test login with invalid Google credential."""
+        mock_verify.side_effect = ValueError("Invalid token")
+        
+        response = client.post(
+            "/api/auth/google",
+            json={"credential": "invalid_token"},
         )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        assert "Invalid Google credentials" in str(response.json())
 
     def test_get_me_unauthorized(self, client):
         """Test getting current user without auth."""
         response = client.get("/api/auth/me")
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_get_me_success(self, client):
+    @patch("app.services.auth_service.id_token.verify_oauth2_token")
+    def test_get_me_success(self, mock_verify, client):
         """Test getting current user with auth."""
-        # Register and login
-        client.post(
-            "/api/auth/register",
-            json={
-                "email": "test@example.com",
-                "password": "password123",
-                "name": "Test User",
-            },
-        )
+        mock_verify.return_value = {
+            "email": "testme@example.com",
+            "name": "Test Me",
+            "sub": "googleabc"
+        }
+        
+        # Login
         login_response = client.post(
-            "/api/auth/login",
-            json={
-                "email": "test@example.com",
-                "password": "password123",
-            },
+            "/api/auth/google",
+            json={"credential": "mock_google_id_token"},
         )
         token = login_response.json()["access_token"]
 
@@ -110,29 +90,25 @@ class TestAuth:
         )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-        assert data["email"] == "test@example.com"
-        assert data["name"] == "Test User"
+        assert data["email"] == "testme@example.com"
+        assert data["name"] == "Test Me"
 
 
 class TestAPIKeys:
     """API Key endpoint tests."""
 
-    def test_create_api_key(self, client):
+    @patch("app.services.auth_service.id_token.verify_oauth2_token")
+    def test_create_api_key(self, mock_verify, client):
         """Test creating an API key."""
-        # Register and login
-        client.post(
-            "/api/auth/register",
-            json={
-                "email": "test@example.com",
-                "password": "password123",
-            },
-        )
+        mock_verify.return_value = {
+            "email": "testkey@example.com",
+            "name": "Test Key User"
+        }
+        
+        # Login
         login_response = client.post(
-            "/api/auth/login",
-            json={
-                "email": "test@example.com",
-                "password": "password123",
-            },
+            "/api/auth/google",
+            json={"credential": "mock_google_id_token"},
         )
         token = login_response.json()["access_token"]
 
@@ -147,16 +123,18 @@ class TestAPIKeys:
         assert data["name"] == "My API Key"
         assert "key" in data  # Full key shown once
 
-    def test_list_api_keys(self, client):
+    @patch("app.services.auth_service.id_token.verify_oauth2_token")
+    def test_list_api_keys(self, mock_verify, client):
         """Test listing API keys."""
-        # Register, login, create key
-        client.post(
-            "/api/auth/register",
-            json={"email": "test@example.com", "password": "password123"},
-        )
+        mock_verify.return_value = {
+            "email": "testlistkey@example.com",
+            "name": "Test List Key User"
+        }
+        
+        # Login
         login_response = client.post(
-            "/api/auth/login",
-            json={"email": "test@example.com", "password": "password123"},
+            "/api/auth/google",
+            json={"credential": "mock_google_id_token"},
         )
         token = login_response.json()["access_token"]
 
@@ -175,16 +153,18 @@ class TestAPIKeys:
         data = response.json()
         assert len(data) == 1
 
-    def test_revoke_api_key(self, client):
+    @patch("app.services.auth_service.id_token.verify_oauth2_token")
+    def test_revoke_api_key(self, mock_verify, client):
         """Test revoking an API key."""
-        # Register, login, create key
-        client.post(
-            "/api/auth/register",
-            json={"email": "test@example.com", "password": "password123"},
-        )
+        mock_verify.return_value = {
+            "email": "testrevokekey@example.com",
+            "name": "Test Revoke Key User"
+        }
+        
+        # Login
         login_response = client.post(
-            "/api/auth/login",
-            json={"email": "test@example.com", "password": "password123"},
+            "/api/auth/google",
+            json={"credential": "mock_google_id_token"},
         )
         token = login_response.json()["access_token"]
 
