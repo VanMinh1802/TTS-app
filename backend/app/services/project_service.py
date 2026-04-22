@@ -24,6 +24,7 @@ from app.schemas.project import (
     SegmentUpdate,
 )
 from app.services.tts_service import tts_service, DEFAULT_VOICE
+from app.utils.text_utils import strip_emotion_tags
 
 logger = logging.getLogger(__name__)
 
@@ -132,8 +133,10 @@ def _create_zip(payloads: list[tuple[str, bytes]]) -> bytes:
 
 def _render_segment_audio_bytes(segment_payload: dict[str, Any]) -> tuple[int, bytes]:
     """Render one segment and extract WAV frames."""
+    raw_text = str(segment_payload.get("text", ""))
+    clean_text = strip_emotion_tags(raw_text)
     wav_bytes, _duration = tts_service.synthesize(
-        text=str(segment_payload.get("text", "")),
+        text=clean_text,
         voice_id=str(segment_payload.get("voice_id", "vi_female")),
     )
     return _extract_wav_frames(wav_bytes)

@@ -4,7 +4,8 @@ import base64
 from fastapi import APIRouter
 
 from app.schemas.tts import TTSRequest, TTSResponse
-from app.services.tts_service import TTSService, tts_service, MODELS
+from app.services.tts_service import TTSService, MODELS, VOICE_ALIASES, tts_service
+from app.utils.text_utils import strip_emotion_tags
 
 router = APIRouter(prefix="/tts", tags=["TTS"])
 
@@ -17,15 +18,18 @@ async def generate_tts(request: TTSRequest):
     - Override backend output
     - Add custom pronunciations for words backend doesn't handle
     """
-    if request.voice_id not in MODELS:
+    if request.voice_id not in MODELS and request.voice_id not in VOICE_ALIASES:
         request.voice_id = "vi_female"
 
     # Ensure model is loaded
     await tts_service._ensure_model(request.voice_id)
 
+    # Strip emotion tags before synthesis
+    clean_text = strip_emotion_tags(request.text)
+
     # Synthesize with user dictionary
     wav_data, duration = tts_service.synthesize(
-        text=request.text,
+        text=clean_text,
         voice_id=request.voice_id,
         speed=request.speed,
         user_dictionary=request.user_dictionary,
@@ -45,14 +49,16 @@ async def generate_tts(request: TTSRequest):
 @router.get("/voices")
 async def list_voices():
     """List available voices."""
+    canonical_voice_ids = [voice_id for voice_id in MODELS.keys() if voice_id not in {"default", "vi_female", "vi_male"}]
     return {
         "voices": [
             {
                 "id": voice_id,
-                "name": config["name"],
+                "name": MODELS[voice_id]["name"],
                 "lang": "Vietnamese",
+                "sample_url": MODELS[voice_id].get("sample_url"),
                 "available": True,
             }
-            for voice_id, config in MODELS.items()
+            for voice_id in canonical_voice_ids
         ]
     }
