@@ -5,6 +5,7 @@ from fastapi import APIRouter
 
 from app.schemas.tts import TTSRequest, TTSResponse
 from app.services.tts_service import TTSService, tts_service, MODELS
+from app.utils.text_utils import strip_emotion_tags
 
 router = APIRouter(prefix="/tts", tags=["TTS"])
 
@@ -23,9 +24,12 @@ async def generate_tts(request: TTSRequest):
     # Ensure model is loaded
     await tts_service._ensure_model(request.voice_id)
 
+    # Strip emotion tags before synthesis
+    clean_text = strip_emotion_tags(request.text)
+
     # Synthesize with user dictionary
     wav_data, duration = tts_service.synthesize(
-        text=request.text,
+        text=clean_text,
         voice_id=request.voice_id,
         speed=request.speed,
         user_dictionary=request.user_dictionary,
