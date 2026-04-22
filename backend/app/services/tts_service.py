@@ -5,7 +5,7 @@ import io
 
 from botocore.config import Config
 
-from app.schemas.tts import TTSRequest, TTSResponse, DictionaryEntry
+from app.schemas.tts import TTSRequest, TTSResponse, DictionaryEntry, EmotionParams
 
 MODELS = {
     "vi_female": {
@@ -174,7 +174,8 @@ class TTSService:
         text: str, 
         voice_id: str = "vi_female", 
         speed: float = 1.0,
-        user_dictionary: list[DictionaryEntry] = None
+        user_dictionary: list[DictionaryEntry] = None,
+        emotion_params: EmotionParams = None
     ) -> tuple[bytes, float]:
         """Synthesize speech using Piper library.
         
@@ -183,6 +184,7 @@ class TTSService:
             voice_id: Voice to use
             speed: Speed multiplier (1.0 = normal)
             user_dictionary: User custom dictionary entries
+            emotion_params: Emotion parameters (length_scale, noise_scale)
         """
         # Apply user dictionary FIRST (before any processing)
         if user_dictionary:
@@ -193,10 +195,15 @@ class TTSService:
             voice = voice_data['voice']
             config = voice_data['config']
             
-            # Create synthesis config
+            # Create synthesis config with emotion params
             from piper.config import SynthesisConfig
-            length_scale = 1.0 / speed
-            syn_config = SynthesisConfig(length_scale=length_scale)
+            if emotion_params:
+                length_scale = emotion_params.length_scale
+                noise_scale = emotion_params.noise_scale
+            else:
+                length_scale = 1.0 / speed
+                noise_scale = 0.667
+            syn_config = SynthesisConfig(length_scale=length_scale, noise_scale=noise_scale)
             
             # Synthesize
             audio_chunks = voice.synthesize(text, syn_config)
