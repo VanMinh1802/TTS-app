@@ -79,6 +79,14 @@ ABBREVIATIONS = {
     "jpy": "yên Nhật",
     "cny": "nhân dân tệ",
     "eur": "êu rô",
+    # Layer 2: Pronunciation aliases for TTS
+    "ceo": "xi i ô",
+    "b2b": "bi tu bi",
+    "vnd": "đồng Việt Nam",
+    "sales": "xêo",
+    "deadline": "đềa đàyên",
+    "team": "tìm",
+    "bonus": "bô nút",
 }
 
 # URL pattern
@@ -168,8 +176,25 @@ class VietnameseNormalizer:
                 return parts
             # URL: https://... -> h t t p s ...
             return " ".join(list(url.replace(".", " dot ")))
+
+    def normalize_dates(self, text: str) -> str:
+        """Normalize date formats: dd/mm/yyyy -> ngày dd tháng mm năm yyyy"""
+        def replace_date(match):
+            groups = match.groups()
+            if groups[0]:  # dd/mm/yyyy
+                day, month, year = groups[0], groups[1], groups[2]
+            elif groups[3]:  # yyyy-mm-dd
+                year, month, day = groups[3], groups[4], groups[5]
+            else:
+                return match.group()
             
-        return URL_PATTERN.sub(replace_url, text)
+            # Convert 2-digit year to 4-digit
+            if len(year) == 2:
+                year = "20" + year if int(year) < 50 else "19" + year
+            
+            return f"ngày {day} tháng {month} năm {year}"
+        
+        return DATE_PATTERN.sub(replace_date, text)
 
     def normalize(self, text: str, mode: str = "standard") -> tuple[str, float]:
         """Normalize text."""
@@ -185,6 +210,7 @@ class VietnameseNormalizer:
         
         if mode in ["standard", "full"]:
             result = self.expand_abbreviations(result)
+            result = self.normalize_dates(result)
             result = self.normalize_numbers(result)
             result = self.normalize_currency(result)
             result = self.normalize_urls(result)

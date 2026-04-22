@@ -5,7 +5,8 @@ from fastapi import APIRouter
 
 from app.schemas.tts import TTSRequest, TTSResponse
 from app.services.tts_service import TTSService, MODELS, VOICE_ALIASES, tts_service
-from app.utils.text_utils import strip_emotion_tags
+from app.services.normalizer import normalize_vietnamese
+from app.utils.text_utils import cleanup_grammar
 
 router = APIRouter(prefix="/tts", tags=["TTS"])
 
@@ -24,12 +25,17 @@ async def generate_tts(request: TTSRequest):
     # Ensure model is loaded
     await tts_service._ensure_model(request.voice_id)
 
-    # Strip emotion tags before synthesis
-    clean_text = strip_emotion_tags(request.text)
+    # Text normalization pipeline: Layer 1 (abbrev/dates) -> Layer 3 (grammar)
+    try:
+        normalized, _, _, _ = normalize_vietnamese(request.text, mode="standard")
+    except Exception:
+        normalized = request.text
+    
+    cleaned = cleanup_grammar(normalized)
 
     # Synthesize with user dictionary
     wav_data, duration = tts_service.synthesize(
-        text=clean_text,
+        text=cleaned,
         voice_id=request.voice_id,
         speed=request.speed,
         user_dictionary=request.user_dictionary,
