@@ -33,6 +33,7 @@ async def generate_tts(request: TTSRequest):
         voice_id=request.voice_id,
         speed=request.speed,
         user_dictionary=request.user_dictionary,
+        emotion_params=request.emotion_params,
     )
 
     # Return as base64 data URL

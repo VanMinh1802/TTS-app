@@ -1,25 +1,24 @@
 """TTS Service - Using Piper library for ONNX-based TTS."""
+import io
 import struct
 from typing import Optional
-import io
 
 from botocore.config import Config
 
-from app.schemas.tts import TTSRequest, TTSResponse, DictionaryEntry
+from app.schemas.tts import DictionaryEntry, TTSRequest, TTSResponse, EmotionParams
+from app.services.voice_registry import build_tts_model_map_from_registry, load_default_voice_registry
 
-MODELS = {
-    "vi_female": {
-        "name": "Minh Quang Vietnamese",
-        "path": "vi/minhquang/minhquang.onnx",
-    },
-    "vi_male": {
-        "name": "Vietnamese Male", 
-        "path": "vi/minhquang/minhquang.onnx",
-    },
-    "default": {
-        "name": "Vietnamese Female (Default)",
-        "path": "vi/minhquang/minhquang.onnx",
-    },
+
+def _load_models() -> dict[str, dict]:
+    registry = load_default_voice_registry()
+    return build_tts_model_map_from_registry(registry)
+
+
+MODELS = _load_models()
+VOICE_ALIASES = {
+    "vi_female": "ngochuyen",
+    "vi_male": "manhdung",
+    "default": "ngochuyen",
 }
 
 # Default voice when none specified
@@ -31,9 +30,13 @@ _piper_cache = {}
 
 def _load_model_from_r2(voice_id: str) -> Optional[tuple[bytes, dict]]:
     """Load ONNX model and config from R2."""
-    from app.core.settings import settings
+    from app.core.settings import settings, get_r2_client_endpoint
     
-    model_path = MODELS[voice_id]["path"]
+    canonical_voice_id = VOICE_ALIASES.get(voice_id, voice_id)
+    model_config = MODELS.get(canonical_voice_id) or MODELS.get(voice_id)
+    if not model_config:
+        return None
+    model_path = model_config["path"]
     json_path = model_path + ".json"
     
     try:
@@ -43,7 +46,7 @@ def _load_model_from_r2(voice_id: str) -> Optional[tuple[bytes, dict]]:
             "s3",
             aws_access_key_id=settings.R2_ACCESS_KEY_ID,
             aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY or "",
-            endpoint_url=f"https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
+            endpoint_url=get_r2_client_endpoint(),
             config=config,
         )
         
@@ -174,7 +177,8 @@ class TTSService:
         text: str, 
         voice_id: str = "vi_female", 
         speed: float = 1.0,
-        user_dictionary: list[DictionaryEntry] = None
+        user_dictionary: list[DictionaryEntry] = None,
+        emotion_params: EmotionParams = None
     ) -> tuple[bytes, float]:
         """Synthesize speech using Piper library.
         
@@ -183,6 +187,7 @@ class TTSService:
             voice_id: Voice to use
             speed: Speed multiplier (1.0 = normal)
             user_dictionary: User custom dictionary entries
+            emotion_params: Emotion parameters (length_scale, noise_scale)
         """
         # Apply user dictionary FIRST (before any processing)
         if user_dictionary:
@@ -193,10 +198,15 @@ class TTSService:
             voice = voice_data['voice']
             config = voice_data['config']
             
-            # Create synthesis config
+            # Create synthesis config with emotion params
             from piper.config import SynthesisConfig
-            length_scale = 1.0 / speed
-            syn_config = SynthesisConfig(length_scale=length_scale)
+            if emotion_params:
+                length_scale = emotion_params.length_scale
+                noise_scale = emotion_params.noise_scale
+            else:
+                length_scale = 1.0 / speed
+                noise_scale = 0.667
+            syn_config = SynthesisConfig(length_scale=length_scale, noise_scale=noise_scale)
             
             # Synthesize
             audio_chunks = voice.synthesize(text, syn_config)
