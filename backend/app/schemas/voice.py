@@ -22,6 +22,8 @@ class VoiceResponse(BaseModel):
     owner_id: Optional[str] = None
     model_url: Optional[str] = None
     config_url: Optional[str] = None
+    sample_url: Optional[str] = None
+    folder: Optional[str] = None
     is_active: bool = True
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

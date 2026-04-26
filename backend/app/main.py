@@ -16,6 +16,8 @@ from app.api.dictionary import router as dictionary_router
 from app.api.language import router as language_router
 from app.api.voices import router as voices_router
 from app.api.auth import router as auth_router
+from app.api.license import router as license_router
+from app.api.library import router as library_router
 from app.core.redis import init_redis, close_redis
 from app.core.settings import settings
 
@@ -83,6 +85,8 @@ app.include_router(dictionary_router, prefix=settings.API_V1_PREFIX)
 app.include_router(language_router, prefix=settings.API_V1_PREFIX)
 app.include_router(voices_router, prefix=settings.API_V1_PREFIX)
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
+app.include_router(library_router, prefix=settings.API_V1_PREFIX)
+app.include_router(license_router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get("/")

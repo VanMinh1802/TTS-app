@@ -13,6 +13,7 @@ from app.schemas.r2 import (
     UploadUrlResponse,
 )
 from app.services.r2_service import r2_service
+from app.services.rate_limiter import rate_limit_dependency
 
 router = APIRouter(prefix="/models", tags=["Models"])
 
@@ -42,6 +43,7 @@ def get_model(model_id: str):
 def get_download_url(
     model_id: str,
     current_user: User = Depends(get_current_user),
+    rate_limit: None = Depends(rate_limit_dependency),
 ):
     """Generate signed URL for model download."""
     try:
@@ -61,6 +63,7 @@ router_audio = APIRouter(prefix="/audio", tags=["Audio"])
 def get_upload_url(
     request: UploadUrlRequest,
     current_user: User = Depends(get_current_user),
+    rate_limit: None = Depends(rate_limit_dependency),
 ):
     """Generate signed URL for audio upload."""
     try:

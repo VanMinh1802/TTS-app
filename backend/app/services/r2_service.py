@@ -9,7 +9,7 @@ import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
-from app.core.settings import settings
+from app.core.settings import settings, get_r2_public_base_url, get_r2_client_endpoint
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +20,12 @@ class R2Service:
     def __init__(self):
         self._client: Optional[boto3.client] = None
         self._models_cache: Optional[dict] = None
+
+    def _public_base_url(self) -> str:
+        return get_r2_public_base_url()
+
+    def _client_endpoint_url(self) -> str:
+        return get_r2_client_endpoint()
 
     @property
     def client(self) -> boto3.client:
@@ -33,7 +39,7 @@ class R2Service:
                 "s3",
                 aws_access_key_id=settings.R2_ACCESS_KEY_ID,
                 aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY,
-                endpoint_url=f"https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestream.com",
+                endpoint_url=self._client_endpoint_url(),
                 config=config,
             )
         return self._client
@@ -118,5 +124,69 @@ class R2Service:
             "user_id": user_id,
         }
 
+    def get_object(self, key: str) -> Optional[bytes]:
+        """Get object from R2 by key."""
+        try:
+            response = self.client.get_object(Bucket=settings.R2_BUCKET_NAME, Key=key)
+            return response["Body"].read()
+        except ClientError:
+            return None
+
+
+class R2LibraryService:
+    """Cloudflare R2 service for user audio library storage."""
+
+    def __init__(self):
+        self._client: Optional[boto3.client] = None
+
+    @property
+    def bucket_name(self) -> str:
+        return settings.R2_LIBRARY_BUCKET_NAME
+
+    @property
+    def s3_client(self) -> boto3.client:
+        """Get or create R2 library client."""
+        return self.client
+
+    @property
+    def client(self) -> boto3.client:
+        """Get or create R2 library client."""
+        if self._client is None:
+            config = Config(
+                signature_version="s3v4",
+                region_name="auto",
+            )
+            endpoint = f"https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+            self._client = boto3.client(
+                "s3",
+                aws_access_key_id=settings.R2_LIBRARY_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.R2_LIBRARY_SECRET_ACCESS_KEY,
+                endpoint_url=endpoint,
+                config=config,
+            )
+        return self._client
+
+    def upload_file(self, file_bytes: bytes, object_name: str, content_type: str = "audio/wav") -> None:
+        """Upload file bytes to R2."""
+        self.client.put_object(
+            Bucket=self.bucket_name,
+            Key=object_name,
+            Body=file_bytes,
+            ContentType=content_type,
+        )
+
+    def get_public_url(self, object_name: str) -> str:
+        """Get public URL for an object using the R2.dev public base URL."""
+        public_base = settings.R2_LIBRARY_PUBLIC_URL or f"https://pub-{settings.R2_ACCOUNT_ID}.r2.dev"
+        return f"{public_base}/{object_name}"
+
+    def delete_file(self, object_name: str) -> None:
+        """Delete file from R2."""
+        self.client.delete_object(
+            Bucket=self.bucket_name,
+            Key=object_name,
+        )
+
 
 r2_service = R2Service()
+r2_library_service = R2LibraryService()

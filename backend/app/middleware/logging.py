@@ -7,7 +7,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.db import get_db
-from app.services.analytics_service import AnalyticsService
+from app.services.analytics_service import AnalyticsService, normalize_request_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -20,33 +20,28 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         start_time = time.time()
-        
-        user_id = None
-        if hasattr(request.state, "user") and request.state.user:
-            user_id = getattr(request.state.user, "id", None)
-        
-        client_ip = request.client.host if request.client else None
-        x_forwarded_for = request.headers.get("X-Forwarded-For")
-        if x_forwarded_for:
-            client_ip = x_forwarded_for.split(",")[0].strip()
-        
+
+        request_metadata = normalize_request_metadata(request)
         response = await call_next(request)
-        
+
         latency_ms = int((time.time() - start_time) * 1000)
-        
+
+        db_gen = get_db()
         try:
-            db = next(get_db())
+            db = next(db_gen)
             service = AnalyticsService(db)
             service.log_request(
                 method=request.method,
                 path=request.url.path,
                 status_code=response.status_code,
                 latency_ms=latency_ms,
-                user_id=user_id,
-                ip_address=client_ip,
-                user_agent=request.headers.get("User-Agent"),
+                user_id=request_metadata["user_id"],
+                ip_address=request_metadata["ip_address"],
+                user_agent=request_metadata["user_agent"],
             )
         except Exception as e:
             logger.warning(f"Failed to log request: {e}")
+        finally:
+            db_gen.close()
         
         return response

@@ -3,6 +3,9 @@ import pytest
 from unittest.mock import MagicMock, patch
 from datetime import date
 
+from app.db import get_db
+from app.middleware.logging import LoggingMiddleware
+from app.models.analytics import RequestLog
 from app.services.analytics_service import AnalyticsService
 
 
@@ -147,5 +150,60 @@ class TestAnalyticsAPI:
         mock_user.is_admin = True
         
         result = require_admin(mock_user)
-        
+
         assert result == mock_user
+
+
+class TestLoggingMiddleware:
+    """Test request logging middleware."""
+
+    @pytest.mark.asyncio
+    async def test_dispatch_persists_request_log(self, client, db_session):
+        """Test middleware inserts a request log row."""
+        from app.main import app
+        from app.api.auth import get_current_user
+        from app.middleware import logging as logging_middleware
+
+        app.dependency_overrides[get_current_user] = lambda: MagicMock(id="user-1")
+
+        def override_get_db():
+            try:
+                yield db_session
+            finally:
+                pass
+
+        original_get_db = logging_middleware.get_db
+        logging_middleware.get_db = override_get_db
+
+        try:
+            response = client.get(
+                "/api/quota",
+                headers={"User-Agent": "pytest-agent", "X-Forwarded-For": "203.0.113.10, 198.51.100.1"},
+            )
+            assert response.status_code == 200
+        finally:
+            app.dependency_overrides.clear()
+            logging_middleware.get_db = original_get_db
+
+        logs = db_session.query(RequestLog).all()
+        assert len(logs) == 1
+        assert logs[0].path == "/api/quota"
+        assert logs[0].user_agent == "pytest-agent"
+        assert logs[0].ip_address == "203.0.113.10"
+
+    def test_normalize_request_metadata_shared_helper(self):
+        """Test metadata normalization is shared and consistent."""
+        from app.services.analytics_service import normalize_request_metadata
+
+        request = MagicMock()
+        request.state.user = MagicMock(id="user-2")
+        request.client = MagicMock(host="10.0.0.2")
+        request.headers = {"X-Forwarded-For": "198.51.100.4, 10.0.0.2", "User-Agent": "abc"}
+        request.method = "POST"
+        request.url.path = "/api/test"
+
+        metadata = normalize_request_metadata(request)
+
+        assert metadata["user_id"] == "user-2"
+        assert metadata["ip_address"] == "198.51.100.4"
+        assert metadata["user_agent"] == "abc"

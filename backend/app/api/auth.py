@@ -1,96 +1,102 @@
-"""Authentication API routes."""
+"""Authentication API endpoints."""
 from typing import Annotated, Optional
-
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, Request, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models.user import User
-from app.schemas.auth import (
-    APIKeyCreate,
-    APIKeyCreateResponse,
-    APIKeyResponse,
-    APIKeyUsageResponse,
-    LoginRequest,
-    TokenResponse,
-    UserCreate,
-    UserResponse,
-)
+from app.schemas.auth import GoogleLoginRequest, TokenResponse, APIKeyCreate, APIKeyCreateResponse, APIKeyResponse
 from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 def get_current_user(
+    request: Request,
     authorization: Annotated[Optional[str], Header()] = None,
     x_api_key: Annotated[Optional[str], Header()] = None,
     db: Session = Depends(get_db),
 ) -> User:
-    """Get current authenticated user from token or API key."""
-    service = AuthService(db)
+    """Get current user from authorization header. Requires valid auth."""
+    from fastapi import HTTPException, status
     
-    # Try Bearer token first
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization[7:]
-        try:
-            return service.get_current_user(token)
-        except ValueError:
-            pass
+    auth_service = AuthService(db)
+    
+    # Try Bearer token
+    if authorization:
+        if authorization.startswith("Bearer "):
+            token = authorization[7:]
+            try:
+                user = auth_service.get_current_user(token)
+                request.state.user = user
+                return user
+            except ValueError:
+                pass
     
     # Try API key
     if x_api_key:
-        user = service.validate_api_key(x_api_key)
+        user = auth_service.validate_api_key(x_api_key)
         if user:
+            request.state.user = user
             return user
     
+    # No valid auth - require login
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid authentication credentials",
+        detail="Not authenticated",
+        headers={"WWW-Authenticate": "Bearer"},
     )
 
 
-# ===== Auth Endpoints =====
+@router.post("/login/google", response_model=TokenResponse)
+async def login_google(request: GoogleLoginRequest, db: Session = Depends(get_db)):
+    """Login with Google OAuth credential."""
+    auth_service = AuthService(db)
+    return await auth_service.google_login(request.credential)
 
 
-from pydantic import BaseModel
+@router.get("/me", response_model=dict)
+def get_me(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get current user info."""
+    from sqlalchemy import select
+    from app.models.license import LicenseKey
+    
+    # Get the most recent activated license for this user
+    activated_at = None
+    latest_license = db.execute(
+        select(LicenseKey)
+        .where(LicenseKey.used_by_id == user.id, LicenseKey.is_used == True)
+        .order_by(LicenseKey.used_at.desc())
+        .limit(1)
+    ).scalar_one_or_none()
+    if latest_license and latest_license.used_at:
+        activated_at = latest_license.used_at.isoformat()
+    
+    return {
+        "id": user.id,
+        "email": user.email,
+        "name": user.name,
+        "subscription_tier": user.subscription_tier,
+        "subscription_expires_at": user.subscription_expires_at.isoformat() if user.subscription_expires_at else None,
+        "subscription_activated_at": activated_at,
+        "is_admin": user.is_admin,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+    }
 
-class GoogleLoginRequest(BaseModel):
-    credential: str
 
-@router.post("/google", response_model=TokenResponse)
-def google_login(login_data: GoogleLoginRequest, db: Session = Depends(get_db)):
-    """Login or register via Google."""
-    service = AuthService(db)
-    try:
-        return service.google_login(login_data.credential)
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e),
-        )
-
-@router.get("/me", response_model=UserResponse)
-def get_me(current_user: User = Depends(get_current_user)):
-    """Get current user profile."""
-    return current_user
-
-
-# ===== API Key Endpoints =====
-
-
-@router.post("/keys", response_model=APIKeyCreateResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/api-keys", response_model=APIKeyCreateResponse)
 def create_api_key(
     key_data: APIKeyCreate,
-    current_user: User = Depends(get_current_user),
+    user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Create a new API key."""
-    service = AuthService(db)
-    api_key, full_key = service.create_api_key(current_user, key_data)
+    auth_service = AuthService(db)
+    api_key, full_key = auth_service.create_api_key(user, key_data)
     return APIKeyCreateResponse(
         id=api_key.id,
-        key=full_key,
         name=api_key.name,
+        key=full_key,
         rate_limit=api_key.rate_limit,
         rate_limit_window=api_key.rate_limit_window,
         expires_at=api_key.expires_at,
@@ -103,14 +109,14 @@ def create_api_key(
     )
 
 
-@router.get("/keys", response_model=list[APIKeyResponse])
+@router.get("/api-keys", response_model=list[APIKeyResponse])
 def list_api_keys(
-    current_user: User = Depends(get_current_user),
+    user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """List all API keys for current user (masked keys)."""
-    service = AuthService(db)
-    keys = service.list_api_keys(current_user)
+    """List user's API keys."""
+    auth_service = AuthService(db)
+    api_keys = auth_service.list_api_keys(user)
     return [
         APIKeyResponse(
             id=k.id,
@@ -125,39 +131,17 @@ def list_api_keys(
             last_used_at=k.last_used_at,
             is_active=k.is_active,
         )
-        for k in keys
+        for k in api_keys
     ]
 
 
-@router.delete("/keys/{key_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/api-keys/{key_id}")
 def revoke_api_key(
     key_id: str,
-    current_user: User = Depends(get_current_user),
+    user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Revoke an API key."""
-    service = AuthService(db)
-    try:
-        service.revoke_api_key(current_user, key_id)
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
-        )
-
-
-@router.get("/keys/{key_id}/usage", response_model=APIKeyUsageResponse)
-def get_api_key_usage(
-    key_id: str,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Get usage stats for an API key."""
-    service = AuthService(db)
-    try:
-        return service.get_api_key_usage(current_user, key_id)
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
-        )
+    auth_service = AuthService(db)
+    auth_service.revoke_api_key(user, key_id)
+    return {"status": "revoked"}

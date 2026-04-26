@@ -1,6 +1,7 @@
 """Pydantic schemas for Custom Dictionary API."""
 import uuid
 from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 
@@ -11,7 +12,8 @@ class DictionaryEntry(BaseModel):
     user_id: str
     word: str = Field(..., description="Word to pronounce")
     pronunciation: str = Field(..., description="Desired pronunciation")
-    category: str = Field("general", description="Category: name, term, abbreviation")
+    priority: int = Field(1, description="Priority: higher values are applied first")
+    category: str | None = Field(default=None, description="Optional metadata")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -21,7 +23,8 @@ class DictionaryCreate(BaseModel):
 
     word: str = Field(..., min_length=1, max_length=100)
     pronunciation: str = Field(..., min_length=1, max_length=200)
-    category: str = Field("general")
+    priority: int = Field(1, ge=1)
+    category: str | None = Field(default=None)
 
 
 class DictionaryUpdate(BaseModel):
@@ -29,6 +32,7 @@ class DictionaryUpdate(BaseModel):
 
     word: str | None = None
     pronunciation: str | None = None
+    priority: int | None = Field(default=None, ge=1)
     category: str | None = None
 
 
@@ -50,5 +54,5 @@ class DictionaryImportRequest(BaseModel):
 class DictionaryExport(BaseModel):
     """Export response."""
 
-    entries: list[dict]
+    entries: list[DictionaryEntry]
     exported_at: datetime

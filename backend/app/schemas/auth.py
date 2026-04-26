@@ -5,20 +5,11 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
-# ===== User Schemas =====
-
-
 class UserBase(BaseModel):
     """Base user schema."""
 
     email: EmailStr
     name: Optional[str] = None
-
-
-class UserCreate(UserBase):
-    """Schema for creating a new user."""
-
-    password: str = Field(..., min_length=8)
 
 
 class UserResponse(UserBase):
@@ -33,14 +24,10 @@ class UserResponse(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ===== Auth Schemas =====
+class GoogleLoginRequest(BaseModel):
+    """Schema for Google OAuth login."""
 
-
-class LoginRequest(BaseModel):
-    """Schema for login request."""
-
-    email: EmailStr
-    password: str
+    credential: str
 
 
 class TokenResponse(BaseModel):
@@ -58,9 +45,6 @@ class TokenPayload(BaseModel):
     email: str
     exp: int
     type: str
-
-
-# ===== API Key Schemas =====
 
 
 class APIKeyCreate(BaseModel):
@@ -94,7 +78,7 @@ class APIKeyResponse(BaseModel):
 class APIKeyCreateResponse(APIKeyResponse):
     """Schema for API key response with full key (shown once)."""
 
-    key: str  # Full key shown only on creation
+    key: str
 
 
 class APIKeyUsageResponse(BaseModel):

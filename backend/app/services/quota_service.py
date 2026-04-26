@@ -29,6 +29,22 @@ class QuotaService:
     def __init__(self, db: Session):
         self.db = db
 
+    @staticmethod
+    def _is_unlimited(limit: int | None) -> bool:
+        return limit is None
+
+    @staticmethod
+    def _remaining(used: int, limit: int | None) -> int | None:
+        if limit is None:
+            return None
+        return max(0, limit - used)
+
+    @staticmethod
+    def _has_capacity(used: int, limit: int | None, amount: int) -> bool:
+        if limit is None:
+            return True
+        return used + amount <= limit
+
     def get_or_create_quota(self, user_id: str) -> UserQuota:
         """Get or create quota for user."""
         quota = self.db.execute(
@@ -55,11 +71,11 @@ class QuotaService:
         quota = self.get_or_create_quota(user_id)
 
         if resource == "characters":
-            return quota.characters_used + amount <= quota.characters_limit
+            return self._has_capacity(quota.characters_used, quota.characters_limit, amount)
         elif resource == "storage":
-            return quota.storage_used_mb + amount <= quota.storage_limit_mb
+            return self._has_capacity(quota.storage_used_mb, quota.storage_limit_mb, amount)
         elif resource == "api_calls":
-            return quota.api_calls_today + amount <= quota.api_calls_limit
+            return self._has_capacity(quota.api_calls_today, quota.api_calls_limit, amount)
         return False
 
     def consume_quota(
@@ -85,9 +101,9 @@ class QuotaService:
     def get_remaining(self, quota: UserQuota) -> dict:
         """Get remaining quota."""
         return {
-            "characters": max(0, quota.characters_limit - quota.characters_used),
-            "storage_mb": max(0, quota.storage_limit_mb - quota.storage_used_mb),
-            "api_calls": max(0, quota.api_calls_limit - quota.api_calls_today),
+            "characters": self._remaining(quota.characters_used, quota.characters_limit),
+            "storage_mb": self._remaining(quota.storage_used_mb, quota.storage_limit_mb),
+            "api_calls": self._remaining(quota.api_calls_today, quota.api_calls_limit),
         }
 
     def get_quota_status(self, user_id: str) -> dict:

@@ -1,13 +1,15 @@
 """Pydantic schemas for quota API."""
 from pydantic import BaseModel
 
+QuotaLimit = int | None
+
 
 class QuotaLimits(BaseModel):
     """Quota limits."""
 
-    characters_per_month: int
-    storage_mb: int
-    api_calls_per_day: int
+    characters_per_month: QuotaLimit
+    storage_mb: QuotaLimit
+    api_calls_per_day: QuotaLimit
 
 
 class QuotaUsage(BaseModel):
@@ -21,9 +23,9 @@ class QuotaUsage(BaseModel):
 class QuotaRemaining(BaseModel):
     """Remaining quota."""
 
-    characters: int
-    storage_mb: int
-    api_calls: int
+    characters: QuotaLimit
+    storage_mb: QuotaLimit
+    api_calls: QuotaLimit
 
 
 class QuotaStatusResponse(BaseModel):

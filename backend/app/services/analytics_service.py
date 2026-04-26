@@ -7,6 +7,24 @@ from sqlalchemy.orm import Session
 from app.models.analytics import RequestLog, UsageSnapshot
 
 
+def normalize_request_metadata(request) -> dict:
+    """Extract request metadata in one place."""
+    user_id = None
+    if hasattr(request.state, "user") and request.state.user:
+        user_id = getattr(request.state.user, "id", None)
+
+    client_ip = request.client.host if request.client else None
+    x_forwarded_for = request.headers.get("X-Forwarded-For")
+    if x_forwarded_for:
+        client_ip = x_forwarded_for.split(",")[0].strip()
+
+    return {
+        "user_id": user_id,
+        "ip_address": client_ip,
+        "user_agent": request.headers.get("User-Agent"),
+    }
+
+
 class AnalyticsService:
     """Service for analytics queries."""
 

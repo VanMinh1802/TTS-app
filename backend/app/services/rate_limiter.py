@@ -3,12 +3,14 @@ import logging
 import time
 from typing import Optional, Tuple
 
-from fastapi import Request, HTTPException
+from fastapi import Depends, HTTPException, Request, Response
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from starlette.responses import JSONResponse
 
+from app.api.auth import get_current_user
 from app.core.redis import get_redis, is_redis_available
+from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +95,11 @@ async def check_rate_limit(
         return limit, limit, int(time.time()) + window, False
 
 
-async def rate_limit_dependency(request: Request) -> dict:
+async def rate_limit_dependency(
+    request: Request,
+    response: Response,
+    current_user: User = Depends(get_current_user),
+) -> None:
     """
     FastAPI dependency for rate limiting.
     
@@ -102,15 +108,16 @@ async def rate_limit_dependency(request: Request) -> dict:
         async def protected_endpoint(request: Request, rate_limit: dict = Depends(rate_limit_dependency)):
             return {"data": "ok"}
     """
+    if current_user and not getattr(request.state, "user", None):
+        request.state.user = current_user
+
     identifier = get_user_identifier(request)
-    
-    user_tier = "free"
-    user = getattr(request.state, "user", None)
-    if user and hasattr(user, "subscription_tier"):
-        user_tier = user.subscription_tier
+
+    user_tier = getattr(current_user, "subscription_tier", "free") or "free"
     
     limit, window = get_tier_limit(user_tier)
     limit_val, remaining, reset_ts, is_limited = await check_rate_limit(identifier, limit, window)
+    headers = build_rate_limit_headers(limit_val, remaining, reset_ts)
     
     if is_limited:
         retry_after = reset_ts - int(time.time())
@@ -121,19 +128,10 @@ async def rate_limit_dependency(request: Request) -> dict:
                 "message": f"API rate limit exceeded. Please try again in {retry_after} seconds.",
                 "retry_after": retry_after,
             },
-            headers={
-                "X-RateLimit-Limit": str(limit_val),
-                "X-RateLimit-Remaining": "0",
-                "X-RateLimit-Reset": str(reset_ts),
-                "Retry-After": str(retry_after),
-            },
+            headers={**headers, "X-RateLimit-Remaining": "0", "Retry-After": str(retry_after)},
         )
     
-    return {
-        "X-RateLimit-Limit": str(limit_val),
-        "X-RateLimit-Remaining": str(remaining),
-        "X-RateLimit-Reset": str(reset_ts),
-    }
+    response.headers.update(headers)
 
 
 def build_rate_limit_headers(limit: int, remaining: int, reset_ts: int) -> dict:

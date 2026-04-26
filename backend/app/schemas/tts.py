@@ -35,9 +35,22 @@ class TTSRequest(BaseModel):
     )
 
 
+class NormalizationMeta(BaseModel):
+    """Metadata about the text normalization step."""
+    mode: str = Field(description="'llm' | 'rule_based'")
+    llm_status: Optional[str] = Field(
+        default=None,
+        description="LLM call status: success | invalid_key | rate_limit | quota_exceeded | error | skipped"
+    )
+    text_was_complex: bool = Field(default=False)
+
+
 class TTSResponse(BaseModel):
     """Response for TTS generation."""
 
     audio_url: str
     duration: float
     voice_id: str
+    normalization: NormalizationMeta = Field(
+        default_factory=lambda: NormalizationMeta(mode="rule_based", text_was_complex=False)
+    )

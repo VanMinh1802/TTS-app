@@ -1,13 +1,15 @@
 # Enhanced TTS Application Specification
 
 ## Overview
-This specification outlines the requirements for enhancing the existing TTS application with a Python FastAPI backend and Next.js/shadcn/ui frontend, maintaining client-side TTS generation while adding enterprise-grade features for a SaaS/PaaS platform.
+This specification outlines the requirements for enhancing the existing TTS application with a Python FastAPI backend and Next.js frontend, maintaining client-side TTS generation while adding enterprise-grade features for a SaaS/PaaS platform. This SPEC intentionally covers the core partials and live-data surfaces already present in the repository, not the full long-term product roadmap.
 
 ---
 
 ## Agent Workflow v3 - SPEC-First Approach
 
 ### New Workflow Design (With SPEC Approval Gate)
+
+This workflow applies to sub-features that are already approved in this SPEC scope. It should not be read as permission to expand the feature set beyond the requirements below.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -83,6 +85,8 @@ STEP 3-8: SAME AS PREVIOUS WORKFLOW
 ---
 
 ### Detailed Workflow After Approval
+
+Implementation should preserve the current product boundaries: backend orchestration only, frontend live-data rendering only, and no server-side TTS rewrite.
 
 ```
 STEP 3: PLANNING (After Approval)
@@ -486,6 +490,101 @@ Sub-feature Implementation
 
 ---
 
+## Implementation Status Checklist
+
+### Phase 1: Foundation
+
+| ID | Status | Notes |
+|---|---|---|
+| F1.1 | done | FastAPI backend foundation and auth module exist |
+| F1.2 | partial | SQLAlchemy/Postgres scaffolding exists; runtime setup not fully validated |
+| F1.3 | done | JWT/login flow exists |
+| F1.4 | partial | Quota service/API scaffolding exists |
+| F1.5 | partial | R2 voice registry exists; signed URL flow not fully validated |
+| F1.6 | partial | API key routes/UI exist; completeness not fully verified |
+| F1.7 | partial | Redis rate limiting scaffolding exists |
+| F1.8 | partial | Analytics service/API exists; not end-to-end verified |
+| F1.9 | n/a | No additional infrastructure tasks are introduced beyond the partials already present in the repo |
+
+### Phase 2: Frontend Core
+
+| ID | Status | Notes |
+|---|---|---|
+| F2.1 | done | Next.js app builds and lints successfully |
+| F2.2 | not started | shadcn/ui not added |
+| F2.3 | partial | App Router exists; route-group intent not fully verified |
+| F2.4 | partial | Login/auth redirect exists; callback flow not complete |
+| F2.5 | done | `/studio` generator UI implemented |
+| F2.6 | not started | IndexedDB model caching not implemented |
+| F2.7 | not started | ONNX Runtime Web Worker not implemented |
+| F2.8 | n/a | No additional frontend foundation work is introduced outside the partials already present |
+
+### Phase 3: Text Processing
+
+| ID | Status | Notes |
+|---|---|---|
+| F3.1 | partial | Text normalization endpoint exists; integration not complete |
+| F3.2 | not started | SSML parser not implemented |
+| F3.3 | not started | Domain preset system not implemented |
+| F3.4 | partial | Custom dictionary UI exists; persistence/processing incomplete |
+| F3.5 | not started | Multi-language code-switching not implemented |
+| F3.6 | n/a | No new text-processing sub-features are introduced beyond the existing partial dictionary/normalization work |
+
+### Phase 4: Voice Management
+
+| ID | Status | Notes |
+|---|---|---|
+| F4.1 | done | Voice registry API shared by `/voices` and `/tts/voices` |
+| F4.2 | done | Voice selector component implemented |
+| F4.3 | partial | Preview UI exists; true voice preview playback not complete |
+| F4.4 | not started | Custom voice presets not implemented |
+| F4.5 | n/a | No premium voice marketplace or preset expansion is added in this plan |
+
+### Phase 5: Project Workflow
+
+| ID | Status | Notes |
+|---|---|---|
+| F5.1 | partial | Project backend scaffolding exists; CRUD completeness not verified |
+| F5.2 | partial | Project list UI exists; completeness not verified |
+| F5.3 | not started | Scene/segment editor not implemented |
+| F5.4 | not started | Timeline interface not implemented |
+| F5.5 | not started | Export functionality not implemented |
+| F5.6 | n/a | Collaboration, version history, and templates remain out of scope for this plan |
+
+### Phase 6: Developer Tools
+
+| ID | Status | Notes |
+|---|---|---|
+| F6.1 | partial | OpenAPI is present by framework default; not curated as a deliverable |
+| F6.2 | not started | TypeScript SDK not implemented |
+| F6.3 | partial | Error handling exists but is not standardized across all surfaces |
+| F6.4 | not started | Integration guides not implemented |
+| F6.5 | n/a | No SDK or guide expansion is included in this partial-completion plan |
+
+### Phase 7: Business & Admin
+
+| ID | Status | Notes |
+|---|---|---|
+| F7.1 | not started | Subscription system not implemented |
+| F7.2 | not started | Admin dashboard not implemented |
+| F7.3 | partial | Analytics API exists; dashboard/reporting not complete |
+| F7.4 | not started | Cloud sync for projects not implemented |
+| F7.5 | n/a | This plan only stabilizes current analytics visibility and existing admin protections |
+
+### Phase 8: PWA & Polish
+
+| ID | Status | Notes |
+|---|---|---|
+| F8.1 | not started | PWA/offline capability not implemented |
+| F8.2 | partial | Build/lint pass; dedicated performance optimization pass still needed |
+| F8.3 | n/a | No PWA or broad performance redesign is introduced in this plan |
+
+## Change Log
+
+- v1.0 - Added the official implementation status checklist for F1.1-F8.2 based on the current repository state.
+
+---
+
 ## Implementation Order (Recommended)
 
 ```
@@ -521,6 +620,9 @@ F1.1 → F1.2 → F1.3 → F2.3 → F2.4 → F2.5 → F2.7 = Basic Working App
 ## Functional Requirements (Reference)
 
 ### 1. Text Processing Enhancements
+
+> **Scope note:** This section preserves the broader roadmap context for text processing. The current implementation plan only covers the existing partial dictionary and normalization surfaces, not the full SSML, presets, or code-switching roadmap.
+
 - [ ] Support for SSML (Speech Synthesis Markup Language) for fine-grained pronunciation control
 - [ ] Domain-specific text presets (medical, legal, technical, etc.)
 - [ ] Automatic abbreviation and acronym expansion
@@ -528,12 +630,18 @@ F1.1 → F1.2 → F1.3 → F2.3 → F2.4 → F2.5 → F2.7 = Basic Working App
 - [ ] Multi-language code-switching support
 
 ### 2. Voice Management Features
+
+> **Scope note:** This section defines the broader voice roadmap. The current implementation plan only covers live voice listing, metadata consistency, and sample playback for the existing voices surface.
+
 - [ ] Voice character library with rich metadata (region, gender, style, use case)
 - [ ] Custom voice presets with adjustable parameters (pitch, speed, volume)
 - [ ] Pre-installed premium voices available for subscription tiers
 - [ ] Speaking style presets (narration, conversation, announcement, etc.)
 
 ### 3. Project-Based Workflow
+
+> **Execution-plan note:** The current plan only stabilizes the existing project CRUD/export workflow and keeps the current editor usable. Collaboration, version history, templates, and timeline expansion remain roadmap items.
+
 - [ ] Multi-scene project structure support
 - [ ] Character assignment per dialogue segment
 - [ ] Timeline-based editing interface
@@ -542,6 +650,9 @@ F1.1 → F1.2 → F1.3 → F2.3 → F2.4 → F2.5 → F2.7 = Basic Working App
 - [ ] Template library for common use cases (ads, audiobooks, podcasts, e-learning)
 
 ### 4. Developer Experience Improvements
+
+> **Scope note:** This section preserves the full developer-experience roadmap. The current plan only closes the live API-key, dashboard, and error-code gaps already present in the repository.
+
 - [ ] Comprehensive OpenAPI/Swagger documentation for all backend endpoints
 - [ ] TypeScript SDK (genvoice-web-sdk) with full type definitions
 - [ ] Standardized error handling with clear error codes and messages
@@ -550,6 +661,9 @@ F1.1 → F1.2 → F1.3 → F2.3 → F2.4 → F2.5 → F2.7 = Basic Working App
 - [ ] Detailed integration guides, tutorials, and code examples
 
 ### 5. Business Model & Monetization Features
+
+> **Execution-plan note:** The current plan only stabilizes live analytics visibility and API-key/admin protections. Subscription, cloud sync, marketplace, and pricing-model expansion remain roadmap items.
+
 - [ ] Tiered subscription plans (Free, Pro, Enterprise)
 - [ ] Voice marketplace with premium voices for Pro/Enterprise tiers
 - [ ] Usage-based pricing models (per character or API call)
@@ -559,6 +673,9 @@ F1.1 → F1.2 → F1.3 → F2.3 → F2.4 → F2.5 → F2.7 = Basic Working App
 - [ ] Volume discounts and enterprise SLAs
 
 ### 6. Core Architecture Requirements
+
+> **Scope note:** This section keeps the long-term architecture goals visible. The current plan only hardens the already-existing orchestration surfaces and does not introduce new platform primitives such as ONNX workers, IndexedDB model caching, or a PWA offline layer.
+
 - [ ] Maintain client-side TTS generation for privacy and offline capability
 - [ ] FastAPI backend as orchestrator (text normalization, auth, quota, model URLs)
 - [ ] Secure Cloudflare R2 integration with signed URL generation

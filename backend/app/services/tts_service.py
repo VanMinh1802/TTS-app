@@ -173,25 +173,22 @@ class TTSService:
         return result
 
     def synthesize(
-        self, 
-        text: str, 
-        voice_id: str = "vi_female", 
+        self,
+        text: str,
+        voice_id: str = "vi_female",
         speed: float = 1.0,
-        user_dictionary: list[DictionaryEntry] = None,
-        emotion_params: EmotionParams = None
+        emotion_params: EmotionParams = None,
     ) -> tuple[bytes, float]:
         """Synthesize speech using Piper library.
-        
+
         Args:
-            text: Input text
+            text: Input text (user dictionary already applied and normalized by caller)
             voice_id: Voice to use
             speed: Speed multiplier (1.0 = normal)
-            user_dictionary: User custom dictionary entries
             emotion_params: Emotion parameters (length_scale, noise_scale)
+
+        Note: User dictionary must be applied by the caller BEFORE normalization.
         """
-        # Apply user dictionary FIRST (before any processing)
-        if user_dictionary:
-            text = self._apply_user_dictionary(text, user_dictionary)
         
         try:
             voice_data = _get_piper_voice(voice_id)

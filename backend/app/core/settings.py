@@ -34,6 +34,7 @@ class Settings(BaseSettings):
 
     # Auth - Google
     GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
 
     # Auth - Password
     PASSWORD_MIN_LENGTH: int = 8
@@ -44,6 +45,8 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
     ]
 
     # Rate Limiting
@@ -55,13 +58,20 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: str = ""
     REDIS_DB: int = 0
 
-    # Cloudflare R2
+    # Cloudflare R2 (TTS Models)
     R2_ACCESS_KEY_ID: str = ""
     R2_SECRET_ACCESS_KEY: str = ""
     R2_BUCKET_NAME: str = "genvoice-models"
     R2_ACCOUNT_ID: str = ""
+    R2_ENDPOINT_URL: str = ""
     R2_PUBLIC_URL: str = ""
     SIGNED_URL_EXPIRE_SECONDS: int = 3600
+
+    # Cloudflare R2 (Audio Library)
+    R2_LIBRARY_ACCESS_KEY_ID: str = ""
+    R2_LIBRARY_SECRET_ACCESS_KEY: str = ""
+    R2_LIBRARY_BUCKET_NAME: str = "tts-app-library"
+    R2_LIBRARY_PUBLIC_URL: str = ""
 
     # Quota Management
     DEFAULT_QUOTA_TIER: str = "free"
@@ -82,3 +92,13 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
+
+
+def get_r2_public_base_url() -> str:
+    """Return the configured public R2 base URL."""
+    return settings.R2_PUBLIC_URL or f"https://{settings.R2_ACCOUNT_ID}.r2.dev"
+
+
+def get_r2_client_endpoint() -> str:
+    """Return the configured R2 client endpoint URL."""
+    return settings.R2_ENDPOINT_URL or f"https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
