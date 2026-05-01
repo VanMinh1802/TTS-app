@@ -5,9 +5,12 @@ Supports multiple providers (Gemini, OpenAI) using the user's own API key.
 Called only when rule-based normalization cannot handle complex tokens.
 """
 import hashlib
+import logging
 import re
-from functools import lru_cache
+from collections import OrderedDict
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 # ------------------------------ detection -----------------------------------
 
@@ -18,6 +21,9 @@ _NEEDS_LLM_PATTERNS = [
     # English words heuristic: contains letters not in Vietnamese alphabet (f, j, w, z) or common English endings (ing, ity, tion)
     re.compile(r'\b[A-Za-z]*(?:[fjwzFJWZ]|ing|ity|tion|ment|able|ible)\b'),
     re.compile(r'\b[A-Za-z]+-[A-Za-z]+\b'), # Hyphenated (VN-Index)
+    re.compile(r'[$€£¥]\s?\d+(?:\.\d+)?(?:[KkMmBbtT])?\b'), # Currency ($1.5B)
+    re.compile(r'\d+(?:\.\d+)?[KkMmBbtT]\b'), # Large numbers (1.5B)
+    re.compile(r'[A-Za-z]\+\+'), # C++
 ]
 
 
@@ -28,42 +34,38 @@ def needs_llm_normalization(text: str) -> bool:
 
 # ------------------------------ prompt --------------------------------------
 
-_SYSTEM_PROMPT = """Bạn là một phát thanh viên chuyên nghiệp người Việt đang chuẩn bị đọc bản thảo cho hệ thống Text-to-Speech.
+_SYSTEM_PROMPT = """Bạn là chuyên gia ngôn ngữ học và kỹ sư dữ liệu giọng nói (Speech Data Engineer) đang xây dựng hệ thống Text-to-Speech tiếng Việt.
 
-Nhiệm vụ: Chuyển đoạn văn bản chứa các từ tiếng Anh, thuật ngữ, từ viết tắt thành dạng phát âm tiếng Việt tự nhiên, dễ đọc.
+Nhiệm vụ: Tìm và phiên âm TOÀN BỘ các từ tiếng Anh, thuật ngữ công nghệ, từ viết tắt, con số phức tạp hoặc ký hiệu đặc biệt có trong câu sang dạng phát âm tiếng Việt chuẩn, thân thiện với mô hình máy đọc.
 
-NGUYÊN TẮC QUAN TRỌNG:
-1. CHỈ sửa đổi những từ cần thiết (tiếng Anh, viết tắt).
-2. GIỮ NGUYÊN cấu trúc câu, từ vựng tiếng Việt, không dịch nghĩa, không thêm bớt thông tin.
-3. KHÔNG giải thích, KHÔNG markdown, CHỈ trả về đoạn văn đã xử lý.
+CÁC QUY TẮC CỐT LÕI (TUYỆT ĐỐI TUÂN THỦ):
+1. CHỈ TRẢ VỀ JSON: Kết quả trả về phải là một mảng JSON nghiêm ngặt. TUYỆT ĐỐI KHÔNG sử dụng markdown (không có ```json hay ``` ở đầu/cuối), không có văn bản giải thích thừa.
+2. FORMAT JSON: `[{"word": "Từ gốc", "pronunciation": "cách-đọc-có-gạch-nối"}]`
+3. PHIÊN ÂM TIẾNG ANH: Bắt buộc phân tách các âm tiết bằng dấu gạch nối (VD: "Digital" -> "đi-gi-tờ").
+4. ĐỌC CHỮ CÁI VIẾT TẮT: Đọc từng chữ cái (VD: "AI" -> "Ây Ai", "CEO" -> "Xi I Âu").
+5. TỪ VAY MƯỢN / IT: Đọc theo thói quen của người Việt (VD: "DevOps" -> "Đép-óp", "microservices" -> "mai-crô-sơ-vít").
+6. SỐ VÀ KÝ HIỆU LỚN: Phiên âm cách đọc tiếng Việt đầy đủ (VD: "$1.5B" -> "một phẩy năm tỷ đô la", "C++" -> "xê cộng cộng", "500k" -> "năm trăm ca").
 
-VÍ DỤ 1:
-Input: "Công ty ký hợp đồng hedging trị giá lớn."
-Output: "Công ty ký hợp đồng hét-ging trị giá lớn."
-
-VÍ DỤ 2:
-Input: "Chỉ số VN-Index hôm nay tăng điểm."
-Output: "Chỉ số Vê Nờ Ín-đếch hôm nay tăng điểm."
-
-VÍ DỤ 3:
-Input: "Hệ thống sử dụng cơ chế PoS (Proof of Stake) để xác thực."
-Output: "Hệ thống sử dụng cơ chế Pê Ô Ét, P-rúp Ọp Tếch để xác thực."
+VÍ DỤ ĐẦU RA MONG ĐỢI:
+[
+  {"word": "Digital Transformation", "pronunciation": "đi-gi-tờ tờ-ran-pho-mây-sần"},
+  {"word": "AI", "pronunciation": "Ây Ai"},
+  {"word": "ROI", "pronunciation": "A Âu Ai"},
+  {"word": "DevOps", "pronunciation": "Đép-óp"},
+  {"word": "$1.5B", "pronunciation": "một phẩy năm tỷ đô la"},
+  {"word": "C++", "pronunciation": "xê cộng cộng"}
+]
 """
 
 
 def _build_user_message(text: str) -> str:
-    return f"Xử lý đoạn văn sau:\n\n{text}"
+    return f"Trích xuất và phiên âm các từ phức tạp trong đoạn văn sau:\n\n{text}"
 
 
 # ------------------------------ cache ---------------------------------------
 
-@lru_cache(maxsize=256)
-def _cached_normalize(text_hash: str, text: str, provider: str) -> str:
-    """Cache hit returns immediately. Actual call happens on miss."""
-    return text  # placeholder — overridden at call site
-
-
-_result_cache: dict[str, str] = {}
+_MAX_CACHE_SIZE = 512
+_result_cache: OrderedDict[str, str] = OrderedDict()
 
 
 def _cache_key(text: str, provider: str) -> str:
@@ -130,18 +132,21 @@ async def llm_normalize(text: str, api_key: str) -> tuple[str, str]:
 
     cache_k = _cache_key(text, "gemini")
     if cache_k in _result_cache:
+        _result_cache.move_to_end(cache_k)  # mark as recently used
         return _result_cache[cache_k], LLM_STATUS_SUCCESS
 
     try:
         result = await _call_gemini(text, api_key)
         if result:
             _result_cache[cache_k] = result
+            # Evict oldest entries if cache is full
+            while len(_result_cache) > _MAX_CACHE_SIZE:
+                _result_cache.popitem(last=False)
             return result, LLM_STATUS_SUCCESS
 
     except Exception as exc:  # noqa: BLE001
-        import logging
         status = _classify_http_error(exc)
-        logging.getLogger(__name__).warning(
+        logger.warning(
             "LLM normalization failed (%s): %s — falling back to rule-based", status, exc,
         )
         return text, status
@@ -162,4 +167,45 @@ async def validate_gemini_key(api_key: str) -> tuple[bool, str]:
     except Exception as exc:
         status = _classify_http_error(exc)
         return False, status
+
+async def extract_terms(text: str, api_key: str) -> list[dict]:
+    """
+    Extract and phoneticize complex terms from text using LLM.
+    Implements sentence pre-filtering to save tokens and latency.
+    """
+    import json
+    
+    if not api_key:
+        return []
+
+    # 1. Pre-filter: Split text into sentences
+    sentences = re.split(r'(?<=[.!?\n])\s+', text)
+    complex_sentences = [s for s in sentences if needs_llm_normalization(s)]
+    
+    if not complex_sentences:
+        return []
+        
+    filtered_text = "\n".join(complex_sentences)
+    
+    # 2. Call LLM
+    try:
+        result_text = await _call_gemini(filtered_text, api_key)
+        # Strip markdown if LLM accidentally includes it
+        if result_text.startswith("```json"):
+            result_text = result_text[7:]
+        if result_text.startswith("```"):
+            result_text = result_text[3:]
+        if result_text.endswith("```"):
+            result_text = result_text[:-3]
+            
+        result_text = result_text.strip()
+        
+        # Parse JSON
+        terms = json.loads(result_text)
+        if isinstance(terms, list):
+            return terms
+        return []
+    except Exception as exc:
+        logger.error("Failed to extract terms via LLM: %s", exc)
+        return []
 
