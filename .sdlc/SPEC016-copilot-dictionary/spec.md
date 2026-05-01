@@ -87,6 +87,14 @@ Shifting the LLM from an implicit pipeline step to an explicit "Copilot" feature
 | API Key Invalid | Return 401/400 and show error toast "API Key không hợp lệ" |
 | LLM parsing failure | Catch JSON parsing errors and fallback gracefully or retry |
 
+### 3.4 LLM & Logic Optimizations
+
+| ID | Optimization | Description |
+|----|--------------|-------------|
+| OPT-1 | Strict JSON Prompt | The system prompt must explicitly instruct the LLM to return **ONLY** a raw JSON array of objects (no markdown blocks like \`\`\`json, no conversational padding). Example format: `[{"word": "DevOps", "pronunciation": "đép-óp"}]` |
+| OPT-2 | Pre-filter Logic | Before calling the LLM, the backend should split the input text into sentences. It will use a Regex pattern (matching English characters, uppercase acronyms, or complex numbers/symbols) to filter out purely standard Vietnamese sentences. Only sentences matching the Regex are sent to the LLM. This saves up to 80% tokens and reduces latency. |
+| OPT-3 | Expanded Phonetic Rules | The LLM prompt will include strict rules to handle not only English words but also large numbers and symbols (e.g., "$1.5B" -> "một phẩy năm tỷ đô la", "C++" -> "xê cộng cộng"). All outputs must use hyphenated Vietnamese syllables (e.g. "Digital" -> "đi-gi-tờ"). |
+
 ---
 
 ## 4. Non-Functional Requirements
@@ -121,3 +129,4 @@ Shifting the LLM from an implicit pipeline step to an explicit "Copilot" feature
 | Date | Version | Changed By | Change Summary | Reason | Affected Sections |
 |------|---------|------------|----------------|--------|-------------------|
 | 2026-05-01 | v1.0 | Antigravity | Initial spec | — | All |
+| 2026-05-01 | v1.1 | Antigravity | Added LLM logic optimizations | User request | §3.4 |
