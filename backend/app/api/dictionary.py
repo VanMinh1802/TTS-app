@@ -1,6 +1,6 @@
 """Custom Dictionary API routes."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -16,6 +16,7 @@ from app.schemas.dictionary import (
     DictionaryListResponse,
     DictionaryUpdate,
 )
+from app.core.exceptions import ConflictError, NotFoundError
 from app.services.dictionary_service import DictionaryService
 
 router = APIRouter(prefix="/dictionary", tags=["Dictionary"])
@@ -46,8 +47,8 @@ async def create_entry(
 ):
     try:
         return service.create_entry(current_user.id, entry)
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except ConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=exc.message) from exc
 
 
 @router.put("/{entry_id}", response_model=DictionaryEntry)
@@ -90,7 +91,7 @@ async def export_dictionary(
     current_user: User = Depends(get_current_user),
     service: DictionaryService = Depends(get_dictionary_service),
 ):
-    return DictionaryExport(entries=service.export_entries(current_user.id), exported_at=datetime.utcnow())
+    return DictionaryExport(entries=service.export_entries(current_user.id), exported_at=datetime.now(timezone.utc))
 
 
 @router.get("/search")

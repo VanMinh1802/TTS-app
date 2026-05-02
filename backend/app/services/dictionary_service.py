@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import ConflictError
 from app.models.dictionary import DictionaryEntryModel
 from app.schemas.dictionary import DictionaryCreate, DictionaryEntry, DictionaryUpdate
 
@@ -37,7 +38,7 @@ class DictionaryService:
             )
         ).scalar_one_or_none()
         if existing:
-            raise ValueError(f"Word '{payload.word}' already exists")
+            raise ConflictError(f"Word '{payload.word}' already exists")
 
         entry = DictionaryEntryModel(
             user_id=user_id,
@@ -61,7 +62,7 @@ class DictionaryService:
             entry.priority = payload.priority
         if payload.category is not None:
             entry.category = payload.category
-        entry.updated_at = datetime.utcnow()
+        entry.updated_at = datetime.now(timezone.utc)
         self.db.commit()
         self.db.refresh(entry)
         return self._to_schema(entry)

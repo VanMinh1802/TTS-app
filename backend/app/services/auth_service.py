@@ -1,7 +1,7 @@
 """Authentication service."""
 import logging
 import httpx
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from google.oauth2 import id_token
@@ -11,12 +11,14 @@ from sqlalchemy.orm import Session
 
 from app.core.security import (
     create_access_token,
+    create_csrf_token,
     create_refresh_token,
     decode_token,
 )
 from app.core.settings import settings
 from app.models.user import APIKey, User
 from app.schemas.auth import APIKeyCreate, TokenResponse
+from app.core.exceptions import NotFoundError, PermissionDeniedError, InvalidInputError
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +71,7 @@ class AuthService:
         except Exception as e:
             logger.error(f"Access token verification failed: {e}")
         
-        raise ValueError("Invalid Google credentials - could not verify token")
+        raise PermissionDeniedError("Invalid Google credentials - could not verify token")
 
     async def google_login(self, credential: str) -> TokenResponse:
         """Login or register via Google token."""
@@ -77,7 +79,7 @@ class AuthService:
         
         email = idinfo.get("email")
         if not email:
-            raise ValueError("Google token did not contain an email")
+            raise InvalidInputError("Google token did not contain an email")
             
         name = idinfo.get("name", "")
 
@@ -95,7 +97,7 @@ class AuthService:
             self.db.refresh(user)
         
         if not user.is_active:
-            raise ValueError("Account is inactive")
+            raise PermissionDeniedError("Account is inactive")
 
         token_data = {"sub": user.id, "email": user.email}
         access_token = create_access_token(token_data)
@@ -106,23 +108,31 @@ class AuthService:
             expires_in=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         )
 
+    def issue_csrf_token(self) -> str:
+        """Issue a CSRF token for browser sessions."""
+        return create_csrf_token()
+
     def get_current_user(self, token: str) -> User:
         """Get current user from token."""
         payload = decode_token(token)
         if not payload:
-            raise ValueError("Invalid or expired token")
+            raise PermissionDeniedError("Invalid or expired token")
 
         if payload.get("type") != "access":
-            raise ValueError("Invalid token type")
+            raise PermissionDeniedError("Invalid token type")
 
         user = self.db.get(User, payload.get("sub"))
         if not user:
-            raise ValueError("User not found")
+            raise NotFoundError("User not found")
 
         if not user.is_active:
-            raise ValueError("User is inactive")
+            raise PermissionDeniedError("User is inactive")
 
         return user
+
+    def issue_csrf_token(self) -> str:
+        """Issue a new CSRF token."""
+        return create_csrf_token()
 
     def create_api_key(self, user: User, key_data: APIKeyCreate) -> tuple[APIKey, str]:
         """Create a new API key for user."""
@@ -138,7 +148,7 @@ class AuthService:
         full_key = f"gva_{key_id}.{secret_bytes}"
         key_hash = pwd_context.hash(full_key)
 
-        expires_at = datetime.utcnow() + timedelta(days=key_data.expires_in_days)
+        expires_at = datetime.now(timezone.utc) + timedelta(days=key_data.expires_in_days)
 
         api_key = APIKey(
             id=key_id,
@@ -156,13 +166,22 @@ class AuthService:
 
         return api_key, full_key
 
-    def list_api_keys(self, user: User) -> list[APIKey]:
-        """List active API keys for user."""
-        return self.db.execute(
+    def list_api_keys(self, user: User, limit: int = 50, offset: int = 0) -> tuple[list[APIKey], int]:
+        """List active API keys for user with pagination."""
+        from sqlalchemy import func
+        total = self.db.execute(
+            select(func.count(APIKey.id))
+            .where(APIKey.user_id == user.id, APIKey.is_active == True)
+        ).scalar() or 0
+        
+        records = self.db.execute(
             select(APIKey)
             .where(APIKey.user_id == user.id, APIKey.is_active == True)
             .order_by(APIKey.created_at.desc())
+            .limit(limit)
+            .offset(offset)
         ).scalars().all()
+        return records, total
 
     def revoke_api_key(self, user: User, key_id: str) -> bool:
         """Revoke an API key."""
@@ -174,7 +193,7 @@ class AuthService:
         ).scalar_one_or_none()
 
         if not api_key:
-            raise ValueError("API key not found")
+            raise NotFoundError("API key not found")
 
         api_key.is_active = False
         self.db.commit()
@@ -183,6 +202,8 @@ class AuthService:
     def validate_api_key(self, api_key: str) -> Optional[User]:
         """Validate an API key and return the user in O(1) time."""
         from app.core.security import verify_password
+        from app.core.redis import redis_sync_client
+        import hashlib
         
         if not api_key.startswith("gva_"):
             return None
@@ -200,13 +221,37 @@ class AuthService:
         if not key or not key.is_active:
             return None
             
-        if key.expires_at and key.expires_at < datetime.utcnow():
+        if key.expires_at and key.expires_at < datetime.now(timezone.utc):
             return None
 
-        if verify_password(api_key, key.key_hash):
+        # Cache bcrypt validation result using SHA256 to avoid 100ms penalty
+        hashed_input = hashlib.sha256(api_key.encode()).hexdigest()
+        cache_key = f"apikey_auth:{key_id}:{hashed_input}"
+        
+        is_valid = False
+        if redis_sync_client:
+            try:
+                cached_result = redis_sync_client.get(cache_key)
+                if cached_result == "1":
+                    is_valid = True
+                elif cached_result == "0":
+                    return None
+            except Exception as e:
+                logger.warning(f"Redis cache read error: {e}")
+
+        if not is_valid:
+            is_valid = verify_password(api_key, key.key_hash)
+            if redis_sync_client:
+                try:
+                    # Cache the expensive bcrypt validation result for 1 hour
+                    redis_sync_client.setex(cache_key, 3600, "1" if is_valid else "0")
+                except Exception as e:
+                    logger.warning(f"Redis cache write error: {e}")
+
+        if is_valid:
             key.total_requests += 1
-            key.last_used_at = datetime.utcnow()
+            key.last_used_at = datetime.now(timezone.utc)
             self.db.commit()
             return self.db.get(User, key.user_id)
-
+            
         return None
