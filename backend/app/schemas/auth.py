@@ -1,4 +1,5 @@
 """Authentication schemas."""
+
 from datetime import datetime
 from typing import Optional
 
@@ -79,6 +80,15 @@ class APIKeyCreateResponse(APIKeyResponse):
     """Schema for API key response with full key (shown once)."""
 
     key: str
+
+
+class APIKeyListResponse(BaseModel):
+    """Schema for paginated API key list response."""
+
+    items: list[APIKeyResponse]
+    total: int
+    limit: int
+    offset: int
 
 
 class APIKeyUsageResponse(BaseModel):

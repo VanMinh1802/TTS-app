@@ -11,7 +11,6 @@ from sqlalchemy.orm import Session
 
 from app.core.security import (
     create_access_token,
-    create_csrf_token,
     create_refresh_token,
     decode_token,
 )
@@ -108,10 +107,6 @@ class AuthService:
             expires_in=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         )
 
-    def issue_csrf_token(self) -> str:
-        """Issue a CSRF token for browser sessions."""
-        return create_csrf_token()
-
     def get_current_user(self, token: str) -> User:
         """Get current user from token."""
         payload = decode_token(token)
@@ -129,11 +124,6 @@ class AuthService:
             raise PermissionDeniedError("User is inactive")
 
         return user
-
-    def issue_csrf_token(self) -> str:
-        """Issue a new CSRF token."""
-        return create_csrf_token()
-
     def create_api_key(self, user: User, key_data: APIKeyCreate) -> tuple[APIKey, str]:
         """Create a new API key for user."""
         import secrets

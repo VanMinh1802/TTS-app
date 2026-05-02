@@ -15,6 +15,18 @@ def _load_models() -> dict[str, dict]:
 
 
 MODELS = _load_models()
+
+
+def _get_models() -> dict[str, dict]:
+    """Return the current TTS model registry."""
+    return MODELS
+
+
+def get_models() -> dict[str, dict]:
+    """Public accessor for the current TTS model registry."""
+    return MODELS
+
+
 VOICE_ALIASES = {
     "vi_female": "ngochuyen",
     "vi_male": "manhdung",

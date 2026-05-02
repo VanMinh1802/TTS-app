@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.exceptions import ServiceError
 from app.core.settings import settings
+from app.core.security import decode_token, create_access_token, create_refresh_token
 from app.db import get_db
 from app.models.license import LicenseKey
 from app.models.user import User
@@ -22,8 +23,11 @@ from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
+REFRESH_COOKIE_NAME = "refresh_token"
+
 
 def _set_auth_cookie(response: Response, token: str) -> None:
+    """Set access_token as httpOnly cookie. Max-age matches JWT expiry."""
     response.set_cookie(
         key=settings.AUTH_COOKIE_NAME,
         value=token,
@@ -31,31 +35,27 @@ def _set_auth_cookie(response: Response, token: str) -> None:
         secure=settings.AUTH_COOKIE_SECURE,
         samesite=settings.AUTH_COOKIE_SAMESITE,
         path=settings.AUTH_COOKIE_PATH,
-        max_age=settings.AUTH_COOKIE_MAX_AGE,
+        max_age=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
 
 
-def _set_csrf_cookie(response: Response, token: str) -> None:
+def _set_refresh_cookie(response: Response, token: str) -> None:
+    """Set refresh_token as httpOnly cookie. Max-age matches refresh expiry."""
     response.set_cookie(
-        key=settings.CSRF_COOKIE_NAME,
+        key=REFRESH_COOKIE_NAME,
         value=token,
-        httponly=False,
-        secure=settings.CSRF_COOKIE_SECURE,
-        samesite=settings.CSRF_COOKIE_SAMESITE,
-        path=settings.CSRF_COOKIE_PATH,
-        max_age=settings.CSRF_COOKIE_MAX_AGE,
+        httponly=True,
+        secure=settings.AUTH_COOKIE_SECURE,
+        samesite=settings.AUTH_COOKIE_SAMESITE,
+        path="/api/auth",
+        max_age=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS * 86400,
     )
 
 
-def _clear_auth_cookie(response: Response) -> None:
-    response.delete_cookie(
-        key=settings.AUTH_COOKIE_NAME,
-        path=settings.AUTH_COOKIE_PATH,
-    )
-    response.delete_cookie(
-        key=settings.CSRF_COOKIE_NAME,
-        path=settings.CSRF_COOKIE_PATH,
-    )
+def _clear_auth_cookies(response: Response) -> None:
+    """Clear all auth cookies."""
+    response.delete_cookie(key=settings.AUTH_COOKIE_NAME, path=settings.AUTH_COOKIE_PATH)
+    response.delete_cookie(key=REFRESH_COOKIE_NAME, path="/api/auth")
 
 
 def get_current_user(
@@ -132,28 +132,60 @@ async def login_google(
     response: Response,
     db: Session = Depends(get_db),
 ):
-    """Login with Google OAuth credential."""
+    """Login with Google OAuth credential. Issues access + refresh tokens."""
     auth_service = AuthService(db)
     token_response = await auth_service.google_login(request.credential)
+
+    # Set access_token cookie (short-lived)
     _set_auth_cookie(response, token_response.access_token)
-    csrf_token = auth_service.issue_csrf_token()
-    _set_csrf_cookie(response, csrf_token)
+
+    # Issue and set refresh_token cookie (long-lived)
+    payload = decode_token(token_response.access_token)
+    if payload:
+        refresh_token = create_refresh_token({"sub": payload["sub"], "email": payload.get("email")})
+        _set_refresh_cookie(response, refresh_token)
+
     return token_response
 
 
-@router.get("/csrf")
-def get_csrf_token(response: Response, db: Session = Depends(get_db)):
-    """Issue or rotate a CSRF token for the current browser session."""
-    auth_service = AuthService(db)
-    csrf_token = auth_service.issue_csrf_token()
-    _set_csrf_cookie(response, csrf_token)
-    return {"csrf_token": csrf_token}
+@router.post("/refresh")
+def refresh_token(
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    """Refresh access token using refresh_token cookie. Implements token rotation."""
+    refresh = request.cookies.get(REFRESH_COOKIE_NAME)
+    if not refresh:
+        raise HTTPException(status_code=401, detail="No refresh token")
+
+    payload = decode_token(refresh)
+    if not payload or payload.get("type") != "refresh":
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    user_id = payload.get("sub")
+    user = db.get(User, user_id)
+    if not user or not user.is_active:
+        raise HTTPException(status_code=401, detail="User not found or inactive")
+
+    # Token Rotation: issue new access + refresh tokens
+    token_data = {"sub": user.id, "email": user.email}
+    new_access = create_access_token(token_data)
+    new_refresh = create_refresh_token(token_data)
+
+    _set_auth_cookie(response, new_access)
+    _set_refresh_cookie(response, new_refresh)
+
+    return {
+        "access_token": new_access,
+        "token_type": "bearer",
+        "expires_in": settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    }
 
 
 @router.get("/me", response_model=dict)
 def get_me(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Get current user info."""
-    # Get the most recent activated license for this user
     activated_at = None
     latest_license = db.execute(
         select(LicenseKey)
@@ -163,7 +195,7 @@ def get_me(user: User = Depends(get_current_user), db: Session = Depends(get_db)
     ).scalar_one_or_none()
     if latest_license and latest_license.used_at:
         activated_at = latest_license.used_at.isoformat()
-    
+
     return {
         "id": user.id,
         "email": user.email,
@@ -211,7 +243,7 @@ def list_api_keys(
     """List user's API keys with pagination."""
     auth_service = AuthService(db)
     api_keys, total = auth_service.list_api_keys(user, limit=limit, offset=offset)
-    
+
     items = [
         APIKeyResponse(
             id=k.id,
@@ -228,7 +260,7 @@ def list_api_keys(
         )
         for k in api_keys
     ]
-    
+
     return APIKeyListResponse(items=items, total=total, limit=limit, offset=offset)
 
 
@@ -246,7 +278,6 @@ def revoke_api_key(
 
 @router.post("/logout")
 def logout(response: Response):
-    """Clear authentication cookie."""
-    _clear_auth_cookie(response)
+    """Clear all authentication cookies."""
+    _clear_auth_cookies(response)
     return {"status": "logged_out"}
-    return {"status": "revoked"}
