@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import DateTime, ForeignKey, Integer, LargeBinary, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models import Base
@@ -73,6 +74,7 @@ class Segment(Base):
     voice_id: Mapped[str] = mapped_column(String(50), nullable=False)
     order_index: Mapped[int] = mapped_column(Integer, default=0)
     audio_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    emotion_params: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
     scene: Mapped["Scene"] = relationship(back_populates="segments")
