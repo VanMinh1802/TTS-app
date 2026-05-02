@@ -76,9 +76,33 @@ class LicenseService:
         self.db.commit()
         return True
     
-    def get_all_licenses(self, current_user: User) -> List[LicenseKey]:
+    def get_all_licenses(self, current_user: User):
         """Get all licenses for admin dashboard."""
         if not current_user.is_admin:
             raise ValueError("Only admins can view licenses")
             
-        return self.db.execute(select(LicenseKey)).scalars().all()
+        stmt = select(LicenseKey, User.email).outerjoin(User, LicenseKey.used_by_id == User.id)
+        results = self.db.execute(stmt).all()
+        
+        response = []
+        for key, email in results:
+            response.append({
+                "id": str(key.id),
+                "code": key.code,
+                "duration_days": key.duration_days,
+                "tier": key.tier,
+                "is_used": key.is_used,
+                "used_at": key.used_at,
+                "created_at": key.created_at,
+                "used_by_email": email
+            })
+        return response
+
+    def delete_license(self, current_user: User, license_id: str):
+        if not current_user.is_admin:
+            raise ValueError("Only admins can delete licenses")
+        key = self.db.get(LicenseKey, license_id)
+        if not key:
+            raise ValueError("License not found")
+        self.db.delete(key)
+        self.db.commit()

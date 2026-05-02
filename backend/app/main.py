@@ -120,3 +120,4 @@ async def health_check():
         "status": "healthy" if db_status == "connected" else "unhealthy",
         "database": db_status,
     }
+

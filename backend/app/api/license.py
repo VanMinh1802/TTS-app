@@ -47,6 +47,21 @@ def get_all_licenses(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@router.delete("/admin/licenses/{license_id}")
+def delete_license(
+    license_id: str,
+    current_user: User = Depends(get_admin_user),
+    db: Session = Depends(get_db)
+):
+    service = LicenseService(db)
+    try:
+        service.delete_license(current_user, license_id)
+        return {"success": True}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 @router.post("/subscriptions/activate")
 def activate_subscription(
     request: LicenseActivateRequest,
