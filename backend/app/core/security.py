@@ -1,6 +1,8 @@
-"""Security utilities: password hashing and JWT."""
-from datetime import datetime, timedelta
+"""Security utilities: password hashing, JWT, and CSRF."""
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
+
+import secrets
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -25,9 +27,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     """Create a JWT access token."""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(
+        expire = datetime.now(timezone.utc) + timedelta(
             minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
         )
     to_encode.update({"exp": expire, "type": "access"})
@@ -40,7 +42,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 def create_refresh_token(data: dict) -> str:
     """Create a JWT refresh token."""
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS)
+    expire = datetime.now(timezone.utc) + timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode.update({"exp": expire, "type": "refresh"})
     encoded_jwt = jwt.encode(
         to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM
@@ -66,11 +68,14 @@ def create_api_key() -> tuple[str, str]:
     Returns:
         Tuple of (full_key, key_hash) - full_key shown once to user, hash stored in DB
     """
-    import secrets
-    
     # Generate random key
     key_bytes = secrets.token_bytes(32)
     full_key = f"gva_{key_bytes.hex()}"
     key_hash = pwd_context.hash(full_key)
     
     return full_key, key_hash
+
+
+def create_csrf_token() -> str:
+    """Create a CSRF token."""
+    return secrets.token_urlsafe(32)

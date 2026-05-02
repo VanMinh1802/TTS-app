@@ -1,8 +1,13 @@
-"""FastAPI application entry point."""
+"""Điểm khởi động ứng dụng FastAPI."""
+
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from sqlalchemy import text
+
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
@@ -18,8 +23,15 @@ from app.api.voices import router as voices_router
 from app.api.auth import router as auth_router
 from app.api.license import router as license_router
 from app.api.library import router as library_router
-from app.core.redis import init_redis, close_redis
+
+# Temporarily comment out admin metrics until models are fixed
+# from app.api.admin.metrics import router as admin_metrics_router
+from app.core.metrics import metrics_response
+from app.core.dependencies import get_admin_user
+from app.core.redis import init_redis, close_redis, is_redis_available
 from app.core.settings import settings
+from app.db import SessionLocal, engine
+from app.services.cleanup_task import cleanup_expired_audio_records
 
 # Configure logging
 logging.basicConfig(
@@ -31,14 +43,32 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan events."""
-    # Startup
-    logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
+    """Xử lý vòng đời ứng dụng."""
+    # Khởi động
+    logger.info(f"Đang khởi động {settings.APP_NAME} v{settings.APP_VERSION}")
     await init_redis()
+    
+    # Khởi động cronjob
+    async def run_cleanup():
+        """Run cleanup in thread pool to avoid blocking event loop."""
+        def _sync_cleanup():
+            db = SessionLocal()
+            try:
+                cleanup_expired_audio_records(db)
+            finally:
+                db.close()
+        await asyncio.to_thread(_sync_cleanup)
+            
+    scheduler = AsyncIOScheduler()
+    # Chạy mỗi ngày lúc nửa đêm
+    scheduler.add_job(run_cleanup, 'cron', hour=0, minute=0)
+    scheduler.start()
+    
     yield
-    # Shutdown
+    # Tắt ứng dụng
+    scheduler.shutdown()
     await close_redis()
-    logger.info("Shutting down application")
+    logger.info("Đang tắt ứng dụng")
 
 
 # Create FastAPI app
@@ -52,9 +82,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Api-Key", "X-Requested-With"],
 )
 
 # Add exception handlers
@@ -63,15 +93,33 @@ from app.core.exceptions import (
     rate_limit_exception_handler,
     generic_exception_handler,
     http_exception_handler,
+    ServiceError,
+    service_error_handler,
 )
 
+app.add_exception_handler(ServiceError, service_error_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(429, rate_limit_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)
 
 # Add logging middleware
 from app.middleware.logging import LoggingMiddleware
+from app.middleware.csrf import CsrfMiddleware
+
 app.add_middleware(LoggingMiddleware)
+
+# Add CSRF middleware
+app.add_middleware(CsrfMiddleware)
+
+# Add rate limit middleware
+from app.middleware.rate_limit import RateLimitMiddleware
+
+app.add_middleware(RateLimitMiddleware)
+
+# Add GZip compression middleware
+from fastapi.middleware.gzip import GZipMiddleware
+
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Include routers
 
@@ -87,6 +135,7 @@ app.include_router(voices_router, prefix=settings.API_V1_PREFIX)
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(library_router, prefix=settings.API_V1_PREFIX)
 app.include_router(license_router, prefix=settings.API_V1_PREFIX)
+# app.include_router(admin_metrics_router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get("/")
@@ -100,12 +149,10 @@ def root():
 
 
 @app.get("/health")
-def health_check():
-    """Health check endpoint with database status."""
-    from sqlalchemy import text
-    from app.db import engine
-
+async def health_check():
+    """Health check endpoint with database and Redis status."""
     db_status = "disconnected"
+    redis_status = "disconnected"
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
@@ -113,7 +160,21 @@ def health_check():
     except Exception:
         pass
 
+    try:
+        redis_status = "connected" if await is_redis_available() else "disconnected"
+    except Exception:
+        pass
+
+    overall_healthy = db_status == "connected" and redis_status == "connected"
+
     return {
-        "status": "healthy" if db_status == "connected" else "unhealthy",
+        "status": "healthy" if overall_healthy else "unhealthy",
         "database": db_status,
+        "redis": redis_status,
     }
+
+
+@app.get("/metrics", dependencies=[Depends(get_admin_user)])
+def prometheus_metrics():
+    """Prometheus metrics endpoint (admin only)"""
+    return metrics_response()

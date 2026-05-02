@@ -1,27 +1,39 @@
 """TTS API routes - Using Piper library."""
+import asyncio
 import base64
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.api.auth import get_current_user
+from app.core.messages import BACKEND_MESSAGES
 from app.db import get_db
 from app.models.user import User
-from app.schemas.tts import NormalizationMeta, TTSRequest, TTSResponse
+from app.schemas.tts import (
+    NormalizationMeta,
+    TTSRequest,
+    TTSResponse,
+    Term,
+    TermExtractionRequest,
+    TermExtractionResponse,
+)
 from app.services.llm_normalizer import (
-    LLM_STATUS_SKIPPED,
     LLM_STATUS_SUCCESS,
+    extract_terms,
     llm_normalize,
     needs_llm_normalization,
     validate_gemini_key,
 )
 from app.services.normalizer import normalize_vietnamese
 from app.services.quota_service import QuotaService
-from app.services.tts_service import MODELS, VOICE_ALIASES, tts_service
+from app.services.tts_service import VOICE_ALIASES, _get_models, tts_service
 from app.utils.text_utils import cleanup_grammar
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/tts", tags=["TTS"])
+MAX_TEXT_LENGTH = 10_000
 
 
 class ValidateKeyRequest(BaseModel):
@@ -35,11 +47,11 @@ class ValidateKeyResponse(BaseModel):
 
 
 _STATUS_MESSAGES = {
-    LLM_STATUS_SUCCESS: "✓ API key hợp lệ và hoạt động tốt",
-    "invalid_key": "✗ API key không hợp lệ hoặc đã bị thu hồi",
-    "rate_limit": "⚠ Đã đạt rate limit, vui lòng thử lại sau ít phút",
-    "quota_exceeded": "⚠ Đã hết quota, kiểm tra billing trên Google AI Studio",
-    "error": "✗ Lỗi kết nối đến Gemini API",
+    LLM_STATUS_SUCCESS: BACKEND_MESSAGES["status"]["api_key_valid"],
+    "invalid_key": BACKEND_MESSAGES["status"]["api_key_invalid"],
+    "rate_limit": BACKEND_MESSAGES["status"]["api_key_rate_limit"],
+    "quota_exceeded": BACKEND_MESSAGES["status"]["api_key_quota_exceeded"],
+    "error": BACKEND_MESSAGES["status"]["api_key_error"],
 }
 
 
@@ -50,7 +62,7 @@ async def validate_key(body: ValidateKeyRequest):
     return ValidateKeyResponse(
         valid=is_valid,
         status=status,
-        message=_STATUS_MESSAGES.get(status, "Trạng thái không xác định"),
+        message=_STATUS_MESSAGES.get(status, BACKEND_MESSAGES["errors"]["unknown_status"]),
     )
 
 
@@ -62,23 +74,27 @@ async def generate_tts(
     db: Session = Depends(get_db),
 ):
     """Generate TTS audio using Piper model from R2."""
-    if request.voice_id not in MODELS and request.voice_id not in VOICE_ALIASES:
+    if len(request.text) > MAX_TEXT_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Văn bản quá dài. Giới hạn tối đa {MAX_TEXT_LENGTH:,} ký tự.",
+        )
+
+    models = _get_models()
+    if request.voice_id not in models and request.voice_id not in VOICE_ALIASES:
         request.voice_id = "vi_female"
 
     quota_service = QuotaService(db)
     char_count = len(request.text)
 
     if not quota_service.check_quota(user.id, "api_calls", 1):
-        raise HTTPException(status_code=429, detail="Bạn đã đạt giới hạn số lần gọi API trong ngày (API calls limit reached).")
+        raise HTTPException(status_code=429, detail=BACKEND_MESSAGES["errors"]["api_calls_limit"])
     if not quota_service.check_quota(user.id, "characters", char_count):
-        raise HTTPException(status_code=429, detail="Bạn đã hết số lượng ký tự trong tháng (Characters limit reached).")
+        raise HTTPException(status_code=429, detail=BACKEND_MESSAGES["errors"]["characters_limit"])
 
     await tts_service._ensure_model(request.voice_id)
 
-    text = tts_service._apply_user_dictionary(
-        request.text,
-        request.user_dictionary or [],
-    )
+    text = tts_service._apply_user_dictionary(request.text, request.user_dictionary or [])
 
     try:
         normalized, _, _, _ = normalize_vietnamese(text, mode="standard")
@@ -89,7 +105,7 @@ async def generate_tts(
     is_complex = needs_llm_normalization(normalized)
 
     norm_mode = "rule_based"
-    llm_status = LLM_STATUS_SKIPPED
+    llm_status = "skipped"
     final_normalized = normalized
 
     if llm_api_key and is_complex:
@@ -99,7 +115,8 @@ async def generate_tts(
 
     cleaned = cleanup_grammar(final_normalized)
 
-    wav_data, duration = tts_service.synthesize(
+    wav_data, duration = await asyncio.to_thread(
+        tts_service.synthesize,
         text=cleaned,
         voice_id=request.voice_id,
         speed=request.speed,
@@ -124,17 +141,39 @@ async def generate_tts(
     )
 
 
+@router.post("/extract-terms", response_model=TermExtractionResponse)
+async def extract_terms_api(
+    request: TermExtractionRequest,
+    http_request: Request,
+    user: User = Depends(get_current_user),
+):
+    """Extract complex terms from text and suggest phonetic pronunciations."""
+    llm_api_key = http_request.headers.get("X-LLM-API-Key", "").strip()
+    if not llm_api_key:
+        raise HTTPException(
+            status_code=401,
+            detail="Vui lòng cấu hình API Key trong phần Cài đặt để sử dụng tính năng này.",
+        )
+
+    terms_data = await extract_terms(request.text, llm_api_key)
+    return TermExtractionResponse(terms=[Term(**t) for t in terms_data])
+
+
 @router.get("/voices")
 async def list_voices():
     """List available voices."""
-    canonical_voice_ids = [voice_id for voice_id in MODELS.keys() if voice_id not in {"default", "vi_female", "vi_male"}]
+    models = _get_models()
+    canonical_voice_ids = [
+        voice_id for voice_id in models.keys()
+        if voice_id not in {"default", "vi_female", "vi_male"}
+    ]
     return {
         "voices": [
             {
                 "id": voice_id,
-                "name": MODELS[voice_id]["name"],
+                "name": models[voice_id]["name"],
                 "lang": "Vietnamese",
-                "sample_url": MODELS[voice_id].get("sample_url"),
+                "sample_url": models[voice_id].get("sample_url"),
                 "available": True,
             }
             for voice_id in canonical_voice_ids

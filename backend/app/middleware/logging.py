@@ -27,6 +27,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         latency_ms = int((time.time() - start_time) * 1000)
 
         db_gen = get_db()
+        db = None
         try:
             db = next(db_gen)
             service = AnalyticsService(db)
@@ -42,6 +43,10 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         except Exception as e:
             logger.warning(f"Failed to log request: {e}")
         finally:
-            db_gen.close()
+            try:
+                if db is not None:
+                    db.close()
+            finally:
+                db_gen.close()
         
         return response

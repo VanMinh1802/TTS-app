@@ -61,8 +61,6 @@ def test_dictionary_applied_before_normalization(client, monkeypatch):
     monkeypatch.setattr(tts_module, "normalize_vietnamese", fake_normalize)
     monkeypatch.setattr(tts_module.tts_service, "synthesize", fake_synthesize)
     monkeypatch.setattr(tts_module.tts_service, "_ensure_model", fake_ensure_model)
-    monkeypatch.setattr(tts_module, "MODELS", {"vi_female": {}})
-    monkeypatch.setattr(tts_module, "VOICE_ALIASES", {"vi_female": "vi_female"})
 
     client.post(
         "/api/tts/generate",
