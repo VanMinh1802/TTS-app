@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<!-- saved from url=(0012)about:srcdoc -->
+<html lang="en" data-lp-grid-heavy="1" data-lp-grid-heavy-reasons="webgl,animation" data-lp-grid-paused="1"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><script id="__landing-pages-grid-perf-script">
+    (() => {
+      if (window.__lpGridPerf && window.__lpGridPerf.version) {
+        return;
+      }
+
+      const state = {
+        paused: false,
+        heavy: true,
+        reasons: ["webgl","animation"],
+      };
+
+      const suppressKnownPreviewWarnings = () => {
+        if (!window.console || typeof window.console.warn !== "function") {
+          return;
+        }
+        const currentWarn = window.console.warn;
+        if (currentWarn && currentWarn.__lpGridWrappedWarn) {
+          return;
+        }
+        const originalWarn = currentWarn.bind(window.console);
+        const wrappedWarn = (...args) => {
+          const first = String(args[0] ?? "");
+          if (/cdn\.tailwindcss\.com should not be used in production/i.test(first)) {
+            return;
+          }
+          originalWarn(...args);
+        };
+        wrappedWarn.__lpGridWrappedWarn = true;
+        wrappedWarn.__lpGridOriginalWarn = originalWarn;
+        window.console.warn = wrappedWarn;
+      };
+
+      const originalRaf = typeof window.requestAnimationFrame === "function"
+        ? window.requestAnimationFrame.bind(window)
+        : null;
+      const originalCancelRaf = typeof window.cancelAnimationFrame === "function"
+        ? window.cancelAnimationFrame.bind(window)
+        : null;
+      const originalSetInterval = typeof window.setInterval === "function"
+        ? window.setInterval.bind(window)
+        : null;
+      const originalSetTimeout = typeof window.setTimeout === "function"
+        ? window.setTimeout.bind(window)
+        : null;
+      const queuedTimeoutCallbacks = [];
+      const queuedRafCallbacks = new Map();
+      const queuedRafNativeIds = new Map();
+      let queuedRafId = -1;
+
+      const heavySelectors = [
+        "canvas",
+        "model-viewer",
+        "spline-viewer",
+        "video[autoplay]",
+        "[class*='webgl']",
+        "[id*='webgl']",
+        "[data-three]",
+        "[data-webgl]"
+      ];
+
+      const scriptHints = /(three|webgl|webgpu|gsap|scrolltrigger|anime|lottie|pixi|babylon|particles|rive|spline)/i;
+
+      const markHeavy = (reason) => {
+        if (!reason) return;
+        if (!state.reasons.includes(reason)) {
+          state.reasons.push(reason);
+        }
+        state.heavy = state.reasons.length > 0;
+      };
+
+      const scanHeavy = () => {
+        try {
+          for (const selector of heavySelectors) {
+            if (document.querySelector(selector)) {
+              markHeavy(selector);
+            }
+          }
+          document.querySelectorAll("script").forEach((scriptNode) => {
+            const src = String(scriptNode.getAttribute("src") || "");
+            const inlineText = String(scriptNode.textContent || "").slice(0, 2400);
+            if (scriptHints.test(src) || scriptHints.test(inlineText)) {
+              markHeavy("script-hint");
+            }
+          });
+        } catch {
+          // ignore
+        }
+      };
+
+      const syncPausedAttribute = () => {
+        try {
+          document.documentElement.setAttribute("data-lp-grid-paused", state.paused ? "1" : "0");
+          document.documentElement.setAttribute("data-lp-grid-heavy", state.heavy ? "1" : "0");
+        } catch {
+          // ignore
+        }
+      };
+
+      const syncMedia = () => {
+        try {
+          document.querySelectorAll("video, audio").forEach((media) => {
+            if (!(media instanceof HTMLMediaElement)) {
+              return;
+            }
+            if (state.paused) {
+              if (!media.paused) {
+                media.dataset.lpGridWasPlaying = "1";
+              }
+              media.pause();
+              return;
+            }
+            if (media.dataset.lpGridWasPlaying === "1") {
+              delete media.dataset.lpGridWasPlaying;
+              const playResult = media.play();
+              if (playResult && typeof playResult.catch === "function") {
+                playResult.catch(() => {});
+              }
+            }
+          });
+        } catch {
+          // ignore
+        }
+      };
+
+      const syncAnimations = () => {
+        if (typeof document.getAnimations !== "function") {
+          return;
+        }
+        try {
+          document.getAnimations().forEach((animation) => {
+            if (!animation) {
+              return;
+            }
+            if (state.paused) {
+              if (animation.playState === "running") {
+                animation.__lpGridPausedByGuard = true;
+                animation.pause();
+              }
+              return;
+            }
+            if (animation.__lpGridPausedByGuard) {
+              animation.__lpGridPausedByGuard = false;
+              animation.play();
+            }
+          });
+        } catch {
+          // ignore
+        }
+      };
+
+      const invokeHandler = (handler, args = []) => {
+        if (typeof handler === "function") {
+          handler(...args);
+          return;
+        }
+        if (typeof handler === "string") {
+          // eslint-disable-next-line no-new-func
+          Function(handler)();
+        }
+      };
+
+      const flushQueuedTimeouts = () => {
+        if (state.paused || !originalSetTimeout || queuedTimeoutCallbacks.length === 0) {
+          return;
+        }
+        const pending = queuedTimeoutCallbacks.splice(0, queuedTimeoutCallbacks.length);
+        pending.forEach((entry) => {
+          originalSetTimeout(() => {
+            if (state.paused) {
+              queuedTimeoutCallbacks.push(entry);
+              return;
+            }
+            invokeHandler(entry.handler, entry.args);
+          }, 0);
+        });
+      };
+
+      const flushQueuedRafCallbacks = () => {
+        if (state.paused || !originalRaf || queuedRafCallbacks.size === 0) {
+          return;
+        }
+        const pending = Array.from(queuedRafCallbacks.entries());
+        queuedRafCallbacks.clear();
+        pending.forEach(([queuedId, callback]) => {
+          const nativeId = originalRaf((timestamp) => {
+            queuedRafNativeIds.delete(queuedId);
+            if (state.paused) {
+              queuedRafCallbacks.set(queuedId, callback);
+              return;
+            }
+            callback(timestamp);
+          });
+          queuedRafNativeIds.set(queuedId, nativeId);
+        });
+      };
+
+      const applyPausedState = (nextPaused) => {
+        const normalized = Boolean(nextPaused);
+        if (state.paused === normalized) {
+          return state.paused;
+        }
+        state.paused = normalized;
+        syncPausedAttribute();
+        syncAnimations();
+        syncMedia();
+        if (!state.paused) {
+          // Resume one-shot bootstrapping work that was deferred during a pause.
+          flushQueuedTimeouts();
+          flushQueuedRafCallbacks();
+        }
+        return state.paused;
+      };
+
+      const handleMessage = (event) => {
+        const payload = event?.data;
+        if (!payload || typeof payload !== "object") {
+          return;
+        }
+        if (payload.type === "lp:grid:setPaused") {
+          applyPausedState(Boolean(payload.paused));
+          return;
+        }
+        if (payload.type === "lp:grid:scanHeavy") {
+          scanHeavy();
+          syncPausedAttribute();
+        }
+      };
+
+      if (originalRaf) {
+        window.requestAnimationFrame = (callback) => {
+          if (state.paused) {
+            const nextId = queuedRafId;
+            queuedRafId -= 1;
+            queuedRafCallbacks.set(nextId, callback);
+            return nextId;
+          }
+          return originalRaf(callback);
+        };
+      }
+
+      if (originalCancelRaf) {
+        window.cancelAnimationFrame = (id) => {
+          if (!id) {
+            return;
+          }
+          if (queuedRafCallbacks.delete(id)) {
+            queuedRafNativeIds.delete(id);
+            return;
+          }
+          const queuedNativeId = queuedRafNativeIds.get(id);
+          if (queuedNativeId) {
+            queuedRafNativeIds.delete(id);
+            originalCancelRaf(queuedNativeId);
+            return;
+          }
+          originalCancelRaf(id);
+        };
+      }
+
+      if (originalSetInterval) {
+        window.setInterval = (handler, timeout, ...args) => {
+          const wrapped = (...wrappedArgs) => {
+            if (state.paused) {
+              return;
+            }
+            invokeHandler(handler, wrappedArgs);
+          };
+          return originalSetInterval(wrapped, timeout, ...args);
+        };
+      }
+
+      if (originalSetTimeout) {
+        window.setTimeout = (handler, timeout, ...args) => {
+          const wrapped = (...wrappedArgs) => {
+            if (state.paused) {
+              queuedTimeoutCallbacks.push({
+                handler,
+                args: wrappedArgs.length > 0 ? wrappedArgs : args,
+              });
+              return;
+            }
+            invokeHandler(handler, wrappedArgs);
+          };
+          return originalSetTimeout(wrapped, timeout, ...args);
+        };
+      }
+
+      suppressKnownPreviewWarnings();
+      scanHeavy();
+      syncPausedAttribute();
+      window.addEventListener("message", handleMessage);
+
+      const observer = new MutationObserver(() => {
+        scanHeavy();
+        if (state.paused) {
+          syncAnimations();
+          syncMedia();
+        }
+        syncPausedAttribute();
+      });
+      observer.observe(document.documentElement, { childList: true, subtree: true });
+
+      window.__lpGridPerf = {
+        version: "1",
+        setPaused: (nextPaused) => applyPausedState(nextPaused),
+        getState: () => ({
+          paused: state.paused,
+          heavy: state.heavy,
+          reasons: state.reasons.slice(),
+        }),
+        scanHeavy: () => {
+          scanHeavy();
+          syncPausedAttribute();
+          return { heavy: state.heavy, reasons: state.reasons.slice() };
+        },
+      };
+    })();
+  </script><script id="__landing-pages-grid-preview-guard-script">
+        (() => {
+          const selector = 'input, textarea, select, form, [contenteditable]';
+          const scrub = () => {
+            document.querySelectorAll(selector).forEach((node) => {
+              if (!(node instanceof HTMLElement)) return;
+              node.setAttribute('tabindex', '-1');
+              node.setAttribute('autocomplete', 'off');
+              node.style.pointerEvents = 'none';
+              node.style.userSelect = 'none';
+              node.style.caretColor = 'transparent';
+              if ('disabled' in node) node.disabled = true;
+              if ('readOnly' in node) node.readOnly = true;
+            });
+            if (document.activeElement instanceof HTMLElement) {
+              document.activeElement.blur();
+            }
+          };
+          scrub();
+          const observer = new MutationObserver(scrub);
+          observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true });
+          ['focusin', 'mousedown', 'pointerdown'].forEach((eventName) => {
+            document.addEventListener(eventName, (event) => {
+              const target = event.target;
+              if (!(target instanceof HTMLElement)) return;
+              if (!target.closest(selector)) return;
+              event.preventDefault();
+              event.stopPropagation();
+              target.blur();
+            }, true);
+          });
+        })();
+      </script><!--<base data-lp-generated-base="1" href="https://wypspaektjjiccarxrgy.supabase.co/storage/v1/object/sign/html-pages/5b012bea-e79a-45e3-9389-657effe6bf33/meridian-geo-terrain-intelligence-platform/88e97d57-02f0-4f6c-945d-a5564914c4d3.html">--><base href=".">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meridian Geo — Terrain Intelligence Platform</title>
+    <script src="https://cdn.tailwindcss.com/"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+<style id="__landing-pages-grid-preview-guard-style">
+      input, textarea, select, form, [contenteditable] {
+        display: none !important;
+        pointer-events: none !important;
+      }
+    </style><style id="__landing-pages-grid-perf-style">
+      html[data-lp-grid-paused="1"],
+      html[data-lp-grid-paused="1"] * {
+        animation-play-state: paused !important;
+        transition-duration: 0ms !important;
+        scroll-behavior: auto !important;
+      }
+
+      html[data-lp-grid-paused="1"] video,
+      html[data-lp-grid-paused="1"] audio {
+        pointer-events: none !important;
+      }
+
+      html[data-lp-grid-paused="1"] canvas,
+      html[data-lp-grid-paused="1"] model-viewer,
+      html[data-lp-grid-paused="1"] spline-viewer,
+      html[data-lp-grid-paused="1"] [class*="webgl"],
+      html[data-lp-grid-paused="1"] [id*="webgl"] {
+        visibility: hidden !important;
+      }
+    </style><style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.absolute{position:absolute}.relative{position:relative}.inset-0{inset:0px}.inset-\[1px\]{inset:1px}.-top-\[50\%\]{top:-50%}.bottom-8{bottom:2rem}.left-0{left:0px}.left-1\/2{left:50%}.right-12{right:3rem}.top-0{top:0px}.top-1\/2{top:50%}.z-0{z-index:0}.z-10{z-index:10}.z-20{z-index:20}.z-30{z-index:30}.mx-auto{margin-left:auto;margin-right:auto}.mb-10{margin-bottom:2.5rem}.mb-12{margin-bottom:3rem}.mb-6{margin-bottom:1.5rem}.flex{display:flex}.inline-flex{display:inline-flex}.hidden{display:none}.h-full{height:100%}.h-screen{height:100vh}.h-\[1px\]{height:1px}.h-\[200\%\]{height:200%}.h-1\/2{height:50%}.h-2{height:0.5rem}.h-8{height:2rem}.h-\[3px\]{height:3px}.w-full{width:100%}.w-6{width:1.5rem}.w-2{width:0.5rem}.w-\[1px\]{width:1px}.w-\[260px\]{width:260px}.max-w-\[1400px\]{max-width:1400px}.max-w-\[480px\]{max-width:480px}.max-w-\[640px\]{max-width:640px}.flex-1{flex:1 1 0%}.-translate-x-1\/2{--tw-translate-x:-50%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.-translate-y-1\/2{--tw-translate-y:-50%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@keyframes spin{to{transform:rotate(360deg)}}.animate-spin{animation:spin 1s linear infinite}.cursor-pointer{cursor:pointer}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-10{gap:2.5rem}.gap-3{gap:0.75rem}.gap-2{gap:0.5rem}.gap-6{gap:1.5rem}.gap-1\.5{gap:0.375rem}.gap-2\.5{gap:0.625rem}.gap-3\.5{gap:0.875rem}.gap-5{gap:1.25rem}.gap-8{gap:2rem}.overflow-hidden{overflow:hidden}.rounded-full{border-radius:9999px}.rounded-xl{border-radius:0.75rem}.rounded-\[17px\]{border-radius:17px}.rounded-\[18px\]{border-radius:18px}.border-b{border-bottom-width:1px}.border-t{border-top-width:1px}.border-white\/5{border-color:rgb(255 255 255 / 0.05)}.bg-\[\#0a0d08\]{--tw-bg-opacity:1;background-color:rgb(10 13 8 / var(--tw-bg-opacity, 1))}.bg-\[\#0a0d08\]\/30{background-color:rgb(10 13 8 / 0.3)}.bg-\[\#0d100a\]{--tw-bg-opacity:1;background-color:rgb(13 16 10 / var(--tw-bg-opacity, 1))}.bg-\[\#7a9a6e\]{--tw-bg-opacity:1;background-color:rgb(122 154 110 / var(--tw-bg-opacity, 1))}.bg-\[\#0d100a\]\/80{background-color:rgb(13 16 10 / 0.8)}.bg-white\/10{background-color:rgb(255 255 255 / 0.1)}.bg-white\/5{background-color:rgb(255 255 255 / 0.05)}.bg-\[radial-gradient\(ellipse_at_top_right\2c rgba\(122\2c 154\2c 110\2c 0\.05\)\2c transparent_50\%\)\]{background-image:radial-gradient(ellipse at top right,rgba(122,154,110,0.05),transparent 50%)}.bg-gradient-to-b{background-image:linear-gradient(to bottom, var(--tw-gradient-stops))}.bg-gradient-to-br{background-image:linear-gradient(to bottom right, var(--tw-gradient-stops))}.bg-gradient-to-r{background-image:linear-gradient(to right, var(--tw-gradient-stops))}.bg-\[conic-gradient\(from_0deg\2c transparent_40\%\2c \#7a9a6e_60\%\2c transparent_80\%\)\]{background-image:conic-gradient(from 0deg,transparent 40%,#7a9a6e 60%,transparent 80%)}.from-\[\#0a0d08\]\/60{--tw-gradient-from:rgb(10 13 8 / 0.6) var(--tw-gradient-from-position);--tw-gradient-to:rgb(10 13 8 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-\[\#7a9a6e\]{--tw-gradient-from:#7a9a6e var(--tw-gradient-from-position);--tw-gradient-to:rgb(122 154 110 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-\[\#e8efe2\]{--tw-gradient-from:#e8efe2 var(--tw-gradient-from-position);--tw-gradient-to:rgb(232 239 226 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-\[\#5c7a4a\]{--tw-gradient-from:#5c7a4a var(--tw-gradient-from-position);--tw-gradient-to:rgb(92 122 74 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-\[\#7a9a6e\]\/40{--tw-gradient-from:rgb(122 154 110 / 0.4) var(--tw-gradient-from-position);--tw-gradient-to:rgb(122 154 110 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-transparent{--tw-gradient-from:transparent var(--tw-gradient-from-position);--tw-gradient-to:rgb(0 0 0 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.via-transparent{--tw-gradient-to:rgb(0 0 0 / 0)  var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), transparent var(--tw-gradient-via-position), var(--tw-gradient-to)}.via-\[\#7a9a6e\]{--tw-gradient-to:rgb(122 154 110 / 0)  var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), #7a9a6e var(--tw-gradient-via-position), var(--tw-gradient-to)}.via-white\/5{--tw-gradient-to:rgb(255 255 255 / 0)  var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), rgb(255 255 255 / 0.05) var(--tw-gradient-via-position), var(--tw-gradient-to)}.to-\[\#0a0d08\]\/90{--tw-gradient-to:rgb(10 13 8 / 0.9) var(--tw-gradient-to-position)}.to-\[\#5c7a4a\]{--tw-gradient-to:#5c7a4a var(--tw-gradient-to-position)}.to-\[\#c4b99a\]{--tw-gradient-to:#c4b99a var(--tw-gradient-to-position)}.to-\[\#a8c89a\]{--tw-gradient-to:#a8c89a var(--tw-gradient-to-position)}.to-\[\#7a9a6e\]{--tw-gradient-to:#7a9a6e var(--tw-gradient-to-position)}.to-transparent{--tw-gradient-to:transparent var(--tw-gradient-to-position)}.bg-clip-text{-webkit-background-clip:text;background-clip:text}.p-6{padding:1.5rem}.p-\[1px\]{padding:1px}.px-5{padding-left:1.25rem;padding-right:1.25rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-4{padding-top:1rem;padding-bottom:1rem}.px-7{padding-left:1.75rem;padding-right:1.75rem}.py-3\.5{padding-top:0.875rem;padding-bottom:0.875rem}.pt-8{padding-top:2rem}.font-sans{font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"}.text-base{font-size:1rem;line-height:1.5rem}.text-xs{font-size:0.75rem;line-height:1rem}.text-5xl{font-size:3rem;line-height:1}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-\[0\.6rem\]{font-size:0.6rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.font-light{font-weight:300}.font-normal{font-weight:400}.font-extralight{font-weight:200}.font-thin{font-weight:100}.uppercase{text-transform:uppercase}.tabular-nums{--tw-numeric-spacing:tabular-nums;font-variant-numeric:var(--tw-ordinal) var(--tw-slashed-zero) var(--tw-numeric-figure) var(--tw-numeric-spacing) var(--tw-numeric-fraction)}.leading-\[1\.05\]{line-height:1.05}.leading-relaxed{line-height:1.625}.tracking-tight{letter-spacing:-0.025em}.tracking-wide{letter-spacing:0.025em}.tracking-\[0\.12em\]{letter-spacing:0.12em}.tracking-\[0\.15em\]{letter-spacing:0.15em}.tracking-\[0\.1em\]{letter-spacing:0.1em}.text-\[\#0a0d08\]{--tw-text-opacity:1;color:rgb(10 13 8 / var(--tw-text-opacity, 1))}.text-\[\#c4b99a\]{--tw-text-opacity:1;color:rgb(196 185 154 / var(--tw-text-opacity, 1))}.text-\[\#c4b99a\]\/60{color:rgb(196 185 154 / 0.6)}.text-transparent{color:transparent}.text-\[\#7a9a6e\]{--tw-text-opacity:1;color:rgb(122 154 110 / var(--tw-text-opacity, 1))}.text-\[\#c4b99a\]\/70{color:rgb(196 185 154 / 0.7)}.text-\[\#e8efe2\]{--tw-text-opacity:1;color:rgb(232 239 226 / var(--tw-text-opacity, 1))}.text-\[\#c4b99a\]\/40{color:rgb(196 185 154 / 0.4)}.text-\[\#c4b99a\]\/50{color:rgb(196 185 154 / 0.5)}.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.opacity-0{opacity:0}.opacity-40{opacity:0.4}.shadow-\[inset_0_0_20px_rgba\(122\2c 154\2c 110\2c 0\.05\)\]{--tw-shadow:inset 0 0 20px rgba(122,154,110,0.05);--tw-shadow-colored:inset 0 0 20px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-\[0_0_10px_rgba\(122\2c 154\2c 110\2c 0\.6\)\]{--tw-shadow:0 0 10px rgba(122,154,110,0.6);--tw-shadow-colored:0 0 10px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-\[0_20px_60px_-10px_rgba\(0\2c 0\2c 0\2c 0\.6\)\]{--tw-shadow:0 20px 60px -10px rgba(0,0,0,0.6);--tw-shadow-colored:0 20px 60px -10px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.backdrop-blur-xl{--tw-backdrop-blur:blur(24px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.backdrop-blur-2xl{--tw-backdrop-blur:blur(40px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-colors{transition-property:color, background-color, border-color, fill, stroke, -webkit-text-decoration-color;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, -webkit-text-decoration-color;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-opacity{transition-property:opacity;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-transform{transition-property:transform;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-300{transition-duration:300ms}.duration-500{transition-duration:500ms}.duration-700{transition-duration:700ms}.ease-out{transition-timing-function:cubic-bezier(0, 0, 0.2, 1)}.selection\:bg-\[\#7a9a6e\]\/30 *::selection{background-color:rgb(122 154 110 / 0.3)}.selection\:text-\[\#e8efe2\] *::selection{--tw-text-opacity:1;color:rgb(232 239 226 / var(--tw-text-opacity, 1))}.selection\:bg-\[\#7a9a6e\]\/30::selection{background-color:rgb(122 154 110 / 0.3)}.selection\:text-\[\#e8efe2\]::selection{--tw-text-opacity:1;color:rgb(232 239 226 / var(--tw-text-opacity, 1))}.hover\:-translate-y-\[1px\]:hover{--tw-translate-y:-1px;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.hover\:text-\[\#e8efe2\]:hover{--tw-text-opacity:1;color:rgb(232 239 226 / var(--tw-text-opacity, 1))}.hover\:text-\[\#c4b99a\]:hover{--tw-text-opacity:1;color:rgb(196 185 154 / var(--tw-text-opacity, 1))}.hover\:shadow-\[0_0_20px_rgba\(122\2c 154\2c 110\2c 0\.3\)\]:hover{--tw-shadow:0 0 20px rgba(122,154,110,0.3);--tw-shadow-colored:0 0 20px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.group:hover .group-hover\:translate-x-1{--tw-translate-x:0.25rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.group:hover .group-hover\:bg-\[\#0d100a\]\/80{background-color:rgb(13 16 10 / 0.8)}.group:hover .group-hover\:to-\[\#7a9a6e\]{--tw-gradient-to:#7a9a6e var(--tw-gradient-to-position)}.group:hover .group-hover\:opacity-100{opacity:1}@media (min-width: 768px){.md\:flex{display:flex}.md\:inline-flex{display:inline-flex}.md\:hidden{display:none}.md\:gap-12{gap:3rem}.md\:px-12{padding-left:3rem;padding-right:3rem}.md\:py-6{padding-top:1.5rem;padding-bottom:1.5rem}.md\:text-6xl{font-size:3.75rem;line-height:1}.md\:text-base{font-size:1rem;line-height:1.5rem}.md\:text-2xl{font-size:1.5rem;line-height:2rem}}@media (min-width: 1024px){.lg\:block{display:block}.lg\:text-7xl{font-size:4.5rem;line-height:1}}</style></head>
+<body class="h-screen w-full overflow-hidden bg-[#0a0d08] text-[#c4b99a] font-sans antialiased selection:bg-[#7a9a6e]/30 selection:text-[#e8efe2]">
+
+    <!-- WebGL Background -->
+    <canvas id="heroCanvas" class="absolute inset-0 z-0 w-full h-full" width="2321" height="1247" style="width: 2321px; height: 1247px;"></canvas>
+    
+    <!-- Ambient Gradient Overlay -->
+    <div class="absolute inset-0 z-10 bg-gradient-to-b from-[#0a0d08]/60 via-transparent to-[#0a0d08]/90 pointer-events-none"></div>
+    <div class="absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_top_right,rgba(122,154,110,0.05),transparent_50%)] pointer-events-none"></div>
+
+    <!-- Main Interface -->
+    <div class="relative z-20 h-full flex flex-col w-full">
+        
+        <!-- Navigation -->
+        <nav id="nav-bar" class="flex items-center justify-between px-6 py-4 md:px-12 md:py-6 backdrop-blur-xl bg-[#0a0d08]/30 border-b border-white/5 opacity-0">
+            <div class="flex items-center gap-3 cursor-pointer group">
+                <span class="text-base font-normal tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#e8efe2] to-[#c4b99a] transition-all duration-300 group-hover:to-[#7a9a6e]">
+                    Meridian Geo
+                </span>
+            </div>
+            
+            <div class="hidden md:flex items-center gap-10">
+                <a href="https://wypspaektjjiccarxrgy.supabase.co/storage/v1/object/sign/html-pages/5b012bea-e79a-45e3-9389-657effe6bf33/meridian-geo-terrain-intelligence-platform/88e97d57-02f0-4f6c-945d-a5564914c4d3.html#" class="text-xs font-light text-[#c4b99a]/60 hover:text-[#e8efe2] transition-colors tracking-wide">Platform</a>
+                <a href="https://wypspaektjjiccarxrgy.supabase.co/storage/v1/object/sign/html-pages/5b012bea-e79a-45e3-9389-657effe6bf33/meridian-geo-terrain-intelligence-platform/88e97d57-02f0-4f6c-945d-a5564914c4d3.html#" class="text-xs font-light text-[#c4b99a]/60 hover:text-[#e8efe2] transition-colors tracking-wide">Surveys</a>
+                <a href="https://wypspaektjjiccarxrgy.supabase.co/storage/v1/object/sign/html-pages/5b012bea-e79a-45e3-9389-657effe6bf33/meridian-geo-terrain-intelligence-platform/88e97d57-02f0-4f6c-945d-a5564914c4d3.html#" class="text-xs font-light text-[#c4b99a]/60 hover:text-[#e8efe2] transition-colors tracking-wide">Analysis</a>
+                <a href="https://wypspaektjjiccarxrgy.supabase.co/storage/v1/object/sign/html-pages/5b012bea-e79a-45e3-9389-657effe6bf33/meridian-geo-terrain-intelligence-platform/88e97d57-02f0-4f6c-945d-a5564914c4d3.html#" class="text-xs font-light text-[#c4b99a]/60 hover:text-[#e8efe2] transition-colors tracking-wide">Research</a>
+            </div>
+
+            <a href="https://wypspaektjjiccarxrgy.supabase.co/storage/v1/object/sign/html-pages/5b012bea-e79a-45e3-9389-657effe6bf33/meridian-geo-terrain-intelligence-platform/88e97d57-02f0-4f6c-945d-a5564914c4d3.html#" class="hidden md:inline-flex items-center justify-center px-5 py-2 text-xs font-normal text-[#0a0d08] bg-gradient-to-br from-[#7a9a6e] to-[#5c7a4a] rounded-full hover:shadow-[0_0_20px_rgba(122,154,110,0.3)] transition-all duration-300 hover:-translate-y-[1px]">
+                Request Access
+            </a>
+            
+            <!-- Mobile Menu Icon -->
+            <button class="md:hidden text-[#c4b99a] hover:text-[#e8efe2]">
+                <iconify-icon icon="solar:hamburger-menu-linear" width="24" height="24" style="stroke-width: 1.5;"><template shadowrootmode="open"><style data-style="data-style">:host{display:inline-block;vertical-align:0}span,svg{display:block}</style><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5" d="M20 7H4m16 5H4m16 5H4"></path></svg></template></iconify-icon>
+            </button>
+        </nav>
+
+        <!-- Hero Content Area -->
+        <main class="flex-1 flex items-center justify-between w-full max-w-[1400px] mx-auto px-6 md:px-12 relative">
+            
+            <!-- Left Column -->
+            <div class="max-w-[640px] flex flex-col z-20" id="hero-content">
+                
+                <div class="flex items-center gap-3 mb-6 opacity-0" id="anim-label">
+                    <div class="w-6 h-[1px] bg-[#7a9a6e]"></div>
+                    <span class="text-xs font-normal uppercase tracking-[0.12em] text-[#7a9a6e]">Terrain Intelligence Platform</span>
+                </div>
+                
+                <h1 class="text-5xl md:text-6xl lg:text-7xl font-thin tracking-tight text-[#e8efe2] leading-[1.05] mb-6 opacity-0" id="anim-title">
+                    Map the earth<br>
+                    <span class="font-extralight text-transparent bg-clip-text bg-gradient-to-br from-[#7a9a6e] to-[#a8c89a]">in living detail</span>
+                </h1>
+                
+                <p class="text-sm md:text-base font-light text-[#c4b99a]/70 leading-relaxed max-w-[480px] mb-10 opacity-0" id="anim-sub">
+                    High-resolution topographic analysis with real-time terrain modeling. From geological surveys to environmental monitoring, see the landscape breathe.
+                </p>
+                
+                <div class="flex flex-wrap items-center gap-6 mb-12 opacity-0" id="anim-actions">
+                    <!-- Premium Gradient Border Button -->
+                    <a href="https://wypspaektjjiccarxrgy.supabase.co/storage/v1/object/sign/html-pages/5b012bea-e79a-45e3-9389-657effe6bf33/meridian-geo-terrain-intelligence-platform/88e97d57-02f0-4f6c-945d-a5564914c4d3.html#" class="relative inline-flex items-center justify-center px-7 py-3.5 rounded-xl group overflow-hidden">
+                        <div class="absolute inset-0 w-full h-[200%] -top-[50%] bg-[conic-gradient(from_0deg,transparent_40%,#7a9a6e_60%,transparent_80%)] animate-spin opacity-40 group-hover:opacity-100 transition-opacity duration-500" style="animation-duration: 4s;"></div>
+                        <div class="absolute inset-[1px] bg-[#0d100a] rounded-xl transition-colors duration-300 group-hover:bg-[#0d100a]/80"></div>
+                        <div class="absolute inset-0 rounded-xl shadow-[inset_0_0_20px_rgba(122,154,110,0.05)]"></div>
+                        <span class="relative z-10 text-xs font-normal tracking-wide text-[#e8efe2]">Explore the Platform</span>
+                    </a>
+                    
+                    <a href="https://wypspaektjjiccarxrgy.supabase.co/storage/v1/object/sign/html-pages/5b012bea-e79a-45e3-9389-657effe6bf33/meridian-geo-terrain-intelligence-platform/88e97d57-02f0-4f6c-945d-a5564914c4d3.html#" class="group flex items-center gap-2 text-xs font-light text-[#c4b99a]/70 hover:text-[#c4b99a] transition-colors">
+                        View field data
+                        <iconify-icon icon="solar:arrow-right-linear" width="16" height="16" class="transition-transform duration-300 group-hover:translate-x-1" style="stroke-width: 1.5;"><template shadowrootmode="open"><style data-style="data-style">:host{display:inline-block;vertical-align:0}span,svg{display:block}</style><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 12h16m0 0l-6-6m6 6l-6 6"></path></svg></template></iconify-icon>
+                    </a>
+                </div>
+                
+                <!-- Stats -->
+                <div class="flex items-center gap-8 md:gap-12 pt-8 border-t border-white/5 opacity-0" id="anim-stats">
+                    <div class="flex flex-col gap-1.5">
+                        <span class="text-xl md:text-2xl font-extralight tracking-tight text-[#e8efe2]">2.4M km²</span>
+                        <span class="text-xs font-light text-[#c4b99a]/50 uppercase tracking-[0.1em]">Terrain Mapped</span>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <span class="text-xl md:text-2xl font-extralight tracking-tight text-[#e8efe2]">0.3m</span>
+                        <span class="text-xs font-light text-[#c4b99a]/50 uppercase tracking-[0.1em]">Resolution</span>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <span class="text-xl md:text-2xl font-extralight tracking-tight text-[#e8efe2]">147</span>
+                        <span class="text-xs font-light text-[#c4b99a]/50 uppercase tracking-[0.1em]">Active Surveys</span>
+                    </div>
+                </div>
+                
+            </div>
+
+            <!-- Right Floating Card (Premium Surface) -->
+            <div class="hidden lg:block absolute right-12 top-1/2 -translate-y-1/2 z-30 opacity-0" id="anim-card">
+                <!-- Gradient Border Wrapper -->
+                <div class="p-[1px] rounded-[18px] bg-gradient-to-b from-[#7a9a6e]/40 via-white/5 to-transparent shadow-[0_20px_60px_-10px_rgba(0,0,0,0.6)]">
+                    <!-- Inner Glass Card -->
+                    <div class="bg-[#0d100a]/80 backdrop-blur-2xl rounded-[17px] p-6 w-[260px] flex flex-col gap-5">
+                        
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-2 h-2 rounded-full bg-[#7a9a6e] shadow-[0_0_10px_rgba(122,154,110,0.6)]" id="card-dot"></div>
+                            <span class="text-xs font-normal text-[#e8efe2] tracking-wide">Live Survey Feed</span>
+                        </div>
+                        
+                        <div class="flex flex-col gap-3.5 w-full">
+                            <div class="flex justify-between items-center w-full">
+                                <span class="text-xs font-light text-[#c4b99a]/60">Elevation</span>
+                                <span class="text-xs font-light text-[#c4b99a] tabular-nums tracking-tight" id="val-elev">1,836m</span>
+                            </div>
+                            
+                            <!-- Custom Progress Bar -->
+                            <div class="w-full h-[3px] bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-[#5c7a4a] to-[#7a9a6e] rounded-full transition-all duration-700 ease-out" style="width: 57%;" id="val-bar"></div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center w-full">
+                                <span class="text-xs font-light text-[#c4b99a]/60">Gradient</span>
+                                <span class="text-xs font-light text-[#c4b99a] tabular-nums tracking-tight" id="val-grad">13.4°</span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center w-full">
+                                <span class="text-xs font-light text-[#c4b99a]/60">Contour Int.</span>
+                                <span class="text-xs font-light text-[#c4b99a] tabular-nums tracking-tight">25m</span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center w-full">
+                                <span class="text-xs font-light text-[#c4b99a]/60">Layer</span>
+                                <span class="text-xs font-light text-[#c4b99a] tracking-tight transition-opacity duration-300" id="val-layer" style="opacity: 1;">Surface</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Scroll Indicator -->
+        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 opacity-0 z-20" id="anim-scroll">
+            <span class="text-[0.6rem] font-light text-[#c4b99a]/40 uppercase tracking-[0.15em]">Scroll</span>
+            <div class="w-[1px] h-8 bg-white/10 overflow-hidden relative">
+                <div class="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-transparent via-[#7a9a6e] to-transparent" id="scroll-line"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Entry & Ambient Animations using Web Animations API
+        document.addEventListener("DOMContentLoaded", () => {
+            const easeOutQuint = 'cubic-bezier(0.22, 1, 0.36, 1)';
+            const easeOutExpo = 'cubic-bezier(0.16, 1, 0.3, 1)';
+            
+            // Initial Entry
+            document.getElementById('nav-bar').animate(
+                [{ opacity: 0, transform: 'translateY(-10px)' }, { opacity: 1, transform: 'translateY(0)' }],
+                { duration: 1000, easing: easeOutQuint, fill: 'forwards', delay: 100 }
+            );
+
+            const sequence = ['anim-label', 'anim-title', 'anim-sub', 'anim-actions', 'anim-stats'];
+            sequence.forEach((id, index) => {
+                const el = document.getElementById(id);
+                if(el) {
+                    el.animate(
+                        [{ opacity: 0, transform: 'translateY(15px)', filter: 'blur(4px)' }, { opacity: 1, transform: 'translateY(0)', filter: 'blur(0)' }],
+                        { duration: 1200, easing: easeOutExpo, fill: 'forwards', delay: 300 + (index * 120) }
+                    );
+                }
+            });
+
+            // Card Reveal
+            const card = document.getElementById('anim-card');
+            if(card) {
+                card.animate(
+                    [{ opacity: 0, transform: 'translateY(-50%) translateX(20px) scale(0.98)', filter: 'blur(10px)' }, 
+                     { opacity: 1, transform: 'translateY(-50%) translateX(0) scale(1)', filter: 'blur(0)' }],
+                    { duration: 1400, easing: easeOutExpo, fill: 'forwards', delay: 800 }
+                );
+            }
+
+            // Scroll Hint Entry
+            const scrollWrap = document.getElementById('anim-scroll');
+            if(scrollWrap) {
+                scrollWrap.animate(
+                    [{ opacity: 0 }, { opacity: 1 }],
+                    { duration: 1000, easing: 'linear', fill: 'forwards', delay: 1500 }
+                );
+            }
+
+            // Ambient Loops
+            const scrollLine = document.getElementById('scroll-line');
+            if(scrollLine) {
+                scrollLine.animate(
+                    [{ transform: 'translateY(-100%)' }, { transform: 'translateY(200%)' }],
+                    { duration: 2000, iterations: Infinity, easing: 'ease-in-out' }
+                );
+            }
+
+            const cardDot = document.getElementById('card-dot');
+            if(cardDot) {
+                cardDot.animate(
+                    [{ opacity: 0.4, transform: 'scale(0.8)' }, { opacity: 1, transform: 'scale(1.2)' }, { opacity: 0.4, transform: 'scale(0.8)' }],
+                    { duration: 2500, iterations: Infinity, easing: 'ease-in-out' }
+                );
+            }
+
+            // Data Simulation Logic
+            const layers = ['Bedrock', 'Sediment', 'Topsoil', 'Canopy', 'Surface'];
+            const elElev = document.getElementById('val-elev');
+            const elGrad = document.getElementById('val-grad');
+            const elLayer = document.getElementById('val-layer');
+            const elBar = document.getElementById('val-bar');
+            
+            let currentElev = 1847;
+            let currentGrad = 14.2;
+
+            setInterval(() => {
+                currentElev += Math.round((Math.random() - 0.5) * 40);
+                currentElev = Math.max(400, Math.min(3200, currentElev));
+                
+                currentGrad += (Math.random() - 0.5) * 2;
+                currentGrad = Math.max(2, Math.min(35, currentGrad));
+                
+                if(elElev) elElev.textContent = currentElev.toLocaleString() + 'm';
+                if(elGrad) elGrad.textContent = currentGrad.toFixed(1) + '°';
+                
+                if(elLayer && Math.random() > 0.7) {
+                    elLayer.style.opacity = '0.5';
+                    setTimeout(() => {
+                        elLayer.textContent = layers[Math.floor(Math.random() * layers.length)];
+                        elLayer.style.opacity = '1';
+                    }, 150);
+                }
+                
+                if(elBar) {
+                    const pct = Math.round((currentElev / 3200) * 100);
+                    elBar.style.width = pct + '%';
+                }
+            }, 2000);
+        });
+
+        // WebGL Topo-Drift Shader
+        (function(){
+            const canvas = document.getElementById('heroCanvas');
+            const gl = canvas.getContext('webgl', { alpha: true, antialias: false, premultipliedAlpha: false });
+            if(!gl) return;
+
+            let mx = -0.5, my = -0.5, tmx = -0.5, tmy = -0.5;
+
+            function resize(){
+                const dpr = Math.min(window.devicePixelRatio, 1.5);
+                const W = canvas.parentElement.clientWidth;
+                const H = canvas.parentElement.clientHeight;
+                canvas.width = W * dpr;
+                canvas.height = H * dpr;
+                canvas.style.width = W + 'px';
+                canvas.style.height = H + 'px';
+                gl.viewport(0, 0, canvas.width, canvas.height);
+            }
+
+            const VERT = `attribute vec2 p;void main(){gl_Position=vec4(p,0,1);}`;
+
+            const FRAG = `
+            precision highp float;
+            uniform float u_t;
+            uniform vec2 u_r;
+            uniform vec2 u_m;
+
+            vec3 mod289(vec3 x){return x-floor(x*(1./289.))*289.;}
+            vec4 mod289(vec4 x){return x-floor(x*(1./289.))*289.;}
+            vec4 perm(vec4 x){return mod289(((x*34.)+1.)*x);}
+            float snoise(vec3 v){
+                const vec2 C=vec2(1./6.,1./3.);
+                const vec4 D=vec4(0,.5,1,2);
+                vec3 i=floor(v+dot(v,C.yyy));
+                vec3 x0=v-i+dot(i,C.xxx);
+                vec3 g=step(x0.yzx,x0.xyz);vec3 l=1.-g;
+                vec3 i1=min(g,l.zxy);vec3 i2=max(g,l.zxy);
+                vec3 x1=x0-i1+C.xxx;vec3 x2=x0-i2+C.yyy;vec3 x3=x0-D.yyy;
+                i=mod289(i);
+                vec4 p=perm(perm(perm(i.z+vec4(0,i1.z,i2.z,1))+i.y+vec4(0,i1.y,i2.y,1))+i.x+vec4(0,i1.x,i2.x,1));
+                float n_=1./7.;vec3 ns=n_*D.wyz-D.xzx;
+                vec4 j=p-49.*floor(p*ns.z*ns.z);
+                vec4 x_=floor(j*ns.z);vec4 y_=floor(j-7.*x_);
+                vec4 x=x_*ns.x+ns.yyyy;vec4 y=y_*ns.x+ns.yyyy;
+                vec4 h=1.-abs(x)-abs(y);
+                vec4 b0=vec4(x.xy,y.xy);vec4 b1=vec4(x.zw,y.zw);
+                vec4 s0=floor(b0)*2.+1.;vec4 s1=floor(b1)*2.+1.;
+                vec4 sh=-step(h,vec4(0));
+                vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy;vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;
+                vec3 p0=vec3(a0.xy,h.x);vec3 p1=vec3(a0.zw,h.y);
+                vec3 p2=vec3(a1.xy,h.z);vec3 p3=vec3(a1.zw,h.w);
+                vec4 norm=1.79284291400159-.85373472095314*vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3));
+                p0*=norm.x;p1*=norm.y;p2*=norm.z;p3*=norm.w;
+                vec4 m=max(.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.);
+                m=m*m;
+                return 42.*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
+            }
+
+            float terrain(vec2 uv, float t){
+                float h = 0.0;
+                h += snoise(vec3(uv * 2.0, t * 0.014)) * 0.7;
+                h += snoise(vec3(uv * 3.5 + 5.3, t * 0.018 + 2.1)) * 0.4;
+                float warpX = snoise(vec3(uv * 1.8, t * 0.011 + 10.0)) * 0.18;
+                float warpY = snoise(vec3(uv * 1.8, t * 0.011 + 20.0)) * 0.18;
+                h += snoise(vec3((uv.x + warpX) * 2.8, (uv.y + warpY) * 2.8, t * 0.015)) * 0.3;
+                h += snoise(vec3(uv * 5.0 + 3.7, t * 0.022 + 7.0)) * 0.12;
+                vec2 mPos = u_m;
+                float mDist = length(uv - mPos);
+                h += exp(-mDist * mDist * 20.0) * 0.3;
+                h += exp(-mDist * mDist * 6.0) * 0.1;
+                return h;
+            }
+
+            void main(){
+                vec2 uv = gl_FragCoord.xy / u_r;
+                float aspect = u_r.x / u_r.y;
+                vec2 st = vec2(uv.x * aspect, uv.y);
+                float t = u_t;
+
+                float h = terrain(st, t);
+                h = h * 0.4 + 0.5;
+                h = clamp(h, 0.0, 1.0);
+                h = h < 0.5 ? h : 0.5 + (h - 0.5) * 0.85;
+
+                float levels = 20.0;
+                float scaled = h * levels;
+                float contourVal = fract(scaled);
+                float distToLine = min(contourVal, 1.0 - contourVal);
+                float line = 1.0 - smoothstep(0.0, 0.04, distToLine);
+
+                float majorLevels = levels / 5.0;
+                float majorScaled = h * majorLevels;
+                float majorFract = fract(majorScaled);
+                float majorDistToLine = min(majorFract, 1.0 - majorFract);
+                float majorLine = 1.0 - smoothstep(0.0, 0.07, majorDistToLine);
+
+                vec3 bgDark = vec3(0.04, 0.05, 0.03);
+                vec3 sageGreen = vec3(0.48, 0.60, 0.43);
+                vec3 oliveGreen = vec3(0.36, 0.48, 0.29);
+                vec3 fadedSage = vec3(0.25, 0.35, 0.20);
+                vec3 whitePeak = vec3(0.91, 0.94, 0.89);
+
+                float elevNorm = h;
+                vec3 fill = bgDark + vec3(0.01, 0.012, 0.008) * elevNorm;
+                float bandId = floor(scaled);
+                fill += vec3(0.004, 0.005, 0.003) * (sin(bandId * 2.3) * 0.5 + 0.5);
+
+                vec3 minorCol = mix(fadedSage * 0.5, sageGreen * 0.6, smoothstep(0.2, 0.5, elevNorm));
+                minorCol = mix(minorCol, sageGreen * 0.8, smoothstep(0.6, 0.85, elevNorm));
+
+                vec3 majorCol = mix(oliveGreen * 0.7, sageGreen, smoothstep(0.2, 0.5, elevNorm));
+                majorCol = mix(majorCol, whitePeak * 0.7, smoothstep(0.6, 0.9, elevNorm));
+
+                vec3 col = fill;
+                col = mix(col, minorCol, line * 0.8);
+                col = mix(col, majorCol, majorLine);
+
+                float majorGlowDist = min(majorFract, 1.0 - majorFract);
+                float majorGlow = 1.0 - smoothstep(0.0, 0.2, majorGlowDist);
+                col += sageGreen * 0.04 * majorGlow * smoothstep(0.3, 0.7, elevNorm);
+
+                float mDist = length(uv - u_m);
+                float mouseGlow = exp(-mDist * mDist * 12.0) * 0.15;
+                float lineNear = max(line * 0.5, majorLine * 0.8);
+                col += sageGreen * mouseGlow * (0.1 + lineNear * 0.3);
+                col += whitePeak * exp(-mDist * mDist * 40.0) * 0.04;
+
+                vec2 gridUV = st * 10.0;
+                float gridX = smoothstep(0.97, 1.0, fract(gridUV.x)) + smoothstep(0.03, 0.0, fract(gridUV.x));
+                float gridY = smoothstep(0.97, 1.0, fract(gridUV.y)) + smoothstep(0.03, 0.0, fract(gridUV.y));
+                float grid = clamp(gridX + gridY, 0.0, 1.0);
+                col += vec3(0.08, 0.10, 0.06) * grid * 0.05;
+
+                float vig = 1.0 - length((uv - 0.5) * vec2(1.1, 1.5));
+                vig = smoothstep(-0.1, 0.7, vig);
+                col *= mix(0.3, 1.0, vig);
+
+                float alpha = 0.9 * mix(0.4, 1.0, vig);
+                gl_FragColor = vec4(col, alpha);
+            }
+            `;
+
+            function compile(type, src){
+                const s = gl.createShader(type);
+                gl.shaderSource(s, src);
+                gl.compileShader(s);
+                return s;
+            }
+
+            const prog = gl.createProgram();
+            gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+            gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+            gl.linkProgram(prog);
+            gl.useProgram(prog);
+
+            const buf = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+            const pLoc = gl.getAttribLocation(prog, 'p');
+            gl.enableVertexAttribArray(pLoc);
+            gl.vertexAttribPointer(pLoc, 2, gl.FLOAT, false, 0, 0);
+
+            const u_t = gl.getUniformLocation(prog, 'u_t');
+            const u_r = gl.getUniformLocation(prog, 'u_r');
+            const u_m = gl.getUniformLocation(prog, 'u_m');
+
+            canvas.parentElement.addEventListener('mousemove', e => {
+                const r = canvas.getBoundingClientRect();
+                tmx = (e.clientX - r.left) / r.width;
+                tmy = 1.0 - (e.clientY - r.top) / r.height;
+            });
+
+            resize();
+            window.addEventListener('resize', resize);
+
+            function frame(t){
+                requestAnimationFrame(frame);
+                mx += (tmx - mx) * 0.05;
+                my += (tmy - my) * 0.05;
+                gl.clearColor(0, 0, 0, 0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                gl.enable(gl.BLEND);
+                gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+                gl.useProgram(prog);
+                gl.uniform1f(u_t, t * 0.001);
+                gl.uniform2f(u_r, canvas.width, canvas.height);
+                gl.uniform2f(u_m, mx, my);
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            }
+            requestAnimationFrame(frame);
+        })();
+    </script>
+
+</body></html>
