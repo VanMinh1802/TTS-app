@@ -138,11 +138,35 @@ async def llm_normalize(text: str, api_key: str) -> tuple[str, str]:
     try:
         result = await _call_gemini(text, api_key)
         if result:
-            _result_cache[cache_k] = result
+            import json
+            normalized_text = text
+            try:
+                # Clean markdown if present
+                clean_result = result
+                if clean_result.startswith("```json"):
+                    clean_result = clean_result[7:]
+                if clean_result.startswith("```"):
+                    clean_result = clean_result[3:]
+                if clean_result.endswith("```"):
+                    clean_result = clean_result[:-3]
+                
+                terms = json.loads(clean_result.strip())
+                if isinstance(terms, list):
+                    terms.sort(key=lambda x: len(x.get("word", "")), reverse=True)
+                    for term in terms:
+                        word = term.get("word")
+                        pronunciation = term.get("pronunciation")
+                        if word and pronunciation:
+                            normalized_text = normalized_text.replace(word, pronunciation)
+            except Exception as e:
+                logger.error("Failed to parse LLM terms for normalization: %s", e)
+                return text, LLM_STATUS_ERROR
+
+            _result_cache[cache_k] = normalized_text
             # Evict oldest entries if cache is full
             while len(_result_cache) > _MAX_CACHE_SIZE:
                 _result_cache.popitem(last=False)
-            return result, LLM_STATUS_SUCCESS
+            return normalized_text, LLM_STATUS_SUCCESS
 
     except Exception as exc:  # noqa: BLE001
         status = _classify_http_error(exc)
