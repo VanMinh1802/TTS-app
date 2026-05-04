@@ -17,13 +17,14 @@ from app.schemas.dictionary import (
     DictionaryUpdate,
 )
 from app.core.exceptions import ConflictError, NotFoundError
+from app.repositories.dictionary import DictionaryRepository
 from app.services.dictionary_service import DictionaryService
 
 router = APIRouter(prefix="/dictionary", tags=["Dictionary"])
 
 
 def get_dictionary_service(db: Session = Depends(get_db)) -> DictionaryService:
-    return DictionaryService(db)
+    return DictionaryService(DictionaryRepository(db))
 
 
 @router.get("", response_model=DictionaryListResponse)

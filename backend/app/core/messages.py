@@ -17,9 +17,6 @@ BACKEND_MESSAGES = {
         "record_not_found": "Không tìm thấy file âm thanh (Record not found).",
         "r2_upload_error": "Lỗi khi tải file lên máy chủ (R2 Upload Error).",
     },
-    "notifications": {
-        "rate_limit_retry": "API rate limit đã vượt quá. Vui lòng thử lại sau {seconds} giây.",
-    },
     "status": {
         "api_key_valid": "✓ API key hợp lệ và hoạt động tốt",
         "api_key_invalid": "✗ API key không hợp lệ hoặc đã bị thu hồi",

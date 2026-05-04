@@ -1,11 +1,10 @@
 """Analytics API endpoints for admin."""
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
 
-from app.db import get_db
-from app.services.analytics_service import AnalyticsService
 from app.api.auth import get_current_user
+from app.core.di import get_analytics_service
 from app.models.user import User
+from app.services.analytics_service import AnalyticsService
 
 
 router = APIRouter(prefix="/admin/analytics", tags=["Analytics"])
@@ -23,11 +22,10 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
 
 @router.get("")
 async def get_analytics(
-    db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
+    service: AnalyticsService = Depends(get_analytics_service),
 ) -> dict:
     """Get analytics summary for admin dashboard."""
-    service = AnalyticsService(db)
     
     return {
         "total_requests": service.get_total_requests(),

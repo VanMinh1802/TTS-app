@@ -5,13 +5,15 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.user_emotion_dict import UserEmotionDict
+from app.repositories.emotion_dict import EmotionDictRepository
 
 
 class EmotionDictService:
     """Service for user emotion dictionary operations."""
 
-    def __init__(self, db: Session):
-        self.db = db
+    def __init__(self, repo: EmotionDictRepository):
+        self.repo = repo
+        self.db = repo.session
 
     def get_by_user(
         self, user_id: str

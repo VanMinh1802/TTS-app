@@ -1,20 +1,15 @@
 """API Router for Audio Library."""
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
-from sqlalchemy.orm import Session
 
 from app.api.auth import get_current_user
-from app.db import get_db
+from app.core.di import get_library_service, get_uow
+from app.core.uow import UnitOfWork
 from app.models.user import User
 from app.schemas.library import AudioRecordResponse, LibraryListResponse
 from app.services.library_service import LibraryService
 from app.services.quota_service import QuotaService
 
 router = APIRouter(prefix="/library", tags=["Library"])
-
-
-def get_library_service(db: Session = Depends(get_db)) -> LibraryService:
-    """Get library service instance."""
-    return LibraryService(db)
 
 
 @router.post("/upload", response_model=AudioRecordResponse)
@@ -24,11 +19,11 @@ async def upload_to_library(
     voice_id: str = Form(...),
     user: User = Depends(get_current_user),
     service: LibraryService = Depends(get_library_service),
-    db: Session = Depends(get_db)
+    uow: UnitOfWork = Depends(get_uow)
 ):
     """Upload an audio file to Cloudflare R2 and save metadata (PRO users only)."""
     # Check tier
-    quota_service = QuotaService(db)
+    quota_service = QuotaService(uow)
     quota = quota_service.get_or_create_quota(user.id)
     if quota.tier != "pro" and quota.tier != "enterprise":
         raise HTTPException(

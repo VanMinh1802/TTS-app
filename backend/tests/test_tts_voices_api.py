@@ -2,10 +2,10 @@
 
 
 def test_tts_voice_list_excludes_default_alias_duplicate(client, monkeypatch):
-    from app.api import tts as tts_module
+    import app.services.tts_service as tts_svc
 
     monkeypatch.setattr(
-        tts_module,
+        tts_svc,
         "MODELS",
         {
             "ngochuyen": {"name": "Ngọc Huyền", "path": "vi/ngochuyen/ngochuyen.onnx", "sample_url": "https://cdn.example.com/vi/ngochuyen/sample.wav"},

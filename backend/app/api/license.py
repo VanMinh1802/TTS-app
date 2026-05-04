@@ -1,9 +1,8 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
 
 from app.api.auth import get_current_user
-from app.db import get_db
+from app.core.di import get_license_service
 from app.models.user import User
 from app.schemas.license import LicenseGenerateRequest, LicenseActivateRequest, LicenseResponse
 from app.services.license_service import LicenseService
@@ -22,9 +21,8 @@ def get_admin_user(current_user: User = Depends(get_current_user)) -> User:
 def generate_licenses(
     request: LicenseGenerateRequest,
     current_user: User = Depends(get_admin_user),
-    db: Session = Depends(get_db)
+    service: LicenseService = Depends(get_license_service),
 ):
-    service = LicenseService(db)
     try:
         keys = service.generate_keys(
             current_user=current_user,
@@ -39,9 +37,8 @@ def generate_licenses(
 @router.get("/admin/licenses", response_model=List[LicenseResponse])
 def get_all_licenses(
     current_user: User = Depends(get_admin_user),
-    db: Session = Depends(get_db)
+    service: LicenseService = Depends(get_license_service),
 ):
-    service = LicenseService(db)
     try:
         return service.get_all_licenses(current_user)
     except Exception as e:
@@ -51,9 +48,8 @@ def get_all_licenses(
 def delete_license(
     license_id: str,
     current_user: User = Depends(get_admin_user),
-    db: Session = Depends(get_db)
+    service: LicenseService = Depends(get_license_service),
 ):
-    service = LicenseService(db)
     try:
         service.delete_license(current_user, license_id)
         return {"success": True}
@@ -66,9 +62,8 @@ def delete_license(
 def activate_subscription(
     request: LicenseActivateRequest,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    service: LicenseService = Depends(get_license_service),
 ):
-    service = LicenseService(db)
     try:
         service.activate_key(current_user, request.code)
         return {

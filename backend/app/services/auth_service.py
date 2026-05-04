@@ -6,8 +6,7 @@ from typing import Optional
 
 from google.oauth2 import id_token
 from google.auth.transport import requests
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import select, func
 
 from app.core.security import (
     create_access_token,
@@ -15,6 +14,7 @@ from app.core.security import (
     decode_token,
 )
 from app.core.settings import settings
+from app.core.uow import UnitOfWork
 from app.models.user import APIKey, User
 from app.schemas.auth import APIKeyCreate, TokenResponse
 from app.core.exceptions import NotFoundError, PermissionDeniedError, InvalidInputError
@@ -25,8 +25,8 @@ logger = logging.getLogger(__name__)
 class AuthService:
     """Authentication service."""
 
-    def __init__(self, db: Session):
-        self.db = db
+    def __init__(self, uow: UnitOfWork):
+        self.uow = uow
 
     async def verify_google_token(self, credential: str) -> dict:
         """Verify Google token and return user info.
@@ -82,18 +82,15 @@ class AuthService:
             
         name = idinfo.get("name", "")
 
-        user = self.db.execute(
-            select(User).where(User.email == email)
-        ).scalar_one_or_none()
+        user = self.uow.users.get_by_email(email)
 
         if not user:
             user = User(
                 email=email,
                 name=name,
             )
-            self.db.add(user)
-            self.db.commit()
-            self.db.refresh(user)
+            self.uow.users.create(user)
+            self.uow.commit()
         
         if not user.is_active:
             raise PermissionDeniedError("Account is inactive")
@@ -116,7 +113,7 @@ class AuthService:
         if payload.get("type") != "access":
             raise PermissionDeniedError("Invalid token type")
 
-        user = self.db.get(User, payload.get("sub"))
+        user = self.uow.users.get(payload.get("sub"))
         if not user:
             raise NotFoundError("User not found")
 
@@ -124,16 +121,15 @@ class AuthService:
             raise PermissionDeniedError("User is inactive")
 
         return user
+
     def create_api_key(self, user: User, key_data: APIKeyCreate) -> tuple[APIKey, str]:
         """Create a new API key for user."""
         import secrets
         from app.core.security import pwd_context
         
-        # We need the ID first, so we'll create the object, then generate the key
         import uuid
         key_id = str(uuid.uuid4())
         
-        # Generate random key: format is gva_{key_id}.{random_secret}
         secret_bytes = secrets.token_urlsafe(32)
         full_key = f"gva_{key_id}.{secret_bytes}"
         key_hash = pwd_context.hash(full_key)
@@ -150,43 +146,25 @@ class AuthService:
             expires_at=expires_at,
             scopes=key_data.scopes or "models:read,tts:generate",
         )
-        self.db.add(api_key)
-        self.db.commit()
-        self.db.refresh(api_key)
+        self.uow.api_keys.create(api_key)
+        self.uow.commit()
 
         return api_key, full_key
 
     def list_api_keys(self, user: User, limit: int = 50, offset: int = 0) -> tuple[list[APIKey], int]:
         """List active API keys for user with pagination."""
-        from sqlalchemy import func
-        total = self.db.execute(
-            select(func.count(APIKey.id))
-            .where(APIKey.user_id == user.id, APIKey.is_active == True)
-        ).scalar() or 0
-        
-        records = self.db.execute(
-            select(APIKey)
-            .where(APIKey.user_id == user.id, APIKey.is_active == True)
-            .order_by(APIKey.created_at.desc())
-            .limit(limit)
-            .offset(offset)
-        ).scalars().all()
-        return records, total
+        page = (offset // limit) + 1
+        return self.uow.api_keys.list_by_user(user.id, page=page, per_page=limit)
 
     def revoke_api_key(self, user: User, key_id: str) -> bool:
         """Revoke an API key."""
-        api_key = self.db.execute(
-            select(APIKey).where(
-                APIKey.id == key_id,
-                APIKey.user_id == user.id
-            )
-        ).scalar_one_or_none()
+        api_key = self.uow.api_keys.find_one(id=key_id, user_id=user.id)
 
         if not api_key:
             raise NotFoundError("API key not found")
 
         api_key.is_active = False
-        self.db.commit()
+        self.uow.commit()
         return True
 
     def validate_api_key(self, api_key: str) -> Optional[User]:
@@ -206,9 +184,9 @@ class AuthService:
         key_id = parts[0]
         
         # Look up directly by ID instead of scanning entire table
-        key = self.db.get(APIKey, key_id)
+        key = self.uow.api_keys.get_active_key(key_id)
         
-        if not key or not key.is_active:
+        if not key:
             return None
             
         if key.expires_at and key.expires_at < datetime.now(timezone.utc):
@@ -241,7 +219,7 @@ class AuthService:
         if is_valid:
             key.total_requests += 1
             key.last_used_at = datetime.now(timezone.utc)
-            self.db.commit()
-            return self.db.get(User, key.user_id)
+            self.uow.commit()
+            return self.uow.users.get(key.user_id)
             
         return None

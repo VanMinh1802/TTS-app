@@ -14,6 +14,7 @@ class TestModelUrls:
         from app.core.settings import Settings, get_r2_public_base_url
 
         settings = Settings(
+            JWT_SECRET_KEY="test-secret-key-for-testing",
             R2_PUBLIC_URL="https://cdn.example.com",
             R2_ACCOUNT_ID="fallback-account",
         )
@@ -25,6 +26,7 @@ class TestModelUrls:
         from app.core.settings import Settings, get_r2_public_base_url
 
         settings = Settings(
+            JWT_SECRET_KEY="test-secret-key-for-testing",
             R2_PUBLIC_URL="",
             R2_ACCOUNT_ID="fallback-account",
         )
@@ -38,7 +40,7 @@ class TestR2Helpers:
     def test_public_base_url_is_shared_source(self, monkeypatch):
         from app.core.settings import Settings, get_r2_public_base_url
 
-        settings = Settings(R2_PUBLIC_URL="https://cdn.example.com", R2_ACCOUNT_ID="fallback-account")
+        settings = Settings(JWT_SECRET_KEY="test-secret-key-for-testing", R2_PUBLIC_URL="https://cdn.example.com", R2_ACCOUNT_ID="fallback-account")
         monkeypatch.setattr("app.core.settings.settings", settings)
 
         assert get_r2_public_base_url() == "https://cdn.example.com"
@@ -70,7 +72,7 @@ class TestR2Helpers:
         from app.core.settings import Settings, get_r2_public_base_url
         from app.services import voice_registry as registry_module
 
-        settings = Settings(R2_PUBLIC_URL="https://cdn.example.com", R2_ACCOUNT_ID="account-123")
+        settings = Settings(JWT_SECRET_KEY="test-secret-key-for-testing", R2_PUBLIC_URL="https://cdn.example.com", R2_ACCOUNT_ID="account-123")
         monkeypatch.setattr("app.core.settings.settings", settings)
 
         assert get_r2_public_base_url() == "https://cdn.example.com"

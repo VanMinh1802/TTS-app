@@ -1,9 +1,8 @@
 """Quota API routes."""
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends
 
 from app.api.auth import get_current_user
-from app.db import get_db
+from app.core.di import get_quota_service
 from app.models.user import User
 from app.schemas.quota import (
     QuotaStatusResponse,
@@ -13,11 +12,6 @@ from app.schemas.quota import (
 from app.services.quota_service import QuotaService
 
 router = APIRouter(prefix="/quota", tags=["Quota"])
-
-
-def get_quota_service(db: Session = Depends(get_db)) -> QuotaService:
-    """Get quota service instance."""
-    return QuotaService(db)
 
 
 @router.get("", response_model=QuotaStatusResponse)

@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Header, Request, Response, status, HTTPE
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.di import get_auth_service
 from app.core.exceptions import ServiceError
 from app.core.settings import settings
 from app.core.security import decode_token, create_access_token, create_refresh_token
@@ -62,10 +63,9 @@ def get_current_user(
     request: Request,
     authorization: Annotated[Optional[str], Header()] = None,
     x_api_key: Annotated[Optional[str], Header()] = None,
-    db: Session = Depends(get_db),
+    auth_service: AuthService = Depends(get_auth_service),
 ) -> User:
     """Get current user from cookie, authorization header, or API key."""
-    auth_service = AuthService(db)
 
     if authorization and x_api_key:
         raise HTTPException(
@@ -130,10 +130,9 @@ def get_current_user(
 async def login_google(
     request: GoogleLoginRequest,
     response: Response,
-    db: Session = Depends(get_db),
+    auth_service: AuthService = Depends(get_auth_service),
 ):
     """Login with Google OAuth credential. Issues access + refresh tokens."""
-    auth_service = AuthService(db)
     token_response = await auth_service.google_login(request.credential)
 
     # Set access_token cookie (short-lived)
@@ -212,10 +211,9 @@ def get_me(user: User = Depends(get_current_user), db: Session = Depends(get_db)
 def create_api_key(
     key_data: APIKeyCreate,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    auth_service: AuthService = Depends(get_auth_service),
 ):
     """Create a new API key."""
-    auth_service = AuthService(db)
     api_key, full_key = auth_service.create_api_key(user, key_data)
     return APIKeyCreateResponse(
         id=api_key.id,
@@ -238,10 +236,9 @@ def list_api_keys(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    auth_service: AuthService = Depends(get_auth_service),
 ):
     """List user's API keys with pagination."""
-    auth_service = AuthService(db)
     api_keys, total = auth_service.list_api_keys(user, limit=limit, offset=offset)
 
     items = [
@@ -268,10 +265,9 @@ def list_api_keys(
 def revoke_api_key(
     key_id: str,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    auth_service: AuthService = Depends(get_auth_service),
 ):
     """Revoke an API key."""
-    auth_service = AuthService(db)
     auth_service.revoke_api_key(user, key_id)
     return {"status": "revoked"}
 

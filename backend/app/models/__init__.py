@@ -11,7 +11,6 @@ from app.models.analytics import RequestLog, UsageSnapshot
 from app.models.dictionary import DictionaryEntryModel
 from app.models.quota import UserQuota, UsageHistory
 from app.models.user import APIKey, User
-from app.models.voice import Voice
 from app.models.audio_record import AudioRecord
 from app.models.license import LicenseKey
 
@@ -22,7 +21,6 @@ __all__ = [
     "UserQuota",
     "UsageHistory",
     "DictionaryEntryModel",
-    "Voice",
     "RequestLog",
     "UsageSnapshot",
     "AudioRecord",

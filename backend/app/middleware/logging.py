@@ -6,6 +6,7 @@ from typing import Callable
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app.core.uow import UnitOfWork
 from app.db import get_db
 from app.services.analytics_service import AnalyticsService, normalize_request_metadata
 
@@ -30,7 +31,8 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         db = None
         try:
             db = next(db_gen)
-            service = AnalyticsService(db)
+            uow = UnitOfWork(db)
+            service = AnalyticsService(uow)
             service.log_request(
                 method=request.method,
                 path=request.url.path,

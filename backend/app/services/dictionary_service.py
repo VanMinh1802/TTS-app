@@ -9,14 +9,16 @@ from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError
 from app.models.dictionary import DictionaryEntryModel
+from app.repositories.dictionary import DictionaryRepository
 from app.schemas.dictionary import DictionaryCreate, DictionaryEntry, DictionaryUpdate
 
 
 class DictionaryService:
     """Dictionary persistence and retrieval."""
 
-    def __init__(self, db: Session):
-        self.db = db
+    def __init__(self, repo: DictionaryRepository):
+        self.repo = repo
+        self.db = repo.session
 
     @staticmethod
     def _to_schema(entry: DictionaryEntryModel) -> DictionaryEntry:

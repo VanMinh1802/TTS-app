@@ -12,6 +12,7 @@ from app.schemas.user_emotion_dict import (
     UserEmotionDictResponse,
     UserEmotionDictUpdate,
 )
+from app.repositories.emotion_dict import EmotionDictRepository
 from app.services.emotion_dict_service import EmotionDictService
 
 router = APIRouter(
@@ -26,7 +27,7 @@ def get_emotion_dict(
     db: Session = Depends(get_db),
 ):
     """Get all custom emotion params for current user."""
-    service = EmotionDictService(db)
+    service = EmotionDictService(EmotionDictRepository(db))
     user_dicts = service.get_by_user(current_user.id)
     return {
         "data": [
@@ -48,7 +49,7 @@ def upsert_emotion_dict(
     db: Session = Depends(get_db),
 ):
     """Create or update emotion params for a user."""
-    service = EmotionDictService(db)
+    service = EmotionDictService(EmotionDictRepository(db))
 
     existing_stmt = service.get_by_user(current_user.id)
     existing = next(
@@ -82,7 +83,7 @@ def delete_emotion_dict(
     db: Session = Depends(get_db),
 ):
     """Delete custom emotion params for a user."""
-    service = EmotionDictService(db)
+    service = EmotionDictService(EmotionDictRepository(db))
     deleted = service.delete(current_user.id, emotion_key)
 
     if not deleted:

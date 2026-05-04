@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql://user:pass@localhost:5432/genvoice"
 
     # Auth - JWT
-    JWT_SECRET_KEY: str = "your-secret-key-change-in-production"
+    JWT_SECRET_KEY: str = ""
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
@@ -98,10 +98,25 @@ class Settings(BaseSettings):
         return v
 
 
+def _validate_required(settings: Settings) -> None:
+    """Validate that required fields are set after loading from env."""
+    errors: list[str] = []
+    if not settings.JWT_SECRET_KEY:
+        errors.append("JWT_SECRET_KEY must not be empty. Set it in .env or environment variables.")
+    if len(settings.JWT_SECRET_KEY) < 16:
+        errors.append("JWT_SECRET_KEY must be at least 16 characters long for security.")
+    if not settings.DATABASE_URL:
+        errors.append("DATABASE_URL must not be empty. Set it in .env or environment variables.")
+    if errors:
+        raise RuntimeError("Settings validation failed:\n  - " + "\n  - ".join(errors))
+
+
 @lru_cache()
 def get_settings() -> Settings:
     """Get cached settings instance."""
-    return Settings()
+    s = Settings()
+    _validate_required(s)
+    return s
 
 
 settings = get_settings()

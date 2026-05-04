@@ -4,6 +4,7 @@ import pytest
 
 from app.models.user import User
 from app.schemas.dictionary import DictionaryCreate, DictionaryEntry, DictionaryUpdate
+from app.repositories.dictionary import DictionaryRepository
 from app.services.dictionary_service import DictionaryService
 
 
@@ -17,7 +18,7 @@ def create_user(db_session, email: str = "dictionary@example.com") -> User:
 
 def test_dictionary_entries_persist_and_sort_by_priority(db_session):
     user = create_user(db_session)
-    service = DictionaryService(db_session)
+    service = DictionaryService(DictionaryRepository(db_session))
 
     first = service.create_entry(
         user.id,
@@ -40,7 +41,7 @@ def test_dictionary_entries_persist_and_sort_by_priority(db_session):
 
 def test_dictionary_update_and_delete_persist(db_session):
     user = create_user(db_session)
-    service = DictionaryService(db_session)
+    service = DictionaryService(DictionaryRepository(db_session))
 
     entry = service.create_entry(
         user.id,
@@ -65,7 +66,7 @@ def test_dictionary_update_and_delete_persist(db_session):
 
 def test_dictionary_import_skips_duplicates_and_searches_by_word_and_pronunciation(db_session):
     user = create_user(db_session)
-    service = DictionaryService(db_session)
+    service = DictionaryService(DictionaryRepository(db_session))
 
     imported, total = service.import_entries(
         user.id,
