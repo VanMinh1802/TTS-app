@@ -7,37 +7,36 @@ from datetime import datetime, timezone
 from sqlalchemy import func, select
 
 from app.core.exceptions import ConflictError, NotFoundError
+from app.core.uow import UnitOfWork
 from app.models.dictionary import DictionaryEntryModel
-from app.repositories.dictionary import DictionaryRepository
 from app.schemas.dictionary import DictionaryCreate, DictionaryEntry, DictionaryUpdate
 
 
 class DictionaryService:
     """Dictionary persistence and retrieval."""
 
-    def __init__(self, repo: DictionaryRepository):
-        self.repo = repo
-        self.db = repo.session
+    def __init__(self, uow: UnitOfWork):
+        self.uow = uow
 
     @staticmethod
     def _to_schema(entry: DictionaryEntryModel) -> DictionaryEntry:
         return DictionaryEntry.model_validate(entry, from_attributes=True)
 
-    def list_entries(self, user_id: str) -> tuple[list[DictionaryEntry], int]:
-        entries = self.db.execute(
+    def list_entries(self, user_id: str, offset: int = 0, limit: int = 20) -> tuple[list[DictionaryEntry], int]:
+        total = self.uow.dictionaries.session.execute(
+            select(func.count()).select_from(DictionaryEntryModel)
+            .where(DictionaryEntryModel.user_id == user_id)
+        ).scalar() or 0
+        entries = self.uow.dictionaries.session.execute(
             select(DictionaryEntryModel)
             .where(DictionaryEntryModel.user_id == user_id)
             .order_by(DictionaryEntryModel.priority.desc(), DictionaryEntryModel.word.asc())
+            .offset(offset).limit(limit)
         ).scalars().all()
-        return [self._to_schema(entry) for entry in entries], len(entries)
+        return [self._to_schema(e) for e in entries], total
 
     def create_entry(self, user_id: str, payload: DictionaryCreate) -> DictionaryEntry:
-        existing = self.db.execute(
-            select(DictionaryEntryModel).where(
-                DictionaryEntryModel.user_id == user_id,
-                func.lower(DictionaryEntryModel.word) == payload.word.lower(),
-            )
-        ).scalar_one_or_none()
+        existing = self.uow.dictionaries.find_by_user_and_word(user_id, payload.word)
         if existing:
             raise ConflictError(f"Word '{payload.word}' already exists")
 
@@ -48,13 +47,14 @@ class DictionaryService:
             priority=payload.priority,
             category=payload.category,
         )
-        self.db.add(entry)
-        self.db.commit()
-        self.db.refresh(entry)
+        self.uow.dictionaries.create(entry)
+        self.uow.commit()
         return self._to_schema(entry)
 
     def update_entry(self, user_id: str, entry_id: str, payload: DictionaryUpdate) -> DictionaryEntry:
-        entry = self._get_entry(user_id, entry_id)
+        entry = self.uow.dictionaries.find_one(id=entry_id, user_id=user_id)
+        if not entry:
+            raise NotFoundError("Entry not found")
         if payload.word is not None:
             entry.word = payload.word
         if payload.pronunciation is not None:
@@ -64,18 +64,18 @@ class DictionaryService:
         if payload.category is not None:
             entry.category = payload.category
         entry.updated_at = datetime.now(timezone.utc)
-        self.db.commit()
-        self.db.refresh(entry)
+        self.uow.commit()
         return self._to_schema(entry)
 
     def delete_entry(self, user_id: str, entry_id: str) -> None:
-        entry = self._get_entry(user_id, entry_id)
-        self.db.delete(entry)
-        self.db.commit()
+        entry = self.uow.dictionaries.find_one(id=entry_id, user_id=user_id)
+        if not entry:
+            raise NotFoundError("Entry not found")
+        self.uow.dictionaries.delete(entry)
+        self.uow.commit()
 
     def import_entries(self, user_id: str, payloads: list[DictionaryCreate]) -> tuple[list[DictionaryEntry], int]:
-        existing_words = set(self._entry_map(user_id).keys())
-
+        existing_words = {e.word.lower(): e for e in self.uow.dictionaries.find_all(user_id=user_id)}
         for payload in payloads:
             key = payload.word.lower()
             if key in existing_words:
@@ -87,39 +87,17 @@ class DictionaryService:
                 priority=payload.priority,
                 category=payload.category,
             )
-            self.db.add(entry)
-            existing_words.add(key)
-
-        self.db.commit()
-        entries, total = self.list_entries(user_id)
-        return entries, total
+            self.uow.dictionaries.create(entry)
+            existing_words[key] = entry
+        self.uow.commit()
+        entries = self.uow.dictionaries.find_all(user_id=user_id)
+        entries.sort(key=lambda e: (e.priority, e.word), reverse=True)
+        total = len(entries)
+        return [self._to_schema(e) for e in entries], total
 
     def export_entries(self, user_id: str) -> list[DictionaryEntry]:
-        entries, _ = self.list_entries(user_id)
-        return entries
+        entries = self.uow.dictionaries.find_all(user_id=user_id)
+        return [self._to_schema(e) for e in entries]
 
     def search_entries(self, user_id: str, query: str) -> list[DictionaryEntry]:
-        lowered = query.lower()
-        entries, _ = self.list_entries(user_id)
-        return [
-            entry
-            for entry in entries
-            if lowered in entry.word.lower() or lowered in entry.pronunciation.lower()
-        ]
-
-    def _get_entry(self, user_id: str, entry_id: str) -> DictionaryEntryModel:
-        entry = self.db.execute(
-            select(DictionaryEntryModel).where(
-                DictionaryEntryModel.id == entry_id,
-                DictionaryEntryModel.user_id == user_id,
-            )
-        ).scalar_one_or_none()
-        if not entry:
-            raise NotFoundError("Entry not found")
-        return entry
-
-    def _entry_map(self, user_id: str) -> dict[str, DictionaryEntryModel]:
-        entries = self.db.execute(
-            select(DictionaryEntryModel).where(DictionaryEntryModel.user_id == user_id)
-        ).scalars().all()
-        return {entry.word.lower(): entry for entry in entries}
+        return [self._to_schema(e) for e in self.uow.dictionaries.search(user_id, query)]

@@ -11,7 +11,8 @@ def test_get_uow_returns_unit_of_work(db_session):
     assert uow.quotas is not None
 
 
-def test_get_dictionary_service_has_repo(db_session):
+def test_get_dictionary_service_uses_uow(db_session):
     uow = get_uow(db_session)
     service = get_dictionary_service(uow)
-    assert service.repo is not None
+    assert service.uow is not None
+    assert service.uow is uow

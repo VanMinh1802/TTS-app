@@ -6,7 +6,7 @@ from typing import Optional
 
 from botocore.config import Config
 
-from app.schemas.tts import DictionaryEntry, EmotionParams
+from app.schemas.tts import DictionaryEntry
 from app.services.voice_registry import build_tts_model_map_from_registry, load_default_voice_registry
 
 logger = logging.getLogger(__name__)
@@ -142,7 +142,8 @@ class TTSService:
         try:
             _get_piper_voice(voice_id)
             return True
-        except Exception:
+        except Exception as e:
+            logger.warning("Failed to load model for voice '%s': %s", voice_id, e)
             return False
 
     def _apply_user_dictionary(self, text: str, user_dict: list[DictionaryEntry]) -> str:
@@ -161,7 +162,6 @@ class TTSService:
         text: str,
         voice_id: str = "vi_female",
         speed: float = 1.0,
-        emotion_params: EmotionParams | None = None,
     ) -> tuple[bytes, float]:
         try:
             voice_data = _get_piper_voice(voice_id)
@@ -169,12 +169,8 @@ class TTSService:
             config = voice_data["config"]
 
             from piper.config import SynthesisConfig
-            if emotion_params:
-                length_scale = emotion_params.length_scale
-                noise_scale = emotion_params.noise_scale
-            else:
-                length_scale = 1.0 / speed
-                noise_scale = DEFAULT_NOISE_SCALE
+            length_scale = 1.0 / speed
+            noise_scale = DEFAULT_NOISE_SCALE
             syn_config = SynthesisConfig(length_scale=length_scale, noise_scale=noise_scale)
 
             audio_chunks = voice.synthesize(text, syn_config)

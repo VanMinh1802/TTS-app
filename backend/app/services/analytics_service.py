@@ -1,6 +1,6 @@
 """Analytics service for querying logs and usage data."""
 from typing import List, Dict, Any
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from sqlalchemy import func, select
 
 from app.core.uow import UnitOfWork
@@ -70,10 +70,15 @@ class AnalyticsService:
         return round(float(result or 0), 2)
 
     def get_requests_today(self) -> int:
-        today = date.today()
+        now = datetime.now(timezone.utc)
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        tomorrow_start = today_start + timedelta(days=1)
         return self.uow.request_logs.session.execute(
             select(func.count(RequestLog.id))
-            .where(func.date(RequestLog.timestamp) == today)
+            .where(
+                RequestLog.timestamp >= today_start,
+                RequestLog.timestamp < tomorrow_start,
+            )
         ).scalar() or 0
 
     def get_requests_by_endpoint(self, limit: int = 10) -> List[Dict[str, Any]]:

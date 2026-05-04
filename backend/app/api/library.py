@@ -1,5 +1,5 @@
 """API Router for Audio Library."""
-from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, UploadFile, status
 
 from app.api.auth import get_current_user
 from app.core.di import get_library_service, get_uow
@@ -45,12 +45,14 @@ async def upload_to_library(
 
 @router.get("", response_model=LibraryListResponse)
 async def list_library_records(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(50, ge=1, le=100),
     user: User = Depends(get_current_user),
     service: LibraryService = Depends(get_library_service)
 ):
     """List all saved audio records for the user."""
-    records = service.list_user_records(user.id)
-    return LibraryListResponse(items=records)
+    records, total = service.list_user_records(user.id, page=page, per_page=per_page)
+    return LibraryListResponse(items=records, total=total, page=page, per_page=per_page)
 
 
 @router.delete("/{record_id}")

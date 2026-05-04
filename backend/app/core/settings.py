@@ -45,9 +45,10 @@ class Settings(BaseSettings):
     CSRF_COOKIE_NAME: str = "csrf_token"
     CSRF_HEADER_NAME: str = "X-CSRF-Token"
     CSRF_COOKIE_SECURE: bool = False
-    CSRF_COOKIE_SAMESITE: str = "lax"
+    CSRF_COOKIE_SAMESITE: str = "strict"
     CSRF_COOKIE_PATH: str = "/"
     CSRF_COOKIE_MAX_AGE: int = 60 * 60 * 24
+    REFRESH_COOKIE_NAME: str = "refresh_token"
 
     # Auth - Password
     PASSWORD_MIN_LENGTH: int = 8
@@ -96,10 +97,15 @@ class Settings(BaseSettings):
     # Database Pool
     DB_POOL_SIZE: int = 10
     DB_MAX_OVERFLOW: int = 20
+    DB_POOL_RECYCLE: int = 300
+    DB_POOL_TIMEOUT: int = 10
 
     # Redis
     REDIS_CONNECT_TIMEOUT: int = 5
     REDIS_SOCKET_TIMEOUT: int = 5
+    REDIS_MAX_CONNECTIONS: int = 50
+    REDIS_RETRY_ON_TIMEOUT: bool = True
+    REDIS_HEALTH_CHECK_INTERVAL: int = 30
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod

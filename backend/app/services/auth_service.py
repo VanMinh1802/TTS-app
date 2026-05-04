@@ -45,8 +45,8 @@ class AuthService:
                 )
                 logger.info(f"ID token verified for: {idinfo.get('email')}")
                 return idinfo
-            except ValueError:
-                pass  # Not a valid ID token, try access token
+            except ValueError as e:
+                logger.debug("Google ID token verification failed, trying as access token: %s", e)
         
         # Try as access token - call Google userinfo API
         logger.info("Trying as access token...")
@@ -60,6 +60,21 @@ class AuthService:
                 if response.status_code == 200:
                     userinfo = response.json()
                     logger.info(f"Access token worked for: {userinfo.get('email')}")
+
+                    try:
+                        token_info_resp = await client.get(
+                            "https://www.googleapis.com/oauth2/v3/tokeninfo",
+                            params={"access_token": credential},
+                            timeout=5.0,
+                        )
+                        if token_info_resp.status_code == 200:
+                            token_info = token_info_resp.json()
+                            if token_info.get("audience") != settings.GOOGLE_CLIENT_ID:
+                                logger.warning("Google token audience mismatch: expected %s, got %s",
+                                    settings.GOOGLE_CLIENT_ID, token_info.get("audience"))
+                    except Exception:
+                        logger.debug("Token info check skipped (implicit flow or network issue)")
+
                     return {
                         "email": userinfo.get("email"),
                         "name": userinfo.get("name", ""),
@@ -113,6 +128,11 @@ class AuthService:
         if payload.get("type") != "access":
             raise PermissionDeniedError("Invalid token type")
 
+        from app.core.token_blacklist import is_token_blacklisted
+        jti = payload.get("jti")
+        if jti and is_token_blacklisted(jti):
+            raise PermissionDeniedError("Token has been revoked")
+
         user = self.uow.users.get(payload.get("sub"))
         if not user:
             raise NotFoundError("User not found")
@@ -165,6 +185,13 @@ class AuthService:
 
         api_key.is_active = False
         self.uow.commit()
+
+        from app.core.redis import redis_sync_client
+        if redis_sync_client:
+            keys = redis_sync_client.keys(f"apikey_auth:{key_id}:*")
+            if keys:
+                redis_sync_client.delete(*keys)
+
         return True
 
     def validate_api_key(self, api_key: str) -> Optional[User]:

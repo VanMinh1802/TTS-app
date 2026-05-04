@@ -17,8 +17,8 @@ class LicenseKey(Base):
     duration_days: Mapped[int] = mapped_column(Integer, default=30)
     tier: Mapped[str] = mapped_column(String(50), default="pro")
     
-    is_used: Mapped[bool] = mapped_column(Boolean, default=False)
-    used_by_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
+    is_used: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    used_by_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=True, index=True)
     used_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

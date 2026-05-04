@@ -5,12 +5,12 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
 
 from app.api.auth import get_current_user
 from app.core.messages import BACKEND_MESSAGES
-from app.db import get_db
+from app.core.di import get_quota_service
 from app.models.user import User
+from app.services.quota_service import QuotaService
 from app.schemas.tts import (
     NormalizationMeta,
     TTSRequest,
@@ -71,7 +71,7 @@ async def generate_tts(
     request: TTSRequest,
     http_request: Request,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    quota_service: QuotaService = Depends(get_quota_service),
 ):
     """Generate TTS audio using Piper model from R2."""
     if len(request.text) > MAX_TEXT_LENGTH:
@@ -84,7 +84,6 @@ async def generate_tts(
     if request.voice_id not in models and request.voice_id not in VOICE_ALIASES:
         request.voice_id = "vi_female"
 
-    quota_service = QuotaService(db)
     char_count = len(request.text)
 
     if not quota_service.check_quota(user.id, "api_calls", 1):
@@ -120,7 +119,6 @@ async def generate_tts(
         text=cleaned,
         voice_id=request.voice_id,
         speed=request.speed,
-        emotion_params=request.emotion_params,
     )
 
     audio_b64 = base64.b64encode(wav_data).decode("utf-8")

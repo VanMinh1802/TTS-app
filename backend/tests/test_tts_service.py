@@ -52,7 +52,7 @@ def test_dictionary_applied_before_normalization(client, monkeypatch):
         normalize_received.append(text)
         return text, None, None, None
 
-    def fake_synthesize(text, voice_id, speed, emotion_params=None):
+    def fake_synthesize(text, voice_id, speed):
         return b"RIFF\x00\x00\x00\x00WAVE", 0.5
 
     async def fake_ensure_model(voice_id):

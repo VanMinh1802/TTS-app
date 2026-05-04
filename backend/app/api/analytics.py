@@ -12,7 +12,7 @@ router = APIRouter(prefix="/admin/analytics", tags=["Analytics"])
 
 def require_admin(current_user: User = Depends(get_current_user)) -> User:
     """Require admin role."""
-    if not getattr(current_user, "is_admin", False):
+    if not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required",

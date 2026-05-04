@@ -8,12 +8,9 @@ from app.services.auth_service import AuthService
 from app.services.tts_service import TTSService, tts_service
 from app.services.quota_service import QuotaService
 from app.services.dictionary_service import DictionaryService
-from app.services.emotion_dict_service import EmotionDictService
 from app.services.library_service import LibraryService
 from app.services.license_service import LicenseService
 from app.services.analytics_service import AnalyticsService
-from app.repositories.dictionary import DictionaryRepository
-from app.repositories.emotion_dict import EmotionDictRepository
 
 
 def get_uow(db: Session = Depends(get_db)) -> UnitOfWork:
@@ -33,11 +30,7 @@ def get_quota_service(uow: UnitOfWork = Depends(get_uow)) -> QuotaService:
 
 
 def get_dictionary_service(uow: UnitOfWork = Depends(get_uow)) -> DictionaryService:
-    return DictionaryService(uow.dictionaries)
-
-
-def get_emotion_dict_service(uow: UnitOfWork = Depends(get_uow)) -> EmotionDictService:
-    return EmotionDictService(uow.emotion_dicts)
+    return DictionaryService(uow)
 
 
 def get_library_service(uow: UnitOfWork = Depends(get_uow)) -> LibraryService:
@@ -50,3 +43,15 @@ def get_license_service(uow: UnitOfWork = Depends(get_uow)) -> LicenseService:
 
 def get_analytics_service(uow: UnitOfWork = Depends(get_uow)) -> AnalyticsService:
     return AnalyticsService(uow)
+
+
+__all__ = [
+    "get_uow",
+    "get_auth_service",
+    "get_tts_service",
+    "get_quota_service",
+    "get_dictionary_service",
+    "get_library_service",
+    "get_license_service",
+    "get_analytics_service",
+]

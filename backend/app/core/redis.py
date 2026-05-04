@@ -29,6 +29,9 @@ async def init_redis() -> Optional[RedisAsync]:
             decode_responses=True,
             socket_connect_timeout=settings.REDIS_CONNECT_TIMEOUT,
             socket_timeout=settings.REDIS_SOCKET_TIMEOUT,
+            max_connections=settings.REDIS_MAX_CONNECTIONS,
+            retry_on_timeout=settings.REDIS_RETRY_ON_TIMEOUT,
+            health_check_interval=settings.REDIS_HEALTH_CHECK_INTERVAL,
         )
 
         redis_sync_client = redis_sync.Redis(
@@ -39,6 +42,9 @@ async def init_redis() -> Optional[RedisAsync]:
             decode_responses=True,
             socket_connect_timeout=settings.REDIS_CONNECT_TIMEOUT,
             socket_timeout=settings.REDIS_SOCKET_TIMEOUT,
+            max_connections=settings.REDIS_MAX_CONNECTIONS,
+            retry_on_timeout=settings.REDIS_RETRY_ON_TIMEOUT,
+            health_check_interval=settings.REDIS_HEALTH_CHECK_INTERVAL,
         )
 
         await redis_client.ping()

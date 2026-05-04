@@ -4,7 +4,6 @@ from app.core.uow import UnitOfWork
 from app.repositories.user import UserRepository
 from app.repositories.quota import QuotaRepository
 from app.repositories.dictionary import DictionaryRepository
-from app.repositories.emotion_dict import EmotionDictRepository
 from app.repositories.audio_record import AudioRecordRepository
 from app.repositories.license import LicenseKeyRepository
 
@@ -14,7 +13,6 @@ def test_uow_provides_all_repos(db_session):
     assert isinstance(uow.users, UserRepository)
     assert isinstance(uow.quotas, QuotaRepository)
     assert isinstance(uow.dictionaries, DictionaryRepository)
-    assert isinstance(uow.emotion_dicts, EmotionDictRepository)
     assert isinstance(uow.audio_records, AudioRecordRepository)
     assert isinstance(uow.licenses, LicenseKeyRepository)
 

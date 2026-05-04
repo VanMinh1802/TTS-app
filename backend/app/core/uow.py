@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from app.repositories.user import UserRepository, APIKeyRepository
 from app.repositories.quota import QuotaRepository, UsageHistoryRepository
 from app.repositories.dictionary import DictionaryRepository
-from app.repositories.emotion_dict import EmotionDictRepository
 from app.repositories.audio_record import AudioRecordRepository
 from app.repositories.license import LicenseKeyRepository
 from app.repositories.analytics import RequestLogRepository, UsageSnapshotRepository
@@ -27,7 +26,6 @@ class UnitOfWork:
         self.quotas: QuotaRepository = QuotaRepository(session)
         self.usage_history: UsageHistoryRepository = UsageHistoryRepository(session)
         self.dictionaries: DictionaryRepository = DictionaryRepository(session)
-        self.emotion_dicts: EmotionDictRepository = EmotionDictRepository(session)
         self.audio_records: AudioRecordRepository = AudioRecordRepository(session)
         self.licenses: LicenseKeyRepository = LicenseKeyRepository(session)
         self.request_logs: RequestLogRepository = RequestLogRepository(session)

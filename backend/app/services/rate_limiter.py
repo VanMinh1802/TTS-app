@@ -53,6 +53,19 @@ def get_tier_limit(tier: str) -> Tuple[int, int]:
     return tier_config["requests"], tier_config["window"]
 
 
+def check_login_rate_limit(request: Request) -> bool:
+    """Rate limit login attempts: 10 per minute per IP. Returns True if allowed."""
+    from app.core.redis import redis_sync_client
+    if not redis_sync_client:
+        return True
+    ip = get_user_identifier(request)
+    key = f"login_rate:{ip}"
+    count = redis_sync_client.incr(key)
+    if count == 1:
+        redis_sync_client.expire(key, 60)
+    return count <= 10
+
+
 async def check_rate_limit(
     identifier: str, 
     limit: int = 100, 

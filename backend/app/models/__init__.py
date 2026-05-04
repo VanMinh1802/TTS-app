@@ -13,7 +13,6 @@ from app.models.quota import UserQuota, UsageHistory
 from app.models.user import APIKey, User
 from app.models.audio_record import AudioRecord
 from app.models.license import LicenseKey
-from app.models.user_emotion_dict import UserEmotionDict
 
 __all__ = [
     "Base",
@@ -26,5 +25,4 @@ __all__ = [
     "UsageSnapshot",
     "AudioRecord",
     "LicenseKey",
-    "UserEmotionDict",
 ]

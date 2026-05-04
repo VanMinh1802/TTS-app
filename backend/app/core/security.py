@@ -26,6 +26,7 @@ def hash_password(password: str) -> str:
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Create a JWT access token."""
     to_encode = data.copy()
+    to_encode["jti"] = secrets.token_hex(16)
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
@@ -42,6 +43,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 def create_refresh_token(data: dict) -> str:
     """Create a JWT refresh token."""
     to_encode = data.copy()
+    to_encode["jti"] = secrets.token_hex(16)
     expire = datetime.now(timezone.utc) + timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode.update({"exp": expire, "type": "refresh"})
     encoded_jwt = jwt.encode(
@@ -59,21 +61,6 @@ def decode_token(token: str) -> Optional[dict[str, Any]]:
         return payload
     except JWTError:
         return None
-
-
-def create_api_key() -> tuple[str, str]:
-    """
-    Create a new API key.
-    
-    Returns:
-        Tuple of (full_key, key_hash) - full_key shown once to user, hash stored in DB
-    """
-    # Generate random key
-    key_bytes = secrets.token_bytes(32)
-    full_key = f"gva_{key_bytes.hex()}"
-    key_hash = pwd_context.hash(full_key)
-    
-    return full_key, key_hash
 
 
 def create_csrf_token() -> str:

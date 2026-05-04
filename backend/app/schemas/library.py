@@ -20,3 +20,6 @@ class LibraryListResponse(BaseModel):
     """Response schema for library list."""
 
     items: list[AudioRecordResponse]
+    total: int = 0
+    page: int = 1
+    per_page: int = 50

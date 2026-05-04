@@ -58,9 +58,9 @@ class LibraryService:
 
         return record
 
-    def list_user_records(self, user_id: str) -> Sequence[AudioRecord]:
-        records = self.uow.audio_records.find_all(user_id=user_id)
-        return sorted(records, key=lambda r: r.created_at, reverse=True)
+    def list_user_records(self, user_id: str, page: int = 1, per_page: int = 50) -> tuple[Sequence[AudioRecord], int]:
+        records, total = self.uow.audio_records.get_by_user(user_id, page=page, per_page=per_page)
+        return records, total
 
     def delete_record(self, user_id: str, record_id: str) -> bool:
         record = self.uow.audio_records.get_user_record(record_id, user_id)

@@ -18,7 +18,6 @@ from app.api.voices import router as voices_router
 from app.api.auth import router as auth_router
 from app.api.license import router as license_router
 from app.api.library import router as library_router
-from app.api.emotion_dict import router as emotion_dict_router
 from app.core.redis import init_redis, close_redis
 from app.core.settings import settings
 
@@ -66,6 +65,10 @@ app.add_exception_handler(Exception, generic_exception_handler)
 from app.middleware.logging import LoggingMiddleware
 app.add_middleware(LoggingMiddleware)
 
+# Add CSRF protection middleware for mutating requests
+from app.middleware.csrf import CSRFMiddleware
+app.add_middleware(CSRFMiddleware)
+
 # Add GZip compression middleware
 from fastapi.middleware.gzip import GZipMiddleware
 app.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -92,7 +95,6 @@ app.include_router(voices_router, prefix=settings.API_V1_PREFIX)
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(library_router, prefix=settings.API_V1_PREFIX)
 app.include_router(license_router, prefix=settings.API_V1_PREFIX)
-app.include_router(emotion_dict_router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get("/")
