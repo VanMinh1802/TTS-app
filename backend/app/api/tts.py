@@ -28,7 +28,7 @@ from app.services.llm_normalizer import (
 )
 from app.services.normalizer import normalize_vietnamese
 from app.services.quota_service import QuotaService
-from app.services.tts_service import VOICE_ALIASES, _get_models, tts_service
+from app.services.tts_service import VOICE_ALIASES, _get_models, _get_piper_voice, tts_service
 from app.utils.text_utils import cleanup_grammar
 
 logger = logging.getLogger(__name__)
@@ -64,6 +64,47 @@ async def validate_key(body: ValidateKeyRequest):
         status=status,
         message=_STATUS_MESSAGES.get(status, BACKEND_MESSAGES["errors"]["unknown_status"]),
     )
+
+
+class PhonemizeRequest(BaseModel):
+    text: str
+    voice_id: str
+
+
+class PhonemizeResponse(BaseModel):
+    phoneme_ids: list[int]
+
+
+@router.post("/phonemize", response_model=PhonemizeResponse)
+async def phonemize_text(request: PhonemizeRequest):
+    """Return phoneme IDs for client-side ONNX inference."""
+    if len(request.text) > MAX_TEXT_LENGTH:
+        raise HTTPException(status_code=400, detail=f"Văn bản quá dài. Tối đa {MAX_TEXT_LENGTH:,} ký tự.")
+
+    await tts_service._ensure_model(request.voice_id)
+
+    voice_data = _get_piper_voice(request.voice_id)
+    if not voice_data:
+        raise HTTPException(status_code=400, detail="Voice not found")
+
+    voice = voice_data["voice"]
+    config = voice_data["config"]
+    phoneme_map = config.get("phoneme_id_map", {})
+    phoneme_symbols = voice.phonemize(request.text)
+    
+    # Convert phoneme symbols → phoneme IDs using the model's map
+    # Piper returns [[char, char, ...], ...] — each character is a phoneme symbol
+    ids: list[int] = []
+    for sentence in phoneme_symbols:
+        for char in sentence:
+            entry = phoneme_map.get(char)
+            if entry and len(entry) > 0:
+                ids.append(entry[0])
+    
+    if not ids:
+        raise HTTPException(status_code=400, detail="Phonemization produced no valid IDs")
+    
+    return PhonemizeResponse(phoneme_ids=ids)
 
 
 @router.post("/generate", response_model=TTSResponse)
