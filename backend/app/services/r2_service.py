@@ -10,6 +10,7 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 
 from app.core.settings import settings, get_r2_public_base_url, get_r2_client_endpoint
+from app.core.exceptions import NotFoundError, StorageError
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +69,7 @@ class R2Service:
         """Generate signed URL for model download."""
         model = self.get_model(model_id)
         if not model:
-            raise ValueError(f"Model not found: {model_id}")
+            raise NotFoundError(f"Model not found: {model_id}")
 
         key = model["path"]
         expires = datetime.utcnow() + timedelta(seconds=settings.SIGNED_URL_EXPIRE_SECONDS)
@@ -84,7 +85,7 @@ class R2Service:
             )
         except ClientError as e:
             logger.error(f"R2 error: {e}")
-            raise ValueError("Failed to generate download URL") from e
+            raise StorageError("Failed to generate download URL") from e
 
         return {
             "url": url,
@@ -115,7 +116,7 @@ class R2Service:
             )
         except ClientError as e:
             logger.error(f"R2 error: {e}")
-            raise ValueError("Failed to generate upload URL") from e
+            raise StorageError("Failed to generate upload URL") from e
 
         return {
             "upload_url": upload_data["url"],

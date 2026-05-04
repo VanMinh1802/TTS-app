@@ -1,0 +1,83 @@
+﻿<h2>Page Layout & Component Tree</h2>
+<p class="subtitle">Overall structure of the new Library page</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Grid View</div>
+    <div class="mockup-body" style="padding:8px">
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <div style="background:#4ecdc4;color:#fff;font-size:10px;padding:3px 8px;border-radius:4px">All (12)</div>
+        <div style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid #ddd">Local (5)</div>
+        <div style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid #ddd">Cloud (4)</div>
+        <div style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid #ddd">Synced (3)</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="border:1px solid #eee;border-radius:6px;overflow:hidden">
+          <div style="background:linear-gradient(135deg,#667eea,#764ba2);height:40px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px">&#9654;</div>
+          <div style="padding:6px">
+            <div style="font-size:10px;color:#888">Ngochuyen</div>
+            <div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Xin chào...</div>
+            <div style="display:flex;gap:4px;margin-top:4px">
+              <span style="background:#e8f5e9;color:#2e7d32;font-size:8px;padding:1px 4px;border-radius:3px">Local</span>
+              <span style="background:#e3f2fd;color:#1565c0;font-size:8px;padding:1px 4px;border-radius:3px">Cloud</span>
+            </div>
+          </div>
+        </div>
+        <div style="border:1px solid #eee;border-radius:6px;overflow:hidden">
+          <div style="background:linear-gradient(135deg,#f093fb,#f5576c);height:40px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px">&#9654;</div>
+          <div style="padding:6px">
+            <div style="font-size:10px;color:#888">Vi_Female</div>
+            <div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Hôm nay...</div>
+            <div style="display:flex;gap:4px;margin-top:4px">
+              <span style="background:#e8f5e9;color:#2e7d32;font-size:8px;padding:1px 4px;border-radius:3px">Local</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">List View</div>
+    <div class="mockup-body" style="padding:0;font-size:11px">
+      <div style="display:flex;gap:4px;padding:6px 8px;border-bottom:1px solid #eee">...</div>
+      <div style="display:flex;gap:8px;align-items:center;padding:6px 8px;border-bottom:1px solid #f0f0f0">
+        <div style="width:24px;height:24px;border-radius:4px;background:linear-gradient(135deg,#667eea,#764ba2);flex-shrink:0"></div>
+        <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Xin chào, tôi là trợ lý ảo</div>
+        <span style="background:#e8f5e9;color:#2e7d32;font-size:8px;padding:1px 4px;border-radius:3px">Local</span>
+        <span style="color:#888;font-size:10px">3.2s</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;padding:6px 8px;border-bottom:1px solid #f0f0f0">
+        <div style="width:24px;height:24px;border-radius:4px;background:linear-gradient(135deg,#f093fb,#f5576c);flex-shrink:0"></div>
+        <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Hôm nay thời tiết đẹp</div>
+        <span style="background:#e8f5e9;color:#2e7d32;font-size:8px;padding:1px 4px;border-radius:3px">Local</span>
+        <span style="color:#888;font-size:10px">5.1s</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3>Layout Structure</h3>
+<div style="background:#1a1a2e;color:#e0e0e0;padding:1rem;border-radius:8px;font-size:13px;line-height:1.8;font-family:monospace">
+LibraryPage
+├── LibraryToolbar
+│   ├── SearchInput
+│   ├── VoiceFilter dropdown
+│   ├── SortSelector (Newest / Oldest / A-Z)
+│   └── ViewToggle (Grid / List icons)
+├── LibraryTabs
+│   ├── Tab: All | Local | Cloud | Synced
+│   └── [free user] Cloud tab disabled + "PRO" badge
+├── CloudUpgradeBanner (free users only)
+├── LibrarySyncBar (pro users, during sync)
+├── LibraryGrid / LibraryList
+│   └── LibraryCard × N
+│       ├── AudioThumbnail (gradient)
+│       ├── Voice name | Text snippet | Duration | Date
+│       ├── StatusBadge (Local / Cloud / Synced)
+│       └── Actions: Play + Menu (Download/Delete/Upload)
+└── LibraryEmpty (when 0 records)
+
+Backend additions:
+  POST /api/library/sync  ← batch upsert records
+  POST /api/library/batch-delete  ← delete multiple
+</div>

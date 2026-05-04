@@ -27,8 +27,8 @@ async def init_redis() -> Optional[RedisAsync]:
             password=settings.REDIS_PASSWORD if settings.REDIS_PASSWORD else None,
             db=settings.REDIS_DB,
             decode_responses=True,
-            socket_connect_timeout=5,
-            socket_timeout=5,
+            socket_connect_timeout=settings.REDIS_CONNECT_TIMEOUT,
+            socket_timeout=settings.REDIS_SOCKET_TIMEOUT,
         )
 
         redis_sync_client = redis_sync.Redis(
@@ -37,8 +37,8 @@ async def init_redis() -> Optional[RedisAsync]:
             password=settings.REDIS_PASSWORD if settings.REDIS_PASSWORD else None,
             db=settings.REDIS_DB,
             decode_responses=True,
-            socket_connect_timeout=5,
-            socket_timeout=5,
+            socket_connect_timeout=settings.REDIS_CONNECT_TIMEOUT,
+            socket_timeout=settings.REDIS_SOCKET_TIMEOUT,
         )
 
         await redis_client.ping()
@@ -85,6 +85,6 @@ async def is_redis_available() -> bool:
         if redis_client:
             await redis_client.ping()
             return True
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Redis not available: {e}")
     return False

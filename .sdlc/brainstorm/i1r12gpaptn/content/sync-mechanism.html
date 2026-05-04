@@ -1,0 +1,87 @@
+﻿<h2>Sync Mechanism Design</h2>
+<p class="subtitle">Hybrid sync: local-first with cloud backup for pro users</p>
+
+<h3>1. When Sync Triggers</h3>
+<div class="section" style="font-size:13px">
+  <table style="width:100%;border-collapse:collapse">
+    <tr style="background:#16213e"><th style="padding:6px 12px;text-align:left;border:1px solid #333">Trigger</th><th style="padding:6px 12px;text-align:left;border:1px solid #333">Action</th></tr>
+    <tr><td style="padding:6px 12px;border:1px solid #333">Page load (pro user)</td><td style="padding:6px 12px;border:1px solid #333">Auto-scan local records, upload missing ones to cloud</td></tr>
+    <tr><td style="padding:6px 12px;border:1px solid #333">New TTS generated (pro user)</td><td style="padding:6px 12px;border:1px solid #333">Save local + queue cloud upload</td></tr>
+    <tr><td style="padding:6px 12px;border:1px solid #333">Manual "Upload to Cloud"</td><td style="padding:6px 12px;border:1px solid #333">Upload single record</td></tr>
+    <tr><td style="padding:6px 12px;border:1px solid #333">Manual "Sync All"</td><td style="padding:6px 12px;border:1px solid #333">Force re-sync all local records</td></tr>
+  </table>
+</div>
+
+<h3>2. Sync Algorithm (useLibrarySync)</h3>
+<div style="background:#1a1a2e;color:#e0e0e0;padding:1rem;border-radius:8px;font-size:13px;line-height:1.6;font-family:monospace">
+function useLibrarySync() {
+  1. Check subscription_tier === 'pro'
+  2. Read all local records from IndexedDB
+  3. Fetch existing cloud records from GET /api/library
+  4. Compute diff: records in local but NOT in cloud
+  5. If diff.length > 0:
+     a. POST /api/library/sync with diff
+     b. On success: update local records' sync_status.cloud = true
+     c. Update UI via React Query invalidation
+  6. Show progress bar during sync
+  7. On error: show toast, retry option
+}</div>
+
+<h3>3. Error Handling & Edge Cases</h3>
+<div class="section">
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>Handled Cases</h4>
+      <ul style="font-size:12px">
+        <li>Network error during sync → show retry button, don't lose data</li>
+        <li>Quota exceeded → show warning + upgrade prompt</li>
+        <li>Duplicate records → idempotent (match by source_id)</li>
+        <li>Record deleted locally but exists on cloud → no action</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>Non-Goals (future)</h4>
+      <ul style="font-size:12px">
+        <li>Two-way merge conflicts</li>
+        <li>Real-time sync via WebSocket</li>
+        <li>Automatic retry with backoff</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<h3>4. Sync Status Transitions</h3>
+<div style="background:#1a1a2e;color:#e0e0e0;padding:1rem;border-radius:8px;font-size:13px;font-family:monospace;line-height:1.8">
+local=false, cloud=false   → not applicable (no record)
+local=true,  cloud=false   → "Local" (green badge, needs upload)
+local=false, cloud=true    → "Cloud" (orange badge, downloaded/viewed)
+local=true,  cloud=true    → "Synced" (blue badge, fully backed up)
+
+Transitions:
+  Local   → Synced  (after successful sync)
+  Synced  → Local   (if cloud delete, local remains)
+  Cloud   → Synced  (if user downloads/plays, creates local copy)
+  Local   → (deleted)  (delete in Local tab)
+  Cloud   → (deleted)  (delete in Cloud tab)
+  Synced  → Local   (delete in Local tab, cloud remains)
+  Synced  → Cloud   (delete in Cloud tab, local remains)
+</div>
+
+<h3>5. LibrarySyncBar Component</h3>
+<div class="mockup" style="margin-top:12px">
+  <div class="mockup-body" style="padding:12px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="font-size:20px">&#x21BB;</div>
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span>Syncing to cloud...</span>
+          <span>3 / 12 records</span>
+        </div>
+        <div style="height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden">
+          <div style="width:25%;height:100%;background:linear-gradient(90deg,#4ecdc4,#44a8b3);border-radius:3px"></div>
+        </div>
+      </div>
+      <button class="mock-button" style="padding:4px 12px;font-size:11px">Cancel</button>
+    </div>
+  </div>
+</div>

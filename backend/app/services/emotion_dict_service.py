@@ -1,8 +1,5 @@
 """User emotion dictionary service."""
-from typing import Optional
-
 from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 from app.models.user_emotion_dict import UserEmotionDict
 from app.repositories.emotion_dict import EmotionDictRepository

@@ -89,6 +89,18 @@ class Settings(BaseSettings):
     # Quota Management
     DEFAULT_QUOTA_TIER: str = "free"
 
+    # TTS
+    MAX_TTS_TEXT_LENGTH: int = 10000
+    DEFAULT_TTS_SAMPLE_RATE: int = 22050
+
+    # Database Pool
+    DB_POOL_SIZE: int = 10
+    DB_MAX_OVERFLOW: int = 20
+
+    # Redis
+    REDIS_CONNECT_TIMEOUT: int = 5
+    REDIS_SOCKET_TIMEOUT: int = 5
+
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def parse_cors_origins(cls, v):

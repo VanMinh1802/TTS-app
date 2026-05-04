@@ -98,7 +98,7 @@ async def generate_tts(
 
     try:
         normalized, _, _, _ = normalize_vietnamese(text, mode="standard")
-    except Exception:
+    except ValueError:
         normalized = text
 
     llm_api_key = http_request.headers.get("X-LLM-API-Key", "").strip()

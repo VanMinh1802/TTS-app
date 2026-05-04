@@ -1,0 +1,56 @@
+﻿<h2>Proposed Approaches — Library Redesign</h2>
+<p class="subtitle">Choose the architectural approach for implementation</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Incremental Enhancement</h3>
+      <p>Keep existing codebase structure, enhance library page component incrementally</p>
+      <ul>
+        <li>Add view toggle, filters, sort to current <code>page.tsx</code></li>
+        <li>Add <code>useCloudLibrary</code> hook alongside <code>useLocalLibrary</code></li>
+        <li>Minimal refactoring, reuse existing patterns</li>
+        <li>Faster to implement, but file may grow large</li>
+      </ul>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Fastest to ship</li><li>Low risk</li><li>Familiar patterns</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>File bloat risk</li><li>Harder to maintain</li><li>Tangled concerns</li></ul></div>
+      </div>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Modular Refactor</h3>
+      <p>Break library into clean feature modules with proper component separation</p>
+      <ul>
+        <li>Separate components: Toolbar, Grid, List, Card, SyncBar, FilterPanel</li>
+        <li>Custom hooks: <code>useLibraryRecords</code> (unified local+cloud), <code>useLibrarySync</code></li>
+        <li>React Query for cloud API, IndexedDB abstraction layer for local</li>
+        <li>Unified data model bridging local ↔ cloud schemas</li>
+      </ul>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Clean architecture</li><li>Testable components</li><li>Easy to extend</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>More upfront work</li><li>Need migration path</li></ul></div>
+      </div>
+    </div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Unified Sync Architecture</h3>
+      <p>Treat local IndexedDB as cache of cloud data, online-first with offline fallback</p>
+      <ul>
+        <li>Library page always fetches from cloud API (if pro) with IndexedDB as cache</li>
+        <li>Background sync worker for offline → online transitions</li>
+        <li>React Query with optimistic updates</li>
+        <li>Reuses <code>lib/sync/</code> and <code>lib/offline/</code> scaffold</li>
+      </ul>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Future-proof</li><li>Offline-first</li><li>Uses existing infra</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Heavy upfront cost</li><li>Overkill for this scope</li><li>Sync conflict complexity</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>

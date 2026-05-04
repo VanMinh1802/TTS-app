@@ -5,9 +5,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
 
-from app.core.exceptions import ConflictError
+from app.core.exceptions import ConflictError, NotFoundError
 from app.models.dictionary import DictionaryEntryModel
 from app.repositories.dictionary import DictionaryRepository
 from app.schemas.dictionary import DictionaryCreate, DictionaryEntry, DictionaryUpdate
@@ -116,7 +115,7 @@ class DictionaryService:
             )
         ).scalar_one_or_none()
         if not entry:
-            raise ValueError("Entry not found")
+            raise NotFoundError("Entry not found")
         return entry
 
     def _entry_map(self, user_id: str) -> dict[str, DictionaryEntryModel]:

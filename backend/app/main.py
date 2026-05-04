@@ -18,6 +18,7 @@ from app.api.voices import router as voices_router
 from app.api.auth import router as auth_router
 from app.api.license import router as license_router
 from app.api.library import router as library_router
+from app.api.emotion_dict import router as emotion_dict_router
 from app.core.redis import init_redis, close_redis
 from app.core.settings import settings
 
@@ -75,7 +76,7 @@ app.add_middleware(
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+    allow_headers=["Authorization", "Content-Type", "X-API-Key", "X-CSRF-Token"],
 )
 
 # Include routers
@@ -91,6 +92,7 @@ app.include_router(voices_router, prefix=settings.API_V1_PREFIX)
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(library_router, prefix=settings.API_V1_PREFIX)
 app.include_router(license_router, prefix=settings.API_V1_PREFIX)
+app.include_router(emotion_dict_router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get("/")
@@ -113,8 +115,8 @@ async def health_check():
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         db_status = "connected"
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Health check DB ping failed: {e}")
 
     return {
         "status": "healthy" if db_status == "connected" else "unhealthy",

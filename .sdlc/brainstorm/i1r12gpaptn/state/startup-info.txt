@@ -1,0 +1,4 @@
+SESSION_DIR=C:\VanMinh\python\ai-project\TTS-app-v2\.sdlc\brainstorm\i1r12gpaptn
+STATE_DIR=C:\VanMinh\python\ai-project\TTS-app-v2\.sdlc\brainstorm\i1r12gpaptn\state
+CONTENT_DIR=C:\VanMinh\python\ai-project\TTS-app-v2\.sdlc\brainstorm\i1r12gpaptn\content
+PROJECT_DIR=C:\VanMinh\python\ai-project\TTS-app-v2
