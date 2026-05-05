@@ -10,20 +10,20 @@ from app.schemas.tts import DictionaryEntry
 
 def test_apply_user_dictionary_replaces_word():
     service = TTSService()
-    entries = [DictionaryEntry(word="AI", pronunciation="ây ai", priority=5)]
+    entries = [DictionaryEntry(word="AI", pronunciation="ây ai")]
     result = service._apply_user_dictionary("Công nghệ AI rất mạnh.", entries)
     assert result == "Công nghệ ây ai rất mạnh."
 
 
-def test_apply_user_dictionary_respects_priority_order():
-    """Higher priority entries must be applied first to handle overlapping words."""
+def test_apply_user_dictionary_longer_word_first():
+    """Longer entries must be applied first to handle overlapping words."""
     service = TTSService()
     entries = [
-        DictionaryEntry(word="AI", pronunciation="a i", priority=3),
-        DictionaryEntry(word="AI TTS", pronunciation="ây ai ti-ti-xì", priority=8),
+        DictionaryEntry(word="AI", pronunciation="a i"),
+        DictionaryEntry(word="AI TTS", pronunciation="ây ai ti-ti-xì"),
     ]
     result = service._apply_user_dictionary("AI TTS sẽ đọc văn bản.", entries)
-    # "AI TTS" (priority 8) must be replaced before "AI" (priority 3)
+    # "AI TTS" (longer) must be replaced before "AI" (shorter)
     assert result == "ây ai ti-ti-xì sẽ đọc văn bản."
 
 
@@ -35,7 +35,7 @@ def test_apply_user_dictionary_empty_returns_unchanged():
 
 def test_apply_user_dictionary_no_match_returns_unchanged():
     service = TTSService()
-    entries = [DictionaryEntry(word="XYZ", pronunciation="x y z", priority=5)]
+    entries = [DictionaryEntry(word="XYZ", pronunciation="x y z")]
     result = service._apply_user_dictionary("Hello world", entries)
     assert result == "Hello world"
 
@@ -68,7 +68,7 @@ def test_dictionary_applied_before_normalization(client, monkeypatch):
             "text": "Cong nghe AI rat manh.",
             "voice_id": "vi_female",
             "speed": 1.0,
-            "user_dictionary": [{"word": "AI", "pronunciation": "ay ai", "priority": 5}],
+            "user_dictionary": [{"word": "AI", "pronunciation": "ay ai"}],
         },
         headers={"Authorization": "Bearer test-token"},
     )

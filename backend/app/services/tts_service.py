@@ -150,7 +150,7 @@ class TTSService:
         if not user_dict:
             return text
 
-        sorted_entries = sorted(user_dict, key=lambda x: (x.priority, len(x.word)), reverse=True)
+        sorted_entries = sorted(user_dict, key=lambda x: len(x.word), reverse=True)
         result = text
         for entry in sorted_entries:
             if entry.word and entry.pronunciation:

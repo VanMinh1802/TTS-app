@@ -8,7 +8,6 @@ class DictionaryEntry(BaseModel):
 
     word: str = Field(..., description="Original word/text")
     pronunciation: str = Field(..., description="Custom pronunciation/output")
-    priority: int = Field(default=1, description="Priority: higher = applied first")
 
 
 class TTSRequest(BaseModel):

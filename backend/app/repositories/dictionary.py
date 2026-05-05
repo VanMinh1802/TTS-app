@@ -16,7 +16,7 @@ class DictionaryRepository(BaseRepository[DictionaryEntryModel]):
                 self.model.user_id == user_id,
                 self.model.word.ilike(f"%{query}%")
             )
-            .order_by(self.model.priority.desc(), self.model.word)
+            .order_by(self.model.word)
         ).scalars().all()
 
     def find_by_user_and_word(self, user_id: str, word: str) -> Optional[DictionaryEntryModel]:
@@ -35,7 +35,6 @@ class DictionaryRepository(BaseRepository[DictionaryEntryModel]):
                     user_id=user_id,
                     word=entry["word"],
                     pronunciation=entry.get("pronunciation", ""),
-                    priority=entry.get("priority", 1),
                     category=entry.get("category"),
                 ))
         self.session.flush()

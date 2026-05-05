@@ -12,7 +12,6 @@ class DictionaryEntry(BaseModel):
     user_id: str
     word: str = Field(..., description="Word to pronounce")
     pronunciation: str = Field(..., description="Desired pronunciation")
-    priority: int = Field(1, description="Priority: higher values are applied first")
     category: str | None = Field(default=None, description="Optional metadata")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -23,7 +22,6 @@ class DictionaryCreate(BaseModel):
 
     word: str = Field(..., min_length=1, max_length=100)
     pronunciation: str = Field(..., min_length=1, max_length=200)
-    priority: int = Field(1, ge=1)
     category: str | None = Field(default=None)
 
 
@@ -32,7 +30,6 @@ class DictionaryUpdate(BaseModel):
 
     word: str | None = None
     pronunciation: str | None = None
-    priority: int | None = Field(default=None, ge=1)
     category: str | None = None
 
 

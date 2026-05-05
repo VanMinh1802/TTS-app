@@ -30,7 +30,7 @@ class DictionaryService:
         entries = self.uow.dictionaries.session.execute(
             select(DictionaryEntryModel)
             .where(DictionaryEntryModel.user_id == user_id)
-            .order_by(DictionaryEntryModel.priority.desc(), DictionaryEntryModel.word.asc())
+            .order_by(DictionaryEntryModel.word.asc())
             .offset(offset).limit(limit)
         ).scalars().all()
         return [self._to_schema(e) for e in entries], total
@@ -44,7 +44,6 @@ class DictionaryService:
             user_id=user_id,
             word=payload.word,
             pronunciation=payload.pronunciation,
-            priority=payload.priority,
             category=payload.category,
         )
         self.uow.dictionaries.create(entry)
@@ -59,8 +58,6 @@ class DictionaryService:
             entry.word = payload.word
         if payload.pronunciation is not None:
             entry.pronunciation = payload.pronunciation
-        if payload.priority is not None:
-            entry.priority = payload.priority
         if payload.category is not None:
             entry.category = payload.category
         entry.updated_at = datetime.now(timezone.utc)
@@ -84,14 +81,12 @@ class DictionaryService:
                 user_id=user_id,
                 word=payload.word,
                 pronunciation=payload.pronunciation,
-                priority=payload.priority,
                 category=payload.category,
             )
             self.uow.dictionaries.create(entry)
             existing_words[key] = entry
         self.uow.commit()
         entries = self.uow.dictionaries.find_all(user_id=user_id)
-        entries.sort(key=lambda e: (e.priority, e.word), reverse=True)
         total = len(entries)
         return [self._to_schema(e) for e in entries], total
 

@@ -20,12 +20,11 @@ def test_dictionary_api_crud_persists_entries(client, db_session):
     try:
         create_response = client.post(
             "/api/dictionary",
-            json={"word": "TTS", "pronunciation": "ti ti xi", "priority": 7},
+            json={"word": "TTS", "pronunciation": "ti ti xi"},
         )
         assert create_response.status_code == 201
         entry = create_response.json()
         assert entry["word"] == "TTS"
-        assert entry["priority"] == 7
 
         list_response = client.get("/api/dictionary")
         assert list_response.status_code == 200
@@ -33,10 +32,9 @@ def test_dictionary_api_crud_persists_entries(client, db_session):
 
         update_response = client.put(
             f"/api/dictionary/{entry['id']}",
-            json={"pronunciation": "ti-ti-xi", "priority": 10},
+            json={"pronunciation": "ti-ti-xi"},
         )
         assert update_response.status_code == 200
-        assert update_response.json()["priority"] == 10
 
         delete_response = client.delete(f"/api/dictionary/{entry['id']}")
         assert delete_response.status_code == 204
