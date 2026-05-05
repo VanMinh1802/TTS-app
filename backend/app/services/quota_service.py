@@ -1,6 +1,6 @@
 """Quota service for user quota management."""
 import logging
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 
 from app.core.settings import settings
@@ -71,6 +71,30 @@ class QuotaService:
             quota.storage_used_mb += amount
         elif resource == "api_calls":
             quota.api_calls_today += amount
+
+        # Upsert daily usage history
+        from datetime import datetime as dt
+        today_start = dt.combine(date.today(), dt.min.time())
+        existing = self.uow.session.query(UsageHistory).filter(
+            UsageHistory.user_id == user_id,
+            UsageHistory.date >= today_start
+        ).first()
+        if existing:
+            if resource == "characters":
+                existing.characters_used += amount
+            elif resource == "api_calls":
+                existing.api_calls += amount
+            elif resource == "storage":
+                existing.storage_mb += amount
+        else:
+            history = UsageHistory(
+                user_id=user_id,
+                date=dt.combine(date.today(), dt.min.time()),
+                characters_used=amount if resource == "characters" else 0,
+                api_calls=amount if resource == "api_calls" else 0,
+                storage_mb=amount if resource == "storage" else 0,
+            )
+            self.uow.session.add(history)
 
         self.uow.commit()
         return True, quota

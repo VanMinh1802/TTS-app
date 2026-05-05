@@ -1,5 +1,6 @@
 """Quota API routes."""
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 
 from app.api.auth import get_current_user
 from app.core.di import get_quota_service
@@ -12,6 +13,24 @@ from app.schemas.quota import (
 from app.services.quota_service import QuotaService
 
 router = APIRouter(prefix="/quota", tags=["Quota"])
+
+
+class RecordUsageRequest(BaseModel):
+    characters: int = 0
+    api_calls: int = 1
+
+
+@router.post("/record")
+def record_usage(
+    body: RecordUsageRequest,
+    current_user: User = Depends(get_current_user),
+    service: QuotaService = Depends(get_quota_service),
+):
+    if body.api_calls > 0:
+        service.consume_quota(current_user.id, "api_calls", body.api_calls)
+    if body.characters > 0:
+        service.consume_quota(current_user.id, "characters", body.characters)
+    return {"status": "ok"}
 
 
 @router.get("", response_model=QuotaStatusResponse)
