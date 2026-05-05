@@ -7,6 +7,7 @@ class SyncRecordItem(BaseModel):
     text_content: str
     voice_id: str
     audio_data: str
+    audio_mp3: str | None = None
     file_size_bytes: int
     duration: float | None = None
 

@@ -68,10 +68,28 @@ class LibraryService:
 
         for rec in records:
             try:
-                raw = rec["audio_data"]
+                use_mp3 = False
+                raw = rec.get("audio_mp3")
+                if raw and raw.strip():
+                    use_mp3 = True
+                else:
+                    raw = rec.get("audio_data", "")
+
                 if raw.startswith("data:"):
                     raw = raw.split(",", 1)[1]
-                file_bytes = base64.b64decode(raw)
+
+                try:
+                    file_bytes = base64.b64decode(raw)
+                except Exception:
+                    if use_mp3:
+                        raw = rec.get("audio_data", "")
+                        if raw.startswith("data:"):
+                            raw = raw.split(",", 1)[1]
+                        file_bytes = base64.b64decode(raw)
+                        use_mp3 = False
+                    else:
+                        raise
+
                 file_size_mb = max(1, len(file_bytes) // (1024 * 1024))
 
                 if not self.quota_service.check_quota(user_id, "storage", file_size_mb):
@@ -79,12 +97,14 @@ class LibraryService:
                     continue
 
                 record_id = rec["id"]
-                r2_key = f"audio/{user_id}/{record_id}.wav"
+                ext = "mp3" if use_mp3 else "wav"
+                content_type = "audio/mpeg" if use_mp3 else "audio/wav"
+                r2_key = f"audio/{user_id}/{record_id}.{ext}"
 
                 r2_library_service.upload_file(
                     file_bytes=file_bytes,
                     object_name=r2_key,
-                    content_type="audio/wav"
+                    content_type=content_type,
                 )
 
                 public_url = r2_library_service.get_public_url(r2_key)
@@ -96,7 +116,7 @@ class LibraryService:
                     text_content=rec["text_content"],
                     file_url=public_url,
                     file_size_bytes=rec.get("file_size_bytes", len(file_bytes)),
-                    duration=rec.get("duration")
+                    duration=rec.get("duration"),
                 )
                 self.uow.session.merge(record)
                 self.quota_service.consume_quota(user_id, "storage", file_size_mb)
