@@ -1,7 +1,7 @@
 """Database connection and session management."""
 from typing import Generator
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.settings import settings
@@ -33,3 +33,9 @@ def get_db() -> Generator[Session, None, None]:
 def init_db():
     """Initialize database tables."""
     Base.metadata.create_all(bind=engine)
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE audio_records ADD COLUMN IF NOT EXISTS duration FLOAT"))
+            conn.commit()
+    except Exception:
+        pass

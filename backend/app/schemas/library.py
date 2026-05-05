@@ -1,11 +1,13 @@
 """Library API schemas."""
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AudioRecordResponse(BaseModel):
     """Response schema for an audio record."""
+
+    model_config = ConfigDict(from_attributes=True)
 
     id: str
     user_id: str
@@ -13,6 +15,7 @@ class AudioRecordResponse(BaseModel):
     text_content: str
     file_url: str
     file_size_bytes: int
+    duration: float | None = None
     created_at: datetime
 
 

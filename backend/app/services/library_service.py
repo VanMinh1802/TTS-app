@@ -1,7 +1,8 @@
 """Library service for managing audio records in DB and R2."""
+import base64
 import uuid
 import logging
-from typing import Sequence
+from typing import Any, Sequence
 
 from app.core.uow import UnitOfWork
 from app.core.exceptions import NotFoundError, QuotaExceededError, StorageError
@@ -19,7 +20,7 @@ class LibraryService:
         self.uow = uow
         self.quota_service = QuotaService(uow)
 
-    def upload_to_cloud(self, user_id: str, file_bytes: bytes, text_content: str, voice_id: str) -> AudioRecord:
+    def upload_to_cloud(self, user_id: str, file_bytes: bytes, text_content: str, voice_id: str, duration: float | None = None) -> AudioRecord:
         """Upload audio to Cloudflare R2 and save to DB."""
         file_size_bytes = len(file_bytes)
         file_size_mb = max(1, file_size_bytes // (1024 * 1024))
@@ -48,7 +49,8 @@ class LibraryService:
             voice_id=voice_id,
             text_content=text_content,
             file_url=public_url,
-            file_size_bytes=file_size_bytes
+            file_size_bytes=file_size_bytes,
+            duration=duration
         )
         self.uow.audio_records.create(record)
 
@@ -57,6 +59,61 @@ class LibraryService:
         self.uow.commit()
 
         return record
+
+    def batch_sync(self, user_id: str, records: list[dict[str, Any]]) -> dict[str, list]:
+        from datetime import datetime
+
+        synced = []
+        failed = []
+
+        for rec in records:
+            try:
+                raw = rec["audio_data"]
+                if raw.startswith("data:"):
+                    raw = raw.split(",", 1)[1]
+                file_bytes = base64.b64decode(raw)
+                file_size_mb = max(1, len(file_bytes) // (1024 * 1024))
+
+                if not self.quota_service.check_quota(user_id, "storage", file_size_mb):
+                    failed.append({"id": rec["id"], "error": "Storage quota exceeded"})
+                    continue
+
+                record_id = rec["id"]
+                r2_key = f"audio/{user_id}/{record_id}.wav"
+
+                r2_library_service.upload_file(
+                    file_bytes=file_bytes,
+                    object_name=r2_key,
+                    content_type="audio/wav"
+                )
+
+                public_url = r2_library_service.get_public_url(r2_key)
+
+                record = AudioRecord(
+                    id=record_id,
+                    user_id=user_id,
+                    voice_id=rec["voice_id"],
+                    text_content=rec["text_content"],
+                    file_url=public_url,
+                    file_size_bytes=rec.get("file_size_bytes", len(file_bytes)),
+                    duration=rec.get("duration")
+                )
+                self.uow.session.merge(record)
+                self.quota_service.consume_quota(user_id, "storage", file_size_mb)
+                self.uow.flush()
+
+                synced.append({"id": record_id, "file_url": public_url, "synced_at": datetime.utcnow()})
+
+            except Exception as e:
+                logger.error(f"Sync failed for {rec.get('id')}: {e}")
+                self.uow.rollback()
+                failed.append({"id": rec.get("id", "unknown"), "error": str(e)})
+
+        try:
+            self.uow.commit()
+        except Exception:
+            self.uow.rollback()
+        return {"synced": synced, "failed": failed}
 
     def list_user_records(self, user_id: str, page: int = 1, per_page: int = 50) -> tuple[Sequence[AudioRecord], int]:
         records, total = self.uow.audio_records.get_by_user(user_id, page=page, per_page=per_page)

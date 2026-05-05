@@ -42,13 +42,3 @@ class TTSResponse(BaseModel):
     normalization: NormalizationMeta = Field(
         default_factory=lambda: NormalizationMeta(mode="rule_based", text_was_complex=False)
     )
-
-class TermExtractionRequest(BaseModel):
-    text: str
-
-class Term(BaseModel):
-    word: str
-    pronunciation: str
-
-class TermExtractionResponse(BaseModel):
-    terms: list[Term]

@@ -6,10 +6,32 @@ from app.core.di import get_library_service, get_uow
 from app.core.uow import UnitOfWork
 from app.models.user import User
 from app.schemas.library import AudioRecordResponse, LibraryListResponse
+from app.schemas.library_sync import SyncRequest, SyncResponse
 from app.services.library_service import LibraryService
 from app.services.quota_service import QuotaService
 
 router = APIRouter(prefix="/library", tags=["Library"])
+
+
+@router.post("/sync", response_model=SyncResponse)
+async def sync_records(
+    body: SyncRequest,
+    user: User = Depends(get_current_user),
+    service: LibraryService = Depends(get_library_service),
+    uow: UnitOfWork = Depends(get_uow)
+):
+    """Batch sync local records to cloud (PRO only)."""
+    quota_service = QuotaService(uow)
+    quota = quota_service.get_or_create_quota(user.id)
+    if quota.tier != "pro" and quota.tier != "enterprise":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cloud sync requires PRO tier."
+        )
+
+    records_dict = [r.model_dump() for r in body.records]
+    result = service.batch_sync(user.id, records_dict)
+    return result
 
 
 @router.post("/upload", response_model=AudioRecordResponse)

@@ -160,8 +160,8 @@ class R2LibraryService:
             endpoint = f"https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
             self._client = boto3.client(
                 "s3",
-                aws_access_key_id=settings.R2_LIBRARY_ACCESS_KEY_ID,
-                aws_secret_access_key=settings.R2_LIBRARY_SECRET_ACCESS_KEY,
+                aws_access_key_id=settings.R2_LIBRARY_ACCESS_KEY_ID or settings.R2_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.R2_LIBRARY_SECRET_ACCESS_KEY or settings.R2_SECRET_ACCESS_KEY,
                 endpoint_url=endpoint,
                 config=config,
             )

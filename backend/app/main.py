@@ -19,6 +19,7 @@ from app.api.auth import router as auth_router
 from app.api.license import router as license_router
 from app.api.library import router as library_router
 from app.core.redis import init_redis, close_redis
+from app.db import init_db
 from app.core.settings import settings
 
 # Configure logging
@@ -33,6 +34,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Xử lý vòng đời ứng dụng."""
     logger.info(f"Đang khởi động {settings.APP_NAME} v{settings.APP_VERSION}")
+    init_db()
     await init_redis()
     yield
     await close_redis()
@@ -79,7 +81,7 @@ app.add_middleware(
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-API-Key", "X-CSRF-Token"],
+    allow_headers=["Authorization", "Content-Type", "X-API-Key", "X-CSRF-Token", "X-LLM-API-Key"],
 )
 
 # Include routers

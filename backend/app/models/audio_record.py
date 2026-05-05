@@ -2,7 +2,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, String, Text, Integer, DateTime, ForeignKey
+from sqlalchemy import Column, String, Text, Integer, Float, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 
 from app.models import Base
@@ -19,6 +19,7 @@ class AudioRecord(Base):
     text_content = Column(Text, nullable=False)
     file_url = Column(String(512), nullable=False)
     file_size_bytes = Column(Integer, nullable=False, default=0)
+    duration = Column(Float, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     
     # Relationship (assuming User model has back_populates if needed, but not strictly required here)

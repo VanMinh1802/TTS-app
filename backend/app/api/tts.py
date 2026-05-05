@@ -15,13 +15,9 @@ from app.schemas.tts import (
     NormalizationMeta,
     TTSRequest,
     TTSResponse,
-    Term,
-    TermExtractionRequest,
-    TermExtractionResponse,
 )
 from app.services.llm_normalizer import (
     LLM_STATUS_SUCCESS,
-    extract_terms,
     llm_normalize,
     needs_llm_normalization,
     validate_gemini_key,
@@ -178,24 +174,6 @@ async def generate_tts(
             text_was_complex=is_complex,
         ),
     )
-
-
-@router.post("/extract-terms", response_model=TermExtractionResponse)
-async def extract_terms_api(
-    request: TermExtractionRequest,
-    http_request: Request,
-    user: User = Depends(get_current_user),
-):
-    """Extract complex terms from text and suggest phonetic pronunciations."""
-    llm_api_key = http_request.headers.get("X-LLM-API-Key", "").strip()
-    if not llm_api_key:
-        raise HTTPException(
-            status_code=401,
-            detail="Vui lòng cấu hình API Key trong phần Cài đặt để sử dụng tính năng này.",
-        )
-
-    terms_data = await extract_terms(request.text, llm_api_key)
-    return TermExtractionResponse(terms=[Term(**t) for t in terms_data])
 
 
 @router.get("/voices")
