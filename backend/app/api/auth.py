@@ -120,9 +120,14 @@ def get_current_user(
 
     # Try API key
     if x_api_key:
-        user = auth_service.validate_api_key(x_api_key)
+        user = auth_service.validate_api_key(x_api_key, path=request.url.path)
         if user:
             request.state.user = user
+            key_id = x_api_key[4:].split(".", 1)[0]
+            key = auth_service.uow.api_keys.get(key_id)
+            if key:
+                request.state.api_key_rate_limit = key.rate_limit
+                request.state.api_key_rate_limit_window = key.rate_limit_window
             return user
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

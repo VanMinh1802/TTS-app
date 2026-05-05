@@ -1,8 +1,9 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.api.auth import get_current_user
 from app.core.di import get_license_service
+from app.core.exceptions import LicenseError, NotFoundError
 from app.models.user import User
 from app.schemas.license import LicenseGenerateRequest, LicenseActivateRequest, LicenseResponse
 from app.services.license_service import LicenseService
@@ -60,18 +61,19 @@ def delete_license(
 
 @router.post("/subscriptions/activate")
 def activate_subscription(
-    request: LicenseActivateRequest,
+    activate_request: LicenseActivateRequest,
+    http_request: Request,
     current_user: User = Depends(get_current_user),
     service: LicenseService = Depends(get_license_service),
 ):
     try:
-        service.activate_key(current_user, request.code)
+        service.activate_key(current_user, activate_request.code, request=http_request)
         return {
             "success": True, 
             "tier": current_user.subscription_tier, 
             "message": "Subscription activated successfully"
         }
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal server error")
+    except LicenseError as e:
+        raise HTTPException(status_code=400, detail=e.message)
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=e.message)

@@ -194,10 +194,11 @@ class AuthService:
 
         return True
 
-    def validate_api_key(self, api_key: str) -> Optional[User]:
+    def validate_api_key(self, api_key: str, path: str = "") -> Optional[User]:
         """Validate an API key and return the user in O(1) time."""
         from app.core.security import verify_password
         from app.core.redis import redis_sync_client
+        from app.core.scope_map import get_required_scope, has_scope
         import hashlib
         
         if not api_key.startswith("gva_"):
@@ -238,12 +239,14 @@ class AuthService:
             is_valid = verify_password(api_key, key.key_hash)
             if redis_sync_client:
                 try:
-                    # Cache the expensive bcrypt validation result for 1 hour
                     redis_sync_client.setex(cache_key, 3600, "1" if is_valid else "0")
                 except Exception as e:
                     logger.warning(f"Redis cache write error: {e}")
 
         if is_valid:
+            required_scope = get_required_scope(path)
+            if required_scope and not has_scope(key.scopes or "models:read,tts:generate", required_scope):
+                return None
             key.total_requests += 1
             key.last_used_at = datetime.now(timezone.utc)
             self.uow.commit()

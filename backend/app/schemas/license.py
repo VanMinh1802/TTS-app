@@ -17,7 +17,7 @@ class LicenseResponse(BaseModel):
     tier: str
     is_used: bool
     used_at: Optional[datetime] = None
-    created_at: datetime
+    created_at: Optional[datetime] = None
     used_by_email: Optional[str] = None
 
     class Config:

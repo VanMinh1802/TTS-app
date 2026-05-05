@@ -1,12 +1,26 @@
+import hashlib
 import secrets
 from typing import List
-from datetime import datetime, timedelta
-from sqlalchemy import select
+from datetime import datetime, timedelta, timezone
 
+from sqlalchemy import select
 from app.core.uow import UnitOfWork
 from app.core.exceptions import LicenseError, NotFoundError, PermissionDeniedError
 from app.models.user import User
 from app.models.license import LicenseKey
+
+
+def _hash_code(code: str) -> str:
+    """Hash a license code with SHA256 for secure storage and lookup."""
+    return hashlib.sha256(code.encode()).hexdigest()
+
+
+def _display_code(code: str) -> str:
+    """Return a masked display version of the code (first 8 + ... + last 4)."""
+    if len(code) <= 14:
+        return code[:4] + "..." + code[-4:]
+    return code[:8] + "..." + code[-4:]
+
 
 class LicenseService:
     def __init__(self, uow: UnitOfWork):
@@ -19,14 +33,16 @@ class LicenseService:
         generated_codes = []
 
         for _ in range(count):
-            random_part = secrets.token_urlsafe(6).upper().replace("-", "").replace("_", "")[:8]
+            random_part = secrets.token_urlsafe(16)
             code = f"{tier.upper()}-{duration_days}-{random_part}"
+            code_hash = _hash_code(code)
 
             key = LicenseKey(
-                code=code,
+                code=_display_code(code),
+                code_hash=code_hash,
                 duration_days=duration_days,
                 tier=tier,
-                created_by_id=current_user.id
+                created_by_id=current_user.id,
             )
             self.uow.licenses.create(key)
             generated_codes.append(code)
@@ -34,24 +50,35 @@ class LicenseService:
         self.uow.commit()
         return generated_codes
 
-    def activate_key(self, current_user: User, code: str) -> bool:
+    def activate_key(self, current_user: User, code: str, request=None) -> bool:
         from app.services.quota_service import QuotaService, QUOTA_LIMITS
+        from app.models.activation_log import ActivationLog
 
-        key = self.uow.licenses.get_by_code(code)
+        if request:
+            from app.services.rate_limiter import check_activation_rate_limit
+            if not check_activation_rate_limit(request):
+                raise LicenseError("Too many activation attempts. Try again in a minute.")
+
+        code_hash = _hash_code(code)
+        key = self.uow.licenses.find_one(code_hash=code_hash)
 
         if not key:
+            if request:
+                self._log_activation(current_user.id, code_hash, False, request)
             raise NotFoundError("License code not found")
 
         if key.is_used:
+            if request:
+                self._log_activation(current_user.id, code_hash, False, request)
             raise LicenseError("This license code has already been used")
 
         key.is_used = True
         key.used_by_id = current_user.id
-        key.used_at = datetime.utcnow()
+        key.used_at = datetime.now(timezone.utc)
 
         current_user.subscription_tier = key.tier
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if current_user.subscription_expires_at and current_user.subscription_expires_at > now:
             current_user.subscription_expires_at += timedelta(days=key.duration_days)
         else:
@@ -65,27 +92,46 @@ class LicenseService:
         quota.storage_limit_mb = new_limits["storage_mb"]
         quota.api_calls_limit = new_limits["api_calls"]
 
+        if request:
+            self._log_activation(current_user.id, code_hash, True, request)
+
         self.uow.commit()
         return True
+
+    def _log_activation(self, user_id: str, code_hash: str, success: bool, request) -> None:
+        from app.models.activation_log import ActivationLog
+        ip = request.client.host if request.client else "unknown"
+        log = ActivationLog(
+            user_id=user_id,
+            code_hash=code_hash,
+            success=success,
+            ip_address=ip,
+        )
+        self.uow.session.add(log)
+        self.uow.flush()
 
     def get_all_licenses(self, current_user: User):
         if not current_user.is_admin:
             raise PermissionDeniedError("Only admins can view licenses")
 
-        stmt = select(LicenseKey, User.email).outerjoin(User, LicenseKey.used_by_id == User.id)
+        stmt = (
+            select(LicenseKey, User.email)
+            .outerjoin(User, LicenseKey.used_by_id == User.id)
+            .order_by(LicenseKey.created_at.desc())
+        )
         results = self.uow.licenses.session.execute(stmt).all()
 
         response = []
         for key, email in results:
             response.append({
                 "id": str(key.id),
-                "code": key.code,
+                "code": key.code if key.code else "N/A",
                 "duration_days": key.duration_days,
                 "tier": key.tier,
                 "is_used": key.is_used,
-                "used_at": key.used_at,
-                "created_at": key.created_at,
-                "used_by_email": email
+                "used_at": key.used_at.isoformat() if key.used_at else None,
+                "created_at": key.created_at.isoformat() if key.created_at else None,
+                "used_by_email": email,
             })
         return response
 

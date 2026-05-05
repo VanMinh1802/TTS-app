@@ -66,6 +66,19 @@ def check_login_rate_limit(request: Request) -> bool:
     return count <= 10
 
 
+def check_activation_rate_limit(request: Request) -> bool:
+    """Rate limit license activation: 5 per minute per IP. Returns True if allowed."""
+    from app.core.redis import redis_sync_client
+    if not redis_sync_client:
+        return True
+    ip = get_user_identifier(request)
+    key = f"activate_rate:{ip}"
+    count = redis_sync_client.incr(key)
+    if count == 1:
+        redis_sync_client.expire(key, 60)
+    return count <= 5
+
+
 async def check_rate_limit(
     identifier: str, 
     limit: int = 100, 
@@ -126,9 +139,14 @@ async def rate_limit_dependency(
 
     identifier = get_user_identifier(request)
 
-    user_tier = getattr(current_user, "subscription_tier", "free") or "free"
-    
-    limit, window = get_tier_limit(user_tier)
+    key_limit = getattr(request.state, "api_key_rate_limit", None)
+    key_window = getattr(request.state, "api_key_rate_limit_window", None)
+    if key_limit is not None and key_window is not None:
+        limit = key_limit
+        window = key_window
+    else:
+        user_tier = getattr(current_user, "subscription_tier", "free") or "free"
+        limit, window = get_tier_limit(user_tier)
     limit_val, remaining, reset_ts, is_limited = await check_rate_limit(identifier, limit, window)
     headers = build_rate_limit_headers(limit_val, remaining, reset_ts)
     
