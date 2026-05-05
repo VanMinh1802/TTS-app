@@ -144,7 +144,10 @@ async def generate_tts(
     llm_status = "skipped"
     final_normalized = normalized
 
-    if llm_api_key and is_complex:
+    user_tier = getattr(user, "subscription_tier", "free") or "free"
+    is_pro = user_tier in ("pro", "enterprise")
+
+    if llm_api_key and is_complex and is_pro:
         llm_result, llm_status = await llm_normalize(text=normalized, api_key=llm_api_key)
         final_normalized = llm_result
         norm_mode = "llm" if llm_status == LLM_STATUS_SUCCESS else "rule_based"
