@@ -196,3 +196,39 @@ async def list_voices():
             for voice_id in canonical_voice_ids
         ]
     }
+
+
+class ConvertToMp3Request(BaseModel):
+    audio_data: str  # base64 WAV data URL or raw base64
+
+
+@router.post("/convert-to-mp3")
+async def convert_to_mp3(
+    req: ConvertToMp3Request,
+    _user=Depends(get_current_user),
+):
+    from pydub import AudioSegment
+    import io as _io
+
+    raw = req.audio_data
+    if raw.startswith("data:"):
+        raw = raw.split(",", 1)[1]
+
+    try:
+        wav_bytes = base64.b64decode(raw)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid base64 audio data")
+
+    try:
+        audio = AudioSegment.from_file(_io.BytesIO(wav_bytes), format="wav")
+        mp3_buf = _io.BytesIO()
+        audio.export(mp3_buf, format="mp3", bitrate="128k")
+        mp3_bytes = mp3_buf.getvalue()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"MP3 conversion failed: {str(e)}")
+
+    mp3_b64 = base64.b64encode(mp3_bytes).decode("utf-8")
+    return {
+        "mp3_url": f"data:audio/mpeg;base64,{mp3_b64}",
+        "size_bytes": len(mp3_bytes),
+    }

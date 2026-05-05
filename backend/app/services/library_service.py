@@ -1,8 +1,11 @@
 """Library service for managing audio records in DB and R2."""
 import base64
+import io as _io
 import uuid
 import logging
 from typing import Any, Sequence
+
+from pydub import AudioSegment
 
 from app.core.uow import UnitOfWork
 from app.core.exceptions import NotFoundError, QuotaExceededError, StorageError
@@ -89,6 +92,16 @@ class LibraryService:
                         use_mp3 = False
                     else:
                         raise
+
+                if not use_mp3:
+                    try:
+                        audio = AudioSegment.from_file(_io.BytesIO(file_bytes), format="wav")
+                        mp3_buf = _io.BytesIO()
+                        audio.export(mp3_buf, format="mp3", bitrate="128k")
+                        file_bytes = mp3_buf.getvalue()
+                        use_mp3 = True
+                    except Exception as conv_err:
+                        logger.warning(f"WAV->MP3 conversion failed for {rec.get('id')}: {conv_err}")
 
                 file_size_mb = max(1, len(file_bytes) // (1024 * 1024))
 
