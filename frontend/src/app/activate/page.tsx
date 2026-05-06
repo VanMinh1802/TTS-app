@@ -7,10 +7,17 @@ import { apiRequest } from "@/lib/api-client";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { activateSchema, type ActivateFormData } from "@/lib/validators";
+import { FormField, getFieldErrorClass } from "@/components/form/FormField";
 
 function ActivateForm() {
   const { status, user } = useAuth();
-  const [code, setCode] = useState("");
+  const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<ActivateFormData>({
+    resolver: zodResolver(activateSchema),
+    defaultValues: { code: "" },
+  });
   const [actStatus, setActStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -20,10 +27,10 @@ function ActivateForm() {
 
   useEffect(() => {
     const codeParam = searchParams.get("code");
-    if (codeParam) setCode(codeParam);
+    if (codeParam) setValue("code", codeParam);
     const storedCode = sessionStorage.getItem("pending_license_code");
-    if (storedCode && !codeParam) { setCode(storedCode); sessionStorage.removeItem("pending_license_code"); }
-  }, [searchParams]);
+    if (storedCode && !codeParam) { setValue("code", storedCode); sessionStorage.removeItem("pending_license_code"); }
+  }, [searchParams, setValue]);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -36,16 +43,16 @@ function ActivateForm() {
     }
   }, [status, user, searchParams, router]);
 
-  const handleActivate = async () => {
-    if (!code.trim()) return;
+  const handleActivate = async (data: ActivateFormData) => {
+    if (!data.code.trim()) return;
     setActStatus("loading");
     try {
-      const data = await apiRequest<{ success: boolean; tier: string; message: string }>("/subscriptions/activate", {
-        method: "POST", body: JSON.stringify({ code: code.trim() })
+      const result = await apiRequest<{ success: boolean; tier: string; message: string }>("/subscriptions/activate", {
+        method: "POST", body: JSON.stringify({ code: data.code.trim() })
       });
       setActStatus("success");
-      setMessage(data.message || `Kích hoạt thành công — Gói ${data.tier.toUpperCase()}`);
-      setCode("");
+      setMessage(result.message || `Kích hoạt thành công — Gói ${result.tier.toUpperCase()}`);
+      reset();
     } catch (err) {
       setActStatus("error");
       setMessage(err instanceof Error ? err.message : "Mã không hợp lệ hoặc đã được sử dụng");
@@ -75,29 +82,30 @@ function ActivateForm() {
         <FadeIn delay={0.15}>
           <div className="aether-glass-wrapper rounded-[24px] mb-6">
             <div className="aether-glass rounded-[24px] p-8">
-              <div className="mb-6">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA] block mb-2">
-                  Mã kích hoạt
-                </label>
+              <FormField label="Mã kích hoạt" error={errors.code?.message} required>
                 <div className="relative">
                   <input
                     type="text"
-                    value={code}
-                    onChange={(e) => { setCode(e.target.value.toUpperCase()); setActStatus("idle"); }}
+                    {...register("code")}
+                    onInput={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      target.value = target.value.toUpperCase();
+                      setActStatus("idle");
+                    }}
                     placeholder="PRO-365-XXXXXXXX"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 font-mono text-center tracking-[0.15em] text-sm text-white placeholder:text-[#A1A1AA]/30 outline-none focus:border-[#818CF8]/50 focus:bg-white/10 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]"
+                    className={`w-full bg-white/5 border ${getFieldErrorClass(errors.code?.message)} rounded-xl px-5 py-4 font-mono text-center tracking-[0.15em] text-sm text-white placeholder:text-[#A1A1AA]/30 outline-none focus:bg-white/10 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]`}
                   />
-                  {code && (
-                    <button onClick={() => setCode("")} className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-lg text-[#A1A1AA] hover:text-white hover:bg-white/5 transition-all">
+                  {watch("code") && (
+                    <button onClick={() => { setValue("code", ""); setActStatus("idle"); }} className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-lg text-[#A1A1AA] hover:text-white hover:bg-white/5 transition-all">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                   )}
                 </div>
-              </div>
+              </FormField>
 
               <button
-                onClick={handleActivate}
-                disabled={!code.trim() || actStatus === "loading"}
+                onClick={handleSubmit(handleActivate)}
+                disabled={!watch("code").trim() || actStatus === "loading"}
                 className="w-full aether-btn aether-btn-primary py-3.5 min-h-[44px] text-[10px] font-bold uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed disabled:!shadow-none flex items-center justify-center gap-2"
               >
                 {actStatus === "loading" ? (
