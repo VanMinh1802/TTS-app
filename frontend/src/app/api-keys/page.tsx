@@ -7,6 +7,7 @@ import { apiRequest } from "@/lib/api-client";
 import { useNotifications } from "@/shared/notifications/notification-store";
 import { ApiKeyStats } from "./ApiKeyStats";
 import { CreateKeyModal } from "./CreateKeyModal";
+import type { ApiKeyCreateFormData } from "@/lib/validators";
 import { RevokeConfirmModal } from "./RevokeConfirmModal";
 import { NewKeyResultModal } from "./NewKeyResultModal";
 
@@ -39,8 +40,6 @@ export default function APIKeysPage() {
   const [showConfirm, setShowConfirm] = useState<string | null>(null);
   const [newKeyData, setNewKeyData] = useState<{ name: string; fullKey: string } | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [createForm, setCreateForm] = useState({ name: "", rateLimit: 100 });
-
   const fetchData = async () => {
     try {
       const [keysRes, quotaRes] = await Promise.all([
@@ -67,17 +66,15 @@ export default function APIKeysPage() {
     return { totalRequests, successRate: successRate.toFixed(1), activeKeys, characters: quota?.usage.characters_this_month || 0 };
   }, [keys, quota]);
 
-  const handleGenerate = async () => {
-    if (!createForm.name.trim()) return;
+  const handleGenerate = async (data: ApiKeyCreateFormData) => {
     setIsGenerating(true);
     try {
       const res = await apiRequest<{ id: string; name: string; key: string }>("/auth/api-keys", {
         method: "POST",
-        body: JSON.stringify({ name: createForm.name, rate_limit: createForm.rateLimit })
+        body: JSON.stringify({ name: data.name, rate_limit: data.rateLimit })
       });
       setNewKeyData({ name: res.name, fullKey: res.key });
       setShowCreate(false);
-      setCreateForm({ name: "", rateLimit: 100 });
       fetchData();
       notify({ severity: "success", title: "Thành công", message: "Đã khởi tạo API Key mới." });
     } catch (err) {
@@ -227,7 +224,7 @@ export default function APIKeysPage() {
           </div>
         </FadeIn>
 
-        <CreateKeyModal show={showCreate} onClose={() => setShowCreate(false)} createForm={createForm} setCreateForm={setCreateForm} onGenerate={handleGenerate} isGenerating={isGenerating} />
+        <CreateKeyModal show={showCreate} onClose={() => setShowCreate(false)} onGenerate={handleGenerate} isGenerating={isGenerating} />
         <RevokeConfirmModal show={showConfirm} onClose={() => setShowConfirm(null)} onRevoke={handleRevoke} />
         <NewKeyResultModal keyData={newKeyData} onClose={() => setNewKeyData(null)} onCopy={(t) => copyToClipboard(t, "Đã sao chép API Key")} />
       </main>

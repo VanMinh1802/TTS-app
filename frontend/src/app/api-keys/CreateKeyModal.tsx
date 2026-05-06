@@ -1,30 +1,46 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { apiKeyCreateSchema, type ApiKeyCreateFormData } from "@/lib/validators";
+import { FormField, getFieldErrorClass } from "@/components/form/FormField";
 import { UiSelect } from "@/components/ui/UiSelect";
-
-interface CreateFormData {
-  name: string;
-  rateLimit: number;
-}
 
 interface CreateKeyModalProps {
   show: boolean;
   onClose: () => void;
-  createForm: CreateFormData;
-  setCreateForm: (updater: (prev: CreateFormData) => CreateFormData) => void;
-  onGenerate: () => Promise<void>;
+  onGenerate: (data: ApiKeyCreateFormData) => Promise<void>;
   isGenerating: boolean;
 }
+
+const RATE_OPTIONS = [
+  { value: "50", label: "50 requests/min" },
+  { value: "100", label: "100 requests/min" },
+  { value: "200", label: "200 requests/min" },
+];
 
 export function CreateKeyModal({
   show,
   onClose,
-  createForm,
-  setCreateForm,
   onGenerate,
   isGenerating,
 }: CreateKeyModalProps) {
+  const { register, handleSubmit, formState: { errors }, control, reset } = useForm<ApiKeyCreateFormData>({
+    resolver: zodResolver(apiKeyCreateSchema),
+    defaultValues: { name: "", rateLimit: 100 },
+  });
+
+  const handleClose = () => {
+    reset();
+    onClose();
+  };
+
+  const onSubmit = async (data: ApiKeyCreateFormData) => {
+    await onGenerate(data);
+    reset();
+  };
+
   return (
     <AnimatePresence>
       {show && (
@@ -32,8 +48,8 @@ export function CreateKeyModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 /80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          onClick={onClose}
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={handleClose}
         >
           <motion.div
             initial={{ scale: 0.95, y: 10 }}
@@ -48,36 +64,36 @@ export function CreateKeyModal({
                 Khởi tạo API Key mới
               </h2>
               <div className="space-y-6">
-                <div>
-                  <label className="block text-[10px] uppercase tracking-widest text-[#A1A1AA] mb-2">Tên định danh (Key Name)</label>
+                <FormField label="Tên định danh (Key Name)" error={errors.name?.message} required>
                   <input
                     type="text"
-                    value={createForm.name}
-                    onChange={(e) => setCreateForm((f) => ({ ...f, name: e.target.value }))}
-                    className="w-full bg-[#0D100A]/50 border border-white/10 rounded-[8px] px-4 py-3 font-light text-sm text-[#F4F4F5] placeholder:text-gray-700 outline-none focus:border-[#6366F1]/50 transition-colors"
+                    {...register("name")}
+                    className={`w-full bg-[#0D100A]/50 border ${getFieldErrorClass(errors.name?.message)} rounded-[8px] px-4 py-3 font-light text-sm text-[#F4F4F5] placeholder:text-gray-700 outline-none transition-colors`}
                     placeholder="VD: Mobile App Production"
                   />
-                </div>
-                <UiSelect
-                  value={String(createForm.rateLimit)}
-                  onChange={(v) => setCreateForm((f) => ({ ...f, rateLimit: parseInt(v) }))}
-                  options={[
-                    { value: "50", label: "50 requests/min" },
-                    { value: "100", label: "100 requests/min" },
-                    { value: "200", label: "200 requests/min" },
-                  ]}
-                  label="Giới hạn truy vấn (Rate Limit)"
+                </FormField>
+                <Controller
+                  name="rateLimit"
+                  control={control}
+                  render={({ field }) => (
+                    <UiSelect
+                      value={String(field.value)}
+                      onChange={(v) => field.onChange(parseInt(v))}
+                      options={RATE_OPTIONS}
+                      label="Giới hạn truy vấn (Rate Limit)"
+                    />
+                  )}
                 />
                 <div className="flex gap-4 pt-4 border-t border-white/5">
                   <button
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="flex-1 py-3 rounded-[8px] bg-white/5 border border-white/10 text-[10px] font-medium uppercase tracking-widest text-[#D4D4D8] hover:bg-white/10 transition-colors"
                   >
                     Hủy bỏ
                   </button>
                   <button
-                    onClick={onGenerate}
-                    disabled={isGenerating || !createForm.name.trim()}
+                    onClick={handleSubmit(onSubmit)}
+                    disabled={isGenerating}
                     className="aether-btn aether-btn-primary flex-1 py-3 text-[10px] font-medium uppercase tracking-widest disabled:opacity-50"
                   >
                     {isGenerating ? "Đang tạo..." : "Sinh mã (Generate)"}
