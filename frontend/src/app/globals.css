@@ -1,0 +1,579 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-aether-primary: #6366F1;
+  --color-aether-secondary: #000000;
+  --color-aether-tertiary: #C968F7;
+  --color-aether-bg: transparent;
+  --color-aether-surface: #000000;
+  
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Legacy Meridian color variables — used by CopilotModal, LibraryDrawer, AudioPreview */
+:root {
+  --color-meridian-primary: #6366F1;
+  --color-meridian-secondary: #818CF8;
+  --color-meridian-neutral: #F4F4F5;
+}
+
+body {
+  font-family: var(--font-sans);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(88, 28, 135, 0.25) 0%, rgba(88, 28, 135, 0.10) 25%, rgba(0, 0, 0, 0.90) 55%, rgba(0, 0, 0, 1) 75%) no-repeat fixed,
+    radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.06) 0%, transparent 45%) no-repeat fixed,
+    radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.04) 0%, transparent 35%) no-repeat fixed;
+  background-color: #000000;
+  color: #F4F4F5;
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========= Dark Mode Text Brightness Boost ========= */
+/* Bump secondary text colors for better readability */
+.text-\[\#D4D4D8\] { color: #E8E8ED !important; }
+.text-\[\#A1A1AA\] { color: #B8B8C0 !important; font-weight: 500 !important; }
+.text-\[\#71717A\] { color: #909098 !important; }
+.text-gray-300 { color: #E8E8ED !important; }
+.text-gray-700 { color: #B8B8C0 !important; }
+
+/* Aether background gradient */
+.aether-bg-gradient {
+  background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.05) 0%, transparent 70%);
+}
+
+/* Custom Webkit Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(5, 5, 8, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.2);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.4);
+}
+
+/* ========= Aether Glass System ========= */
+/* Card n?n gradient den + xanh lam t�m */
+.aether-glass,
+.aether-card {
+  background: radial-gradient(circle at 0% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+              radial-gradient(circle at 100% 80%, rgba(139, 92, 246, 0.2) 0%, transparent 45%),
+              rgba(5, 5, 8, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 32px;
+  box-shadow: 
+    inset 0 1px 1px rgba(255, 255, 255, 0.08), 
+    inset 0 24px 48px -24px rgba(99, 102, 241, 0.15);
+}
+
+/* Aether Gradient Border Shell */
+.aether-glass-wrapper {
+  padding: 1px;
+  border-radius: 32px;
+  background: linear-gradient(to bottom, rgba(99, 102, 241, 0.35), rgba(139, 92, 246, 0.15), rgba(0, 0, 0, 0.6));
+  box-shadow: 
+    0 20px 40px -10px rgba(0, 0, 0, 0.5),
+    0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.aether-glass-wrapper:hover,
+.aether-glass-wrapper:focus-within {
+  box-shadow: 
+    0 20px 40px -10px rgba(99, 102, 241, 0.3),
+    0 1px 2px rgba(99, 102, 241, 0.15);
+}
+
+/* Aether Card � variant d?ng card d?c l?p (thay th? brutal-card) */
+.aether-card {
+  border-radius: 12px;
+  transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.aether-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 15px 30px -8px rgba(99, 102, 241, 0.15);
+}
+
+/* Aether Buttons */
+.aether-btn {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 12px 28px;
+  border-radius: 9999px;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: 0.01em;
+}
+
+.aether-btn-primary {
+  background: linear-gradient(to right, #6366F1, #C968F7);
+  color: #1A1A1A;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+}
+
+.aether-btn-primary:hover {
+  box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
+  transform: translateY(-1px);
+}
+
+.aether-btn-ghost {
+  background-color: transparent;
+  color: #818CF8;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.aether-btn-ghost:hover {
+  background-color: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.5);
+  transform: translateY(-1px);
+}
+
+/* Text Gradient */
+.aether-text-gradient {
+  background: linear-gradient(to right, #6366F1 0%, #C968F7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Badge */
+.aether-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #818CF8;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  background: rgba(99, 102, 241, 0.08);
+  padding: 6px 16px;
+  border-radius: 9999px;
+}
+
+.aether-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6366F1;
+  box-shadow: 0 0 8px #6366F1;
+}
+
+/* Stagger Animation */
+.aether-animate-stagger > * {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+/* ========= Light Mode Overrides ========= */
+.light #heroCanvas {
+  opacity: 0.10;
+}
+.light body {
+  background: linear-gradient(180deg, #FCFAFF 0%, #FEFEFF 15%, #FFFFFF 35%, #FFFFFF 100%) no-repeat fixed;
+  background-color: #FFFFFF;
+  color: #09090B;
+  font-weight: 400;
+}
+
+/* ---- Light mode: font-light → normal weight ---- */
+.light .font-light {
+  font-weight: 400 !important;
+}
+
+/* ---- Light mode: text color overrides (Tailwind 4 escapes # with \) ---- */
+.light .text-\[\#F4F4F5\] { color: #09090B !important; }
+.light .text-\[\#A1A1AA\] { color: #3F3F46 !important; font-weight: 500 !important; }
+.light .text-\[\#D4D4D8\] { color: #18181B !important; font-weight: 500 !important; }
+.light [class*="text-"]:where([class*="\#71717A"]) { color: #3F3F46 !important; }
+.light .text-white:where(:not(.aether-btn-primary *):not(.aether-badge *):not(nav *)) { color: #09090B !important; }
+.light .text-gray-300 { color: #3F3F46 !important; }
+.light .text-gray-700 { color: #27272A !important; }
+.light .placeholder\:text-gray-700::placeholder { color: #A1A1AA !important; }
+.light .placeholder\:text-\[\#A1A1AA\]::placeholder { color: #A1A1AA !important; }
+
+/* ---- Light mode: purple-accent labels (keep purple!) ---- */
+.light .text-\[\#6366F1\] { color: #4F46E5 !important; }
+.light .text-\[\#818CF8\] { color: #4F46E5 !important; }
+
+/* ---- Light mode: uppercase/tracking labels ---- */
+.light .tracking-widest:where(:not([class*="text-[\#6366F1"])):where(:not([class*="text-[\#818CF8"])):where(:not(.aether-badge)):where(:not(.text-red-400)) {
+  font-weight: 600;
+  color: #18181B !important;
+}
+.light .uppercase:where(:not([class*="text-[\#6366F1"])):where(:not([class*="text-[\#818CF8"])):where(:not(.aether-badge)):where(:not(.text-red-400)) {
+  font-weight: 600;
+  color: #18181B !important;
+}
+
+/* ---- Light mode: Aether badge ---- */
+.light .aether-badge {
+  font-weight: 600 !important;
+  color: #4F46E5 !important;
+  border-color: rgba(79, 70, 229, 0.25) !important;
+  background: rgba(79, 70, 229, 0.08) !important;
+}
+
+/* ---- Light mode: headlines ---- */
+.light h1.bg-gradient-to-r,
+.light h1.bg-gradient-to-b,
+.light .bg-gradient-to-b.from-white {
+  background: linear-gradient(to right, #4F46E5 0%, #C968F7 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+.light .aether-text-gradient {
+  background: linear-gradient(to right, #4F46E5 0%, #C968F7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ---- Light mode: Navbar ---- */
+.light nav:where(.fixed) {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-bottom-color: rgba(99, 102, 241, 0.1) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(99, 102, 241, 0.04) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+.light nav .text-\[\#F4F4F5\] { color: #09090B !important; }
+.light nav .text-\[\#A1A1AA\] { color: #3F3F46 !important; }
+.light nav [class*="text-"]:where([class*="\#818CF8"]) { color: #4F46E5 !important; }
+
+/* ---- Light mode: borders with purple tint ---- */
+.light .border-white\/10 { border-color: rgba(99, 102, 241, 0.12) !important; }
+.light .border-white\/5 { border-color: rgba(99, 102, 241, 0.06) !important; }
+
+/* ---- Light mode: inputs ---- */
+.light input,
+.light select,
+.light textarea {
+  background: #FFFFFF !important;
+  border-color: rgba(99, 102, 241, 0.15) !important;
+  color: #09090B !important;
+  font-weight: 400 !important;
+}
+.light input:focus,
+.light select:focus,
+.light textarea:focus {
+  border-color: #6366F1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+  outline: none !important;
+}
+
+/* ---- Light mode: hover states ---- */
+.light .hover\:bg-white\/\[0\.04\]:hover { background: rgba(99, 102, 241, 0.04) !important; }
+.light .hover\:bg-white\/\[0\.02\]:hover { background: rgba(99, 102, 241, 0.02) !important; }
+.light .hover\:bg-white\/\[0\.03\]:hover { background: rgba(99, 102, 241, 0.05) !important; }
+
+/* ---- Light mode: Dropdown option text ---- */
+.light .text-\[\#C4B99A\] { color: #4F46E5 !important; }
+.light .text-\[\#333333\] { color: #A1A1AA !important; }
+.light .hover\:text-\[\#D4D4D8\]:hover { color: #18181B !important; }
+
+/* ---- Light mode: divider with purple tint ---- */
+.light .divide-white\/10 > * + * { border-color: rgba(99, 102, 241, 0.08) !important; }
+.light .divide-white\/5 > * + * { border-color: rgba(99, 102, 241, 0.04) !important; }
+
+/* ---- Light mode: purple scrollbar ---- */
+.light ::-webkit-scrollbar-track {
+  background: rgba(99, 102, 241, 0.04);
+}
+.light ::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.18);
+}
+
+/* ---- Light mode: utility backgrounds with purple tint ---- */
+.light .bg-white\/5 { background: rgba(99, 102, 241, 0.04) !important; }
+.light .bg-white\/10 { background-color: rgba(99, 102, 241, 0.06) !important; }
+.light .bg-white\/\[0\.02\] { background: rgba(99, 102, 241, 0.02) !important; }
+.light .bg-\[\#0D100A\] { background-color: #FFFFFF !important; }
+.light .bg-\[\#0D100A\]\/50 { background-color: rgba(99, 102, 241, 0.03) !important; }
+.light .bg-\[\#050508\]\/90 { background: rgba(255, 255, 255, 0.92) !important; }
+.light .bg-\[\#050508\]\/95 { background: rgba(255, 255, 255, 0.95) !important; }
+
+/* ---- Light mode: Aether Glass & Cards with subtle purple tint ---- */
+.light .aether-glass,
+.light .aether-card {
+  background: linear-gradient(135deg, #FFFFFF 0%, #FDFBFF 50%, #FAF5FF 100%) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+.light .aether-glass-wrapper {
+  background: linear-gradient(to bottom, rgba(99, 102, 241, 0.18), rgba(139, 92, 246, 0.08)) !important;
+  box-shadow: 
+    0 1px 3px rgba(99, 102, 241, 0.06),
+    0 12px 36px rgba(99, 102, 241, 0.1) !important;
+}
+
+.light .aether-glass-wrapper:hover,
+.light .aether-glass-wrapper:focus-within {
+  box-shadow: 
+    0 4px 24px rgba(99, 102, 241, 0.14),
+    0 1px 3px rgba(99, 102, 241, 0.08) !important;
+}
+
+/* ---- Light mode: buttons inside cards ---- */
+.light .aether-glass button:where(:not(.aether-btn-primary)) {
+  color: #4F46E5 !important;
+  border-color: rgba(79, 70, 229, 0.2) !important;
+  font-weight: 500 !important;
+}
+
+.light .aether-glass button:where(:not(.aether-btn-primary)):hover {
+  background: rgba(79, 70, 229, 0.06) !important;
+  border-color: rgba(79, 70, 229, 0.35) !important;
+}
+
+/* ---- Light mode: primary button ---- */
+.aether-btn-primary {
+  color: #1A1A1A !important;
+}
+.light .aether-btn-primary {
+  color: #1A1A1A !important;
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.25), 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ---- Light mode: progress bars ---- */
+.light .bg-\[\#6366F1\] { background-color: #6366F1 !important; }
+.light .bg-\[\#6366F1\]\/20 { background-color: rgba(99, 102, 241, 0.1) !important; }
+.light .border-\[\#6366F1\]\/50 { border-color: rgba(99, 102, 241, 0.25) !important; }
+.light .bg-\[\#6366F1\]\/10 { background-color: rgba(99, 102, 241, 0.06) !important; }
+.light .border-\[\#6366F1\]\/30 { border-color: rgba(99, 102, 241, 0.2) !important; }
+
+/* ---- Light mode: dividers in cards with purple ---- */
+.light .bg-gradient-to-r.from-white\/10 {
+  background: linear-gradient(to right, rgba(99, 102, 241, 0.15), transparent) !important;
+}
+.light .bg-gradient-to-r.from-transparent.to-white\/10 {
+  background: linear-gradient(to right, transparent, rgba(99, 102, 241, 0.1)) !important;
+}
+.light .bg-gradient-to-l.from-transparent.to-white\/10 {
+  background: linear-gradient(to left, transparent, rgba(99, 102, 241, 0.1)) !important;
+}
+
+/* ---- Light mode: status indicators ---- */
+.light .shadow-\[0_0_8px_rgba\(99\,102\,241\,0\.8\)\] {
+  box-shadow: 0 0 8px rgba(79, 70, 229, 0.6) !important;
+}
+
+/* Light mode: CSS variables for component-level customization */
+.light {
+  --color-meridian-primary: #6366F1;
+  --color-meridian-secondary: #4F46E5;
+  --color-meridian-neutral: #09090B;
+  --range-track-bg: rgba(99, 102, 241, 0.12);
+}
+
+/* ---- Light mode: Studio-specific overrides ---- */
+/* Dark solid borders used in selects/inputs */
+.light .border-\[\#333333\] {
+  border-color: rgba(99, 102, 241, 0.15) !important;
+}
+.light option {
+  background: #FFFFFF !important;
+  color: #09090B !important;
+}
+
+/* ---- Light mode: Toast Container ---- */
+.toast-card {
+  background: rgba(10, 10, 15, 0.96);
+  backdrop-filter: blur(20px);
+}
+.light .toast-card {
+  background: rgba(255, 255, 255, 0.96) !important;
+}
+
+/* ---- Light mode: UiSelect Dropdown Portal ---- */
+.light .bg-\[\#0A0A0F\] {
+  background: #FFFFFF !important;
+}
+.light .border-white\/\[0\.08\] {
+  border-color: rgba(99, 102, 241, 0.12) !important;
+}
+.light .shadow-\[0_15px_40px_-8px_rgba\(0\,0\,0\,0\.6\)\] {
+  box-shadow: 0 8px 32px -4px rgba(99, 102, 241, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+.light .border-white\/\[0\.04\] {
+  border-color: rgba(99, 102, 241, 0.06) !important;
+}
+
+/* Placeholder text for studio inputs */
+.light .placeholder\:text-\[\#52525B\]::placeholder {
+  color: #A1A1AA !important;
+}
+.light .text-\[\#52525B\] { color: #A1A1AA !important; }
+
+/* Dark backgrounds used in textarea footer, audio area */
+.light .bg-black\/40 { background: rgba(99, 102, 241, 0.04) !important; }
+.light .bg-black\/60 { background: rgba(99, 102, 241, 0.06) !important; }
+
+/* Audio area dashed/empty state backgrounds */
+.light .bg-\[\#0D100A\]\/30 { background-color: rgba(99, 102, 241, 0.02) !important; }
+
+/* Drawer/overlay backgrounds */
+.light .bg-\[\#050508\]\/80 { background: rgba(255, 255, 255, 0.85) !important; backdrop-filter: blur(12px) !important; }
+.light .bg-\[\#050508\]\/95 { background: rgba(255, 255, 255, 0.95) !important; }
+
+/* Drawer */
+.light .border-l.border-white\/10 { border-left-color: rgba(99, 102, 241, 0.1) !important; }
+.light aside .text-white { color: #09090B !important; }
+.light aside .text-\[\#A1A1AA\] { color: #3F3F46 !important; }
+.light aside .text-\[\#71717A\] { color: #52525B !important; }
+.light aside .bg-white\/5 { background: rgba(99, 102, 241, 0.04) !important; }
+.light aside .hover\:text-white:hover { color: #09090B !important; }
+.light aside .hover\:bg-white\/10:hover { background: rgba(99, 102, 241, 0.06) !important; }
+
+/* Group-hover text overrides in cards */
+.light .group:hover .group-hover\:text-white { color: #09090B !important; }
+.light .group\/dict:hover .group-hover\/dict\:text-white { color: #09090B !important; }
+
+/* Speed slider - thin track uses #333333 inline bg - override via input range */
+.light input[type="range"] {
+  background: rgba(99, 102, 241, 0.1) !important;
+  accent-color: #4F46E5 !important;
+}
+
+/* Audio player controls light mode */
+.light audio {
+  filter: invert(0) !important;
+}
+
+/* Shadow-inner for dark elements */
+.light .shadow-inner {
+  box-shadow: inset 0 2px 4px rgba(99, 102, 241, 0.03) !important;
+}
+
+/* Edit mode select borders */
+.light .border-white\/20 { border-color: rgba(99, 102, 241, 0.12) !important; }
+.light .bg-white\/5 { background: rgba(99, 102, 241, 0.04) !important; }
+
+/* ---- Light mode: Library Drawer ---- */
+/* Drawer overlay */
+.light .fixed.inset-0.z-\[100\]:where(.bg-\[\#050604\]\/60) {
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* Drawer panel itself (library drawer only = text var-based, not text-white) */
+.light aside.fixed.right-0.z-\[101\]:not([class*="text-white"]) {
+  background: #FFFFFF !important;
+  border-left-color: rgba(99, 102, 241, 0.1) !important;
+}
+
+/* Drawer: all dark text overrides (library drawer only) */
+.light aside.fixed.right-0.z-\[101\]:not([class*="text-white"]) .text-gray-300 { color: #3F3F46 !important; }
+.light aside.fixed.right-0.z-\[101\]:not([class*="text-white"]) .hover\:text-white:hover { color: #09090B !important; }
+.light aside.fixed.right-0.z-\[101\]:not([class*="text-white"]) .hover\:bg-white\/5:hover { background: rgba(99, 102, 241, 0.04) !important; }
+.light aside.fixed.right-0.z-\[101\]:not([class*="text-white"]) .hover\:bg-white\/10:hover { background: rgba(99, 102, 241, 0.06) !important; }
+.light aside.fixed.right-0.z-\[101\]:not([class*="text-white"]) .bg-black\/20 { background: rgba(99, 102, 241, 0.04) !important; }
+.light aside.fixed.right-0.z-\[101\]:not([class*="text-white"]) .bg-white\/\[0\.02\] { background: rgba(99, 102, 241, 0.02) !important; }
+
+/* Drawer record card (library drawer only) */
+.light aside.fixed.right-0.z-\[101\]:not([class*="text-white"]) .border-white\/5 { border-color: rgba(99, 102, 241, 0.06) !important; }
+.light aside.fixed.right-0.z-\[101\]:not([class*="text-white"]) .hover\:bg-white\/\[0\.04\]:hover { background: rgba(99, 102, 241, 0.04) !important; }
+
+/* Drawer close button (library drawer only) */
+.light aside.fixed.right-0.z-\[101\]:not([class*="text-white"]) .h-8.w-8.rounded-full {
+  border-color: rgba(99, 102, 241, 0.12) !important;
+  color: #3F3F46 !important;
+}
+
+/* Drawer footer (library drawer only) */
+.light aside.fixed.right-0.z-\[101\]:not([class*="text-white"]) .bg-\[\#050604\]\/50 { background: rgba(245, 240, 255, 0.5) !important; }
+.light aside.fixed.right-0.z-\[101\]:not([class*="text-white"]) a[href="/library"] button {
+  border-color: rgba(99, 102, 241, 0.12) !important;
+  background: rgba(99, 102, 241, 0.04) !important;
+  color: #3F3F46 !important;
+}
+
+/* ---- Light mode: Copilot Dictionary Modal ---- */
+.light .meridian-glass-wrapper {
+  background: linear-gradient(to bottom, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.06)) !important;
+}
+.light .meridian-glass {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(99, 102, 241, 0.1) !important;
+}
+
+/* ---- Light mode: Admin page ---- */
+.light .bg-\[\#0D100A\]\/95 { background: #FFFFFF !important; }
+.light .hover\:border-white\/20:hover { border-color: rgba(99, 102, 241, 0.2) !important; }
+.light .bg-\[\#6366F1\]\/5 { background: rgba(99, 102, 241, 0.04) !important; }
+.light .text-purple-400 { color: #7C3AED !important; }
+
+/* ---- Custom scrollbar for admin tables ---- */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(5, 5, 8, 0.3);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.2);
+  border-radius: 4px;
+}
+.light .custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(99, 102, 241, 0.04);
+}
+.light .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.15);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---- Light mode: Dashboard Progress Bars ---- */
+.light .shadow-\[inset_0_1px_3px_rgba\(0\,0\,0\,0\.5\)\] {
+  box-shadow: inset 0 1px 3px rgba(99, 102, 241, 0.08) !important;
+}
+
+/* ---- Light mode: Progress Tooltip ---- */
+.light .progress-tooltip {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: rgba(99, 102, 241, 0.15) !important;
+  box-shadow: 0 4px 24px rgba(99, 102, 241, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+.light .progress-tooltip p {
+  color: #09090B !important;
+}
+
+@media (max-width: 768px) {
+  .aether-glass {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}
