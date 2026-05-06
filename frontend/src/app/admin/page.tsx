@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import { FadeIn } from "@/components/motion";
 import { apiRequest } from "@/lib/api-client";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { RequireRole } from "@/features/auth";
+import { notificationService } from "@/shared/notifications/notification-store";
 import LicenseGenerator from "./LicenseGenerator";
 import LicenseTable, { type License } from "./LicenseTable";
 
@@ -14,6 +16,7 @@ export default function AdminPage() {
   const [genDays, setGenDays] = useState(365);
   const [generating, setGenerating] = useState(false);
   const [newKeys, setNewKeys] = useState<string[]>([]);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     loadLicenses();
@@ -37,12 +40,19 @@ export default function AdminPage() {
   const copyAll = () => { navigator.clipboard.writeText(newKeys.join("\n")); };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Bạn có chắc muốn xoá/thu hồi mã này?")) return;
+    setConfirmDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!confirmDeleteId) return;
     try {
-      await apiRequest(`/admin/licenses/${id}`, { method: "DELETE", allowEmpty: true });
+      await apiRequest(`/admin/licenses/${confirmDeleteId}`, { method: "DELETE", allowEmpty: true });
       await loadLicenses();
+      notificationService.notify({ severity: "success", title: "Thành công", message: "Đã xóa license thành công." });
+      setConfirmDeleteId(null);
     } catch (e) {
-      alert("Lỗi khi xoá mã.");
+      notificationService.notify({ severity: "error", title: "Lỗi", message: "Không thể xóa license." });
+      setConfirmDeleteId(null);
     }
   };
 
@@ -82,6 +92,15 @@ export default function AdminPage() {
           </div>
         </main>
       </div>
+      <ConfirmModal
+        open={!!confirmDeleteId}
+        title="Xác nhận xóa"
+        message="Bạn có chắc muốn xóa/thu hồi mã license này? Hành động này không thể hoàn tác."
+        confirmLabel="Xóa"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onClose={() => setConfirmDeleteId(null)}
+      />
     </RequireRole>
   );
 }
