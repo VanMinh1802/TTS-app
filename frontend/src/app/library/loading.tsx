@@ -1,10 +1,24 @@
+import { SkeletonCard } from "@/components/ui/SkeletonCard";
+
 export default function Loading() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-10 h-10 rounded-full border-2 border-[#6366F1] border-t-transparent animate-spin" />
-        <p className="text-[10px] uppercase tracking-widest text-[#A1A1AA]">Đang tải...</p>
-      </div>
+    <div className="min-h-screen relative text-[#F4F4F5] overflow-hidden font-light pt-24 pb-12">
+      <div className="absolute inset-0 pointer-events-none aether-bg-gradient" />
+      <main className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="mb-8">
+          <div className="h-3 w-40 rounded-full mb-4"
+            style={{ background: "linear-gradient(90deg, rgba(99,102,241,0.08), rgba(99,102,241,0.15), rgba(99,102,241,0.08))" }}
+          />
+          <div className="h-10 w-80 rounded-lg mb-2"
+            style={{ background: "linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.1), rgba(255,255,255,0.04))" }}
+          />
+        </div>
+        <div className="space-y-2">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <SkeletonCard key={i} variant="row" className="aether-glass-wrapper rounded-[16px]" />
+          ))}
+        </div>
+      </main>
     </div>
   );
 }
