@@ -48,6 +48,12 @@ export default function DashboardPage() {
       try {
         const quotaData = await apiRequest<QuotaStatus>("/quota");
         setQuota(quotaData);
+        if (quotaData.limits.characters_per_month && quotaData.limits.characters_per_month > 0) {
+          const percentUsed = (quotaData.usage.characters_this_month / quotaData.limits.characters_per_month) * 100;
+          if (percentUsed > 90) {
+            notificationService.notify({ severity: "warning", title: "Sắp hết quota", message: "Bạn sắp hết quota ký tự trong tháng này. Hãy nâng cấp gói để tiếp tục sử dụng." });
+          }
+        }
       } catch (err) {
         console.error("Failed to fetch dashboard data:", err);
         notificationService.notify({ severity: "error", title: "Lỗi", message: "Không thể tải thông tin quota. Vui lòng thử lại." });

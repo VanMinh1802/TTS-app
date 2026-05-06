@@ -98,7 +98,7 @@ export default function APIKeysPage() {
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
-    notify({ severity: "success", title: "Đã sao chép", message: label });
+    notify({ severity: "info", title: "Đã sao chép", message: label });
   };
 
   const formatDate = (dateStr: string) => {
