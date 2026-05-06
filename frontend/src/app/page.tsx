@@ -119,15 +119,15 @@ export default function Home() {
               © 2026 TYPE2VIBE.
             </p>
             <div className="flex items-center gap-8 order-1 md:order-2">
-              <Link href="#" className="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#71717A] hover:text-[#818CF8] transition-colors">
+              <Link href="/404" className="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#71717A] hover:text-[#818CF8] transition-colors">
                 <span className="w-0 group-hover:w-3 h-px bg-[#818CF8] transition-all duration-300" />
                 Điều khoản
               </Link>
-              <Link href="#" className="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#71717A] hover:text-[#818CF8] transition-colors">
+              <Link href="/404" className="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#71717A] hover:text-[#818CF8] transition-colors">
                 <span className="w-0 group-hover:w-3 h-px bg-[#818CF8] transition-all duration-300" />
                 Bảo mật
               </Link>
-              <Link href="#" className="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#71717A] hover:text-[#818CF8] transition-colors">
+              <Link href="/404" className="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#71717A] hover:text-[#818CF8] transition-colors">
                 <span className="w-0 group-hover:w-3 h-px bg-[#818CF8] transition-all duration-300" />
                 API
               </Link>
