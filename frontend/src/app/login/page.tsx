@@ -8,6 +8,11 @@ import { loginWithGoogle } from "@/features/auth/api/auth-api";
 import { useNotifications } from "@/shared/notifications/notification-store";
 import { motion } from "framer-motion";
 
+// Form validation ready for email/password login:
+// import { useForm } from "react-hook-form";
+// import { zodResolver } from "@hookform/resolvers/zod";
+// import { loginSchema, type LoginFormData } from "@/lib/validators";
+
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
 function LoginForm() {
