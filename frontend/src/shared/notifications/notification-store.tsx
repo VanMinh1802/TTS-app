@@ -26,7 +26,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const notify = useCallback((notification: Omit<Notification, "id" | "createdAt">) => {
     const id = Math.random().toString(36).substring(2, 15);
-    setNotifications((prev) => [...prev, { ...notification, id, createdAt: new Date() }]);
+    setNotifications((prev) => {
+      const next = [...prev, { ...notification, id, createdAt: new Date() }];
+      if (next.length > 20) return next.slice(-20);
+      return next;
+    });
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
     }, 6000);
@@ -47,19 +51,6 @@ export function useNotifications() {
   const ctx = useContext(NotificationContext);
   if (!ctx) throw new Error("useNotifications must be used within NotificationProvider");
   return ctx;
-}
-
-export function createNotificationService() {
-  return {
-    notify: (notification: Omit<Notification, "id" | "createdAt">) => {
-      const ctx = useContext(NotificationContext);
-      if (ctx) ctx.notify(notification);
-    },
-    dismiss: (id: string) => {
-      const ctx = useContext(NotificationContext);
-      if (ctx) ctx.dismiss(id);
-    },
-  };
 }
 
 export const notificationService = {
