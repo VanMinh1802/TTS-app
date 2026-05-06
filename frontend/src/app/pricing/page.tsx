@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FadeIn } from "@/components/motion";
 import { getCurrentUser } from "@/features/auth/api/auth-api";
+import { notificationService } from "@/shared/notifications/notification-store";
 
 const faqs = [
   { q: "Tôi có thể hủy gói bất cứ lúc nào không?", a: "Có, bạn có thể hủy gói và không bị ràng buộc. Dịch vụ sẽ tiếp tục hoạt động đến hết chu kỳ thanh toán hiện tại." },
@@ -23,7 +24,9 @@ export default function PricingPage() {
     getCurrentUser().then(u => {
       setUserEmail(u.email);
       setUserTier(u.subscription_tier || "free");
-    }).catch(() => {});
+    }).catch(() => {
+      notificationService.notify({ severity: "error", title: "Lỗi", message: "Không thể tải thông tin người dùng." });
+    });
   }, []);
 
   const price = isYearly ? "99k" : "19k";

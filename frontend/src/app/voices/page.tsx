@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { FadeIn } from "@/components/motion";
 import { UiSelect } from "@/components/ui/UiSelect";
+import { notificationService } from "@/shared/notifications/notification-store";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
@@ -44,6 +45,7 @@ export default function VoicesPage() {
         }
       } catch (error) {
         console.error("Failed to fetch voices:", error);
+        notificationService.notify({ severity: "error", title: "Lỗi", message: "Không thể tải danh sách giọng đọc. Vui lòng thử lại." });
       } finally {
         setLoading(false);
       }

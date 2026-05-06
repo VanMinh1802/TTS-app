@@ -15,6 +15,7 @@ import { LibrarySyncBar } from './LibrarySyncBar';
 import { CloudUpgradeBanner } from './CloudUpgradeBanner';
 import { FormatPickerModal } from './FormatPickerModal';
 import { LibraryRecord, LibraryViewMode, LibraryTab } from '../types';
+import { notificationService } from "@/shared/notifications/notification-store";
 
 export function LibraryPage() {
   const { user } = useAuth();
@@ -72,6 +73,7 @@ export function LibraryPage() {
       refresh();
     } catch (e) {
       console.error('Delete failed:', e);
+      notificationService.notify({ severity: "error", title: "Lỗi", message: "Không thể xóa bản ghi. Vui lòng thử lại." });
     }
   }, [deleteTarget, deleteMode, isPro, refresh]);
 

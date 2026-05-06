@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { apiRequest } from "@/lib/api-client";
 import { useAuth } from "@/features/auth";
+import { notificationService } from "@/shared/notifications/notification-store";
 import { CounterText } from "./components/CounterText";
 import { SkeletonCard } from "@/components/ui/SkeletonCard";
 import { ProgressTooltip } from "./components/ProgressTooltip";
@@ -49,6 +50,7 @@ export default function DashboardPage() {
         setQuota(quotaData);
       } catch (err) {
         console.error("Failed to fetch dashboard data:", err);
+        notificationService.notify({ severity: "error", title: "Lỗi", message: "Không thể tải thông tin quota. Vui lòng thử lại." });
       } finally {
         setLoading(false);
       }
