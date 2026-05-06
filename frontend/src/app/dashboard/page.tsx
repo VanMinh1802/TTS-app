@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { apiRequest } from "@/lib/api-client";
 import { useAuth } from "@/features/auth";
 import { CounterText } from "./components/CounterText";
-import { SkeletonCard } from "./components/SkeletonCard";
+import { SkeletonCard } from "@/components/ui/SkeletonCard";
 import { ProgressTooltip } from "./components/ProgressTooltip";
 
 interface QuotaStatus {
