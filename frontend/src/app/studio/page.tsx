@@ -204,13 +204,16 @@ export default function StudioPage() {
     try {
       const saved = await createDictionaryEntry({ word: entry.word, pronunciation: entry.pronunciation || entry.word }) as unknown as DictionaryEntry;
       setDictionary((prev) => [...prev, saved]);
+      notify({ severity: "success", title: "Đã thêm", message: `Đã thêm "${entry.word}" vào từ điển.`, source: "studio" });
     } catch {
       setDictionary((prev) => [...prev, { ...entry, id: Math.random().toString(), createdAt: new Date().toISOString() } as unknown as DictionaryEntry]);
+      notify({ severity: "error", title: "Lỗi", message: "Không thể thêm từ vào từ điển.", source: "studio" });
     }
-  }, []);
+  }, [notify]);
 
   const handleRemoveDictionary = useCallback(async (index: number) => {
     const entry = dictionary[index];
+    const word = entry?.word || "";
     if (entry?.id) {
       try {
         await deleteDictionaryEntry(entry.id);
@@ -219,25 +222,26 @@ export default function StudioPage() {
       }
     }
     setDictionary((prev) => prev.filter((_, i) => i !== index));
-  }, [dictionary]);
+    notify({ severity: "success", title: "Đã xóa", message: `Đã xóa "${word}" khỏi từ điển.`, source: "studio" });
+  }, [dictionary, notify]);
 
   const handleEditDictionary = useCallback(async (index: number, updated: Partial<DictionaryEntry>) => {
     const entry = dictionary[index];
+    const word = updated.word || entry?.word || "";
     if (entry?.id) {
       try {
-        const saved = await updateDictionaryEntry(entry.id, {
-          word: updated.word,
-          pronunciation: updated.pronunciation,
-        });
+        const saved = await updateDictionaryEntry(entry.id, { word: updated.word, pronunciation: updated.pronunciation });
         setDictionary((prev) => prev.map((e, i) => (i === index ? { ...e, ...saved } : e)));
       } catch {
-        // Optimistic: still update locally
         setDictionary((prev) => prev.map((e, i) => (i === index ? { ...e, ...updated } : e)));
+        notify({ severity: "error", title: "Lỗi", message: `Không thể cập nhật "${word}".`, source: "studio" });
+        return;
       }
     } else {
       setDictionary((prev) => prev.map((e, i) => (i === index ? { ...e, ...updated } : e)));
     }
-  }, [dictionary]);
+    notify({ severity: "success", title: "Đã cập nhật", message: `Đã cập nhật "${word}".`, source: "studio" });
+  }, [dictionary, notify]);
 
   const handleGrammarApply = useCallback((corrected: string) => {
     setText(corrected);
