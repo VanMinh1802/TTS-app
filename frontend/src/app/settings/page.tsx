@@ -4,13 +4,20 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FadeIn } from "@/components/motion";
 import { useAuth } from "@/features/auth";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { geminiKeySchema, type GeminiKeyFormData } from "@/lib/validators";
+import { FormField, getFieldErrorClass } from "@/components/form/FormField";
 
 export default function SettingsPage() {
   const { user } = useAuth();
   const [saved, setSaved] = useState(false);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [geminiKey, setGeminiKey] = useState("");
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<GeminiKeyFormData>({
+    resolver: zodResolver(geminiKeySchema),
+    defaultValues: { geminiKey: "" },
+  });
   const [showKey, setShowKey] = useState(false);
   const [testingKey, setTestingKey] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
@@ -24,14 +31,11 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const savedKey = localStorage.getItem("gemini_api_key");
-    if (savedKey) setGeminiKey(savedKey);
-  }, []);
+    if (savedKey) setValue("geminiKey", savedKey);
+  }, [setValue]);
 
-  const handleTestKey = async () => {
-    if (!geminiKey.trim()) {
-      setTestResult({ ok: false, message: "Vui lòng nhập API Key trước." });
-      return;
-    }
+  const handleTestKeyWrapped = handleSubmit(async (data) => {
+    const geminiKey = data.geminiKey;
     setTestingKey(true);
     setTestResult(null);
     try {
@@ -52,10 +56,11 @@ export default function SettingsPage() {
     } finally {
       setTestingKey(false);
     }
-  };
+  });
 
   const handleSave = () => {
-    localStorage.setItem("gemini_api_key", geminiKey);
+    const currentKey = watch("geminiKey");
+    localStorage.setItem("gemini_api_key", currentKey);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
@@ -131,13 +136,12 @@ export default function SettingsPage() {
                     </ol>
                   </div>
                   <div className="space-y-1.5 mb-6">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">Gemini API Key</label>
-                  <div className="relative">
-                    <input
-                      type={showKey ? "text" : "password"}
-                      value={geminiKey}
-                      onChange={e => setGeminiKey(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl pl-4 pr-12 py-3 font-light text-sm text-white placeholder:text-[#A1A1AA]/50 outline-none focus:border-[#818CF8]/50 focus:bg-white/10 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]"
+                  <FormField label="Gemini API Key" error={errors.geminiKey?.message} required>
+                    <div className="relative">
+                      <input
+                        type={showKey ? "text" : "password"}
+                        {...register("geminiKey")}
+                        className={`w-full bg-white/5 border ${getFieldErrorClass(errors.geminiKey?.message)} rounded-xl pl-4 pr-12 py-3 font-light text-sm text-white placeholder:text-[#A1A1AA]/50 outline-none focus:bg-white/10 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]`}
                       placeholder="AIzaSy..."
                     />
                     <button
@@ -152,6 +156,7 @@ export default function SettingsPage() {
                       )}
                     </button>
                   </div>
+                  </FormField>
                   <p className="mt-2 text-xs text-[#71717A] font-light leading-relaxed">
                     Key được lưu trên trình duyệt (localStorage), dùng cho Sửa chính tả, Kiểm tra phát âm và Chia đoạn trong Studio.
                   </p>
@@ -162,7 +167,7 @@ export default function SettingsPage() {
                     Lưu cấu hình
                   </button>
                   <button
-                    onClick={handleTestKey}
+                    onClick={handleTestKeyWrapped}
                     disabled={testingKey}
                     className="px-6 py-3 rounded-full border border-[#818CF8]/30 bg-[#818CF8]/10 text-[#818CF8] text-[10px] font-bold uppercase tracking-widest hover:bg-[#818CF8]/20 disabled:opacity-50 transition-all"
                   >
