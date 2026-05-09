@@ -2,14 +2,12 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useT } from '@/shared/i18n';
 
 interface StudioHeaderProps {
   onOpenLibrary?: () => void;
 }
 
 export const StudioHeader = React.memo(function StudioHeader({ onOpenLibrary }: StudioHeaderProps) {
-  const t = useT();
   return (
     <div className="aether-glass-wrapper rounded-[24px]">
       <div className="aether-glass rounded-[24px] px-6 py-4 flex items-center justify-between">
