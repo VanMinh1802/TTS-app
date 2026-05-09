@@ -12,15 +12,8 @@ from app.core.di import get_quota_service
 from app.models.user import User
 from app.services.quota_service import QuotaService
 from app.schemas.tts import (
-    NormalizationMeta,
     TTSRequest,
     TTSResponse,
-)
-from app.services.llm_normalizer import (
-    LLM_STATUS_SUCCESS,
-    llm_normalize,
-    needs_llm_normalization,
-    validate_gemini_key,
 )
 from app.services.normalizer import normalize_vietnamese
 from app.services.quota_service import QuotaService
@@ -30,36 +23,6 @@ from app.utils.text_utils import cleanup_grammar
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/tts", tags=["TTS"])
 MAX_TEXT_LENGTH = 10_000
-
-
-class ValidateKeyRequest(BaseModel):
-    api_key: str
-
-
-class ValidateKeyResponse(BaseModel):
-    valid: bool
-    status: str
-    message: str
-
-
-_STATUS_MESSAGES = {
-    LLM_STATUS_SUCCESS: BACKEND_MESSAGES["status"]["api_key_valid"],
-    "invalid_key": BACKEND_MESSAGES["status"]["api_key_invalid"],
-    "rate_limit": BACKEND_MESSAGES["status"]["api_key_rate_limit"],
-    "quota_exceeded": BACKEND_MESSAGES["status"]["api_key_quota_exceeded"],
-    "error": BACKEND_MESSAGES["status"]["api_key_error"],
-}
-
-
-@router.post("/validate-key", response_model=ValidateKeyResponse)
-async def validate_key(body: ValidateKeyRequest):
-    """Validate a Gemini API key without storing it."""
-    is_valid, status = await validate_gemini_key(body.api_key)
-    return ValidateKeyResponse(
-        valid=is_valid,
-        status=status,
-        message=_STATUS_MESSAGES.get(status, BACKEND_MESSAGES["errors"]["unknown_status"]),
-    )
 
 
 class PhonemizeRequest(BaseModel):
@@ -137,22 +100,7 @@ async def generate_tts(
     except ValueError:
         normalized = text
 
-    llm_api_key = http_request.headers.get("X-LLM-API-Key", "").strip()
-    is_complex = needs_llm_normalization(normalized)
-
-    norm_mode = "rule_based"
-    llm_status = "skipped"
-    final_normalized = normalized
-
-    user_tier = getattr(user, "subscription_tier", "free") or "free"
-    is_pro = user_tier in ("pro", "enterprise")
-
-    if llm_api_key and is_complex and is_pro:
-        llm_result, llm_status = await llm_normalize(text=normalized, api_key=llm_api_key)
-        final_normalized = llm_result
-        norm_mode = "llm" if llm_status == LLM_STATUS_SUCCESS else "rule_based"
-
-    cleaned = cleanup_grammar(final_normalized)
+    cleaned = cleanup_grammar(normalized)
 
     wav_data, duration = await asyncio.to_thread(
         tts_service.synthesize,
@@ -171,11 +119,6 @@ async def generate_tts(
         audio_url=audio_url,
         duration=duration,
         voice_id=request.voice_id,
-        normalization=NormalizationMeta(
-            mode=norm_mode,
-            llm_status=llm_status,
-            text_was_complex=is_complex,
-        ),
     )
 
 
