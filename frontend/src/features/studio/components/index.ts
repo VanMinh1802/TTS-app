@@ -8,6 +8,4 @@ export { StudioHero } from './StudioHero';
 export { PreviewPanel } from './PreviewPanel';
 export { DictionaryEntryRow } from './DictionaryEntryRow';
 export { Field } from './DictionaryField';
-export { PronunciationCheck } from './PronunciationCheck';
-export { GrammarFixModal } from './GrammarFixModal';
-export { SmartChunking } from './SmartChunking';
+export { StudioHeader } from './StudioHeader';
