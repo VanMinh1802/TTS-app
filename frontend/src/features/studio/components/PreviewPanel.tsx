@@ -27,9 +27,9 @@ export const PreviewPanel = React.memo(function PreviewPanel({
     <div className="aether-glass-wrapper rounded-[24px]">
       <div className="aether-glass rounded-[24px] p-3">
         <div className="flex items-center justify-between gap-3 mb-3">
-          <h2 className="text-[18px] font-semibold tracking-wide text-white">{t.previewTitle}</h2>
+          <h2 className="text-[18px] font-semibold tracking-wide text-white">{t.studio.previewTitle}</h2>
           <UiChip className={audioUrl ? "bg-[#6366F1]/10 text-[#6366F1] border-[#6366F1]/20" : "bg-transparent border-[#333333] text-[#71717A] shadow-none"}>
-            {audioUrl ? t.ready : loading ? t.generating : t.waiting}
+            {audioUrl ? t.studio.ready : loading ? t.studio.generating : t.studio.waiting}
           </UiChip>
         </div>
         {isPlaying && (
@@ -64,7 +64,7 @@ export const PreviewPanel = React.memo(function PreviewPanel({
         />
         
         <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-2">
-          <p className="text-[11px] font-medium uppercase tracking-[0.15em] text-[#A1A1AA]">{t.previewHint}</p>
+          <p className="text-[11px] font-medium uppercase tracking-[0.15em] text-[#A1A1AA]">{t.studio.previewHint}</p>
         </div>
       </div>
     </div>
