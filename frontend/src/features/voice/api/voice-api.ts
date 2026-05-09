@@ -29,23 +29,11 @@ export const getStudioVoices = async (): Promise<StudioVoice[]> => {
 export const generateTts = async (payload: TTSGenerateRequest): Promise<TTSGenerateResponse> => {
   const validatedPayload = ttsGenerateRequestSchema.parse(payload);
 
-  // Read Gemini API key from localStorage (BYOK — never stored server-side)
-  const llmApiKey = typeof window !== "undefined" ? (localStorage.getItem("gemini_api_key") ?? "") : "";
-
-  const extraHeaders: HeadersInit = {};
-  if (llmApiKey) {
-    extraHeaders["X-LLM-API-Key"] = llmApiKey;
-  }
-
   const raw = await apiRequest<TTSGenerateResponse>("/tts/generate", {
     method: "POST",
     body: JSON.stringify(validatedPayload),
-    headers: extraHeaders,
   });
 
-  // safeParse so a schema mismatch on normalization never breaks audio playback
   const parsed = ttsGenerateResponseSchema.safeParse(raw);
   return parsed.success ? parsed.data : (raw as TTSGenerateResponse);
 };
-
-

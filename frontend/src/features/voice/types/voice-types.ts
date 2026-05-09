@@ -49,17 +49,10 @@ export const ttsGenerateRequestSchema = z.object({
   user_dictionary: z.array(ttsDictionaryEntrySchema).optional(),
 });
 
-export const normalizationMetaSchema = z.object({
-  mode: z.string().default("rule_based"),           // "llm" | "rule_based"
-  llm_status: z.string().nullable().optional(),
-  text_was_complex: z.boolean().default(false),
-});
-
 export const ttsGenerateResponseSchema = z.object({
   audio_url: z.string(),
   duration: z.number(),
   voice_id: z.string(),
-  normalization: normalizationMetaSchema.optional(),
   audio_mp3: z.string().optional(),
   audio_wav: z.string().optional(),
 });
@@ -70,5 +63,5 @@ export type StudioVoice = z.infer<typeof studioVoiceSchema>;
 export type TTSDictionaryEntry = z.infer<typeof ttsDictionaryEntrySchema>;
 export type TTSGenerateRequest = z.infer<typeof ttsGenerateRequestSchema>;
 export type TTSGenerateResponse = z.infer<typeof ttsGenerateResponseSchema>;
-export type NormalizationMeta = z.infer<typeof normalizationMetaSchema>;
+
 
