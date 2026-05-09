@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -62,13 +62,9 @@ export default function PricingPage() {
         { text: "5,000 API calls / ngày", icon: "star" },
         { text: "5GB lưu trữ Cloud (R2)", icon: "cloud" },
         { text: "10+ giọng nói", icon: "star" },
-        { text: "AI Chuẩn hóa (Gemini)", icon: "ai" },
-        { text: "AI Kiểm tra phát âm", icon: "star" },
-        { text: "AI Sửa chính tả", icon: "star" },
-        { text: "AI Chia đoạn thông minh", icon: "star" },
         { text: "Từ điển tuỳ chỉnh", icon: "check" },
         { text: "Đồng bộ đám mây", icon: "cloud" },
-        { text: "Tải file WAV (lossless)", icon: "star" },
+        { text: "Tải file MP3 & WAV (lossless)", icon: "star" },
         { text: "Ưu tiên hỗ trợ", icon: "star" },
       ],
       cta: isPro ? "Đang sử dụng" : "Nâng cấp Pro",
@@ -80,7 +76,6 @@ export default function PricingPage() {
     check: <svg className="w-4 h-4 shrink-0 text-[#6366F1]/70 mt-0.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>,
     star: <svg className="w-4 h-4 shrink-0 text-[#C968F7]/80 mt-0.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>,
     cloud: <svg className="w-4 h-4 shrink-0 text-[#6366F1]/70 mt-0.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"/></svg>,
-    ai: <span className="w-4 h-4 shrink-0 flex items-center justify-center mt-0.5 text-[11px]">✨</span>,
   };
 
   return (
@@ -212,7 +207,7 @@ export default function PricingPage() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowProModal(false)}>
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="aether-glass-wrapper rounded-[24px] w-full max-w-md" onClick={e => e.stopPropagation()}>
               <div className="aether-glass rounded-[24px] p-8 relative">
-                <button onClick={() => setShowProModal(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-[#A1A1AA] hover:text-white hover:bg-white/5 transition-all">
+                <button onClick={() => setShowProModal(false)} aria-label="Đóng" className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-[#A1A1AA] hover:text-white hover:bg-white/5 transition-all">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
                 <h3 className="text-lg font-semibold text-white mb-1">Nâng cấp {planName}</h3>
@@ -231,8 +226,8 @@ export default function PricingPage() {
                 <p className="text-xs text-[#A1A1AA] mb-4">Mã kích hoạt sẽ gửi vào email sau 5-10 phút.</p>
                 <Link href="/activate" className="text-[10px] font-bold uppercase tracking-widest text-[#818CF8] hover:text-[#6366F1] transition-colors">Đã có mã? Kích hoạt ngay →</Link>
                 <div className="pt-4 mt-4 border-t border-white/[0.06] text-[10px] text-[#71717A] flex flex-wrap gap-x-4 gap-y-1">
-                  <a href="https://zalo.me/0378438614" target="_blank" rel="noreferrer" className="hover:text-[#818CF8] transition-colors">Zalo hỗ trợ</a>
-                  <a href="https://www.facebook.com/nvm180220/" target="_blank" rel="noreferrer" className="hover:text-[#818CF8] transition-colors">Fanpage</a>
+                  <a href="https://zalo.me/0378438614" target="_blank" rel="noopener noreferrer" className="hover:text-[#818CF8] transition-colors">Zalo hỗ trợ</a>
+                  <a href="https://www.facebook.com/nvm180220/" target="_blank" rel="noopener noreferrer" className="hover:text-[#818CF8] transition-colors">Fanpage</a>
                 </div>
               </div>
             </motion.div>

@@ -17,10 +17,3 @@ class NormalizeResponse(BaseModel):
     original_length: int
     normalized_length: int
     processing_time_ms: float
-
-
-class NormalizeError(BaseModel):
-    """Error response."""
-
-    detail: str
-    code: str  # EMPTY_TEXT, TEXT_TOO_LONG, INVALID_MODE, INVALID_DIALECT

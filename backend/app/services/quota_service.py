@@ -99,13 +99,6 @@ class QuotaService:
         self.uow.commit()
         return True, quota
 
-    def get_remaining(self, quota: UserQuota) -> dict:
-        return {
-            "characters": self._remaining(quota.characters_used, quota.characters_limit),
-            "storage_mb": self._remaining(quota.storage_used_mb, quota.storage_limit_mb),
-            "api_calls": self._remaining(quota.api_calls_today, quota.api_calls_limit),
-        }
-
     def get_quota_status(self, user_id: str) -> dict:
         quota = self.get_or_create_quota(user_id)
         limits = QUOTA_LIMITS.get(quota.tier, QUOTA_LIMITS["free"])
@@ -122,7 +115,11 @@ class QuotaService:
                 "storage_used_mb": quota.storage_used_mb,
                 "api_calls_today": quota.api_calls_today,
             },
-            "remaining": self.get_remaining(quota),
+            "remaining": {
+                "characters": self._remaining(quota.characters_used, quota.characters_limit),
+                "storage_mb": self._remaining(quota.storage_used_mb, quota.storage_limit_mb),
+                "api_calls": self._remaining(quota.api_calls_today, quota.api_calls_limit),
+            },
             "reset_at": quota.last_reset_at.isoformat() if quota.last_reset_at else None,
         }
 

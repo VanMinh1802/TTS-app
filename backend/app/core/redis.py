@@ -78,19 +78,3 @@ async def close_redis() -> None:
 def get_redis() -> Optional[RedisAsync]:
     """Get Redis client instance."""
     return redis_client
-
-
-def get_redis_sync() -> Optional[RedisSync]:
-    """Get synchronous Redis client instance."""
-    return redis_sync_client
-
-
-async def is_redis_available() -> bool:
-    """Check if Redis is available."""
-    try:
-        if redis_client:
-            await redis_client.ping()
-            return True
-    except Exception as e:
-        logger.debug(f"Redis not available: {e}")
-    return False

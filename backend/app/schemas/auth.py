@@ -3,26 +3,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
-
-
-class UserBase(BaseModel):
-    """Base user schema."""
-
-    email: EmailStr
-    name: Optional[str] = None
-
-
-class UserResponse(UserBase):
-    """Schema for user response."""
-
-    id: str
-    subscription_tier: str
-    is_active: bool
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class GoogleLoginRequest(BaseModel):
@@ -37,15 +18,6 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int
-
-
-class TokenPayload(BaseModel):
-    """Schema for token payload."""
-
-    sub: str  # user id
-    email: str
-    exp: int
-    type: str
 
 
 class APIKeyCreate(BaseModel):
@@ -89,15 +61,3 @@ class APIKeyListResponse(BaseModel):
     total: int
     limit: int
     offset: int
-
-
-class APIKeyUsageResponse(BaseModel):
-    """Schema for API key usage stats."""
-
-    key_id: str
-    total_requests: int
-    successful_requests: int
-    failed_requests: int
-    last_used_at: Optional[datetime]
-
-    model_config = ConfigDict(from_attributes=True)

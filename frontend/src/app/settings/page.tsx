@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { FadeIn } from "@/components/motion";
@@ -45,9 +45,10 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-5">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">Họ và tên</label>
+                    <label htmlFor="settings-name" className="text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">Họ và tên</label>
                     <div className="relative">
                       <input
+                        id="settings-name"
                         type="text"
                         className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 font-light text-sm text-[#D4D4D8] outline-none cursor-not-allowed shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]"
                         value={name}
@@ -57,9 +58,10 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">Email</label>
+                    <label htmlFor="settings-email" className="text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">Email</label>
                     <div className="relative">
                       <input
+                        id="settings-email"
                         type="email"
                         className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 font-light text-sm text-[#71717A] outline-none cursor-not-allowed shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]"
                         value={email}

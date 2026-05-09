@@ -28,5 +28,3 @@ class TTSResponse(BaseModel):
     audio_url: str
     duration: float
     voice_id: str
-    audio_mp3: Optional[str] = None
-    audio_wav: Optional[str] = None

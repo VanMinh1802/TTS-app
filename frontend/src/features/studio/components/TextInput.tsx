@@ -27,7 +27,7 @@ export function TextInput({ value, onChange, onOverLimit }: TextInputProps) {
             <textarea
               value={value}
               onChange={(e) => onChange(e.target.value)}
-              className="w-full flex-1 min-h-[160px] px-4 pt-8 pb-4 bg-transparent rounded-t-[24px] font-medium text-[16px] tracking-wide resize-none focus:outline-none focus:ring-0 text-white placeholder:text-[#A1A1AA] transition-colors leading-relaxed drop-shadow-sm"
+              className="w-full flex-1 min-h-[360px] px-4 pt-8 pb-4 bg-transparent rounded-t-[24px] font-medium text-[16px] tracking-wide resize-none focus:outline-none focus:ring-0 text-white placeholder:text-[#A1A1AA] transition-colors leading-relaxed drop-shadow-sm"
               placeholder={t.studio.textInputPlaceholder}
               role="textbox"
             />

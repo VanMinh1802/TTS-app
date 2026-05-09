@@ -10,7 +10,6 @@ SCOPE_MAP: dict[str, str] = {
     "/api/dictionary": "dictionary",
     "/api/quota": "quota",
     "/api/voices": "voices:read",
-    "/api/subscriptions": "subscriptions",
     "/api/admin": "admin",
     "/api/auth": "auth",
 }

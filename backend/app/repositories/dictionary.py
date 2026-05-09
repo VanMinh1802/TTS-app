@@ -21,21 +21,3 @@ class DictionaryRepository(BaseRepository[DictionaryEntryModel]):
 
     def find_by_user_and_word(self, user_id: str, word: str) -> Optional[DictionaryEntryModel]:
         return self.find_one(user_id=user_id, word=word)
-
-    def bulk_upsert(self, user_id: str, entries: list[dict]) -> int:
-        if not entries:
-            return 0
-        for entry in entries:
-            entry.setdefault("user_id", user_id)
-            existing = self.find_by_user_and_word(user_id, entry["word"])
-            if existing:
-                existing.pronunciation = entry.get("pronunciation", existing.pronunciation)
-            else:
-                self.create(DictionaryEntryModel(
-                    user_id=user_id,
-                    word=entry["word"],
-                    pronunciation=entry.get("pronunciation", ""),
-                    category=entry.get("category"),
-                ))
-        self.session.flush()
-        return len(entries)

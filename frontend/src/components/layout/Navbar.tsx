@@ -111,6 +111,7 @@ export function Navbar() {
             >
               <button 
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
+                aria-label="Menu tài khoản"
                 className={`flex items-center gap-3 p-2 rounded-full border transition-all min-h-[44px] min-w-[44px] ${
                   isMenuOpen 
                     ? "bg-[#6366F1]/10 border-[#6366F1]/50 shadow-[0_0_20px_rgba(99,102,241,0.2)]" 
@@ -190,6 +191,7 @@ export function Navbar() {
           {/* Mobile Menu Toggle */}
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label={isMobileMenuOpen ? "Đóng menu" : "Mở menu"}
             className="md:hidden p-2 text-[#D4D4D8] hover:text-white transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

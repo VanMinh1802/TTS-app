@@ -63,20 +63,22 @@ export function LibraryCardRow({ record, onPlay, onDelete, onDownload, onUploadT
         </span>
       </div>
 
-      <div className="shrink-0 flex gap-2 w-24 justify-end">
-        {record.sync_status.local && (
-          <span className="text-[10px] font-bold tracking-widest uppercase text-[#818CF8] bg-[#6366F1]/10 border border-[#818CF8]/30 rounded-full px-2 py-0.5 shadow-[0_0_6px_rgba(99,102,241,0.1)]">
-            L
-          </span>
-        )}
-        {record.sync_status.cloud && (
-          <span className="text-[10px] font-bold tracking-widest uppercase text-[#C968F7] bg-[#C968F7]/10 border border-[#C968F7]/30 rounded-full px-2 py-0.5 shadow-[0_0_6px_rgba(201,104,247,0.1)]">
-            C
-          </span>
-        )}
+      <div className="shrink-0 w-24 text-right">
+        <div className="flex gap-2 justify-end">
+          {record.sync_status.local && (
+            <span className="text-[10px] font-bold tracking-widest uppercase text-[#818CF8] bg-[#6366F1]/10 border border-[#818CF8]/30 rounded-full px-2 py-0.5 shadow-[0_0_6px_rgba(99,102,241,0.1)]">
+              L
+            </span>
+          )}
+          {record.sync_status.cloud && (
+            <span className="text-[10px] font-bold tracking-widest uppercase text-[#C968F7] bg-[#C968F7]/10 border border-[#C968F7]/30 rounded-full px-2 py-0.5 shadow-[0_0_6px_rgba(201,104,247,0.1)]">
+              C
+            </span>
+          )}
+        </div>
       </div>
 
-      <div className="shrink-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
+      <div className="shrink-0 w-[104px] flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
         <button
           onClick={() => onDownload(record)}
           className="w-11 h-11 rounded-full flex items-center justify-center text-[#A1A1AA] hover:text-[#D4D4D8] hover:bg-white/5 transition-all duration-200 active:scale-[0.92]"

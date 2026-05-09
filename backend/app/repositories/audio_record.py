@@ -12,6 +12,3 @@ class AudioRecordRepository(BaseRepository[AudioRecord]):
 
     def get_user_record(self, record_id: str, user_id: str):
         return self.find_one(id=record_id, user_id=user_id)
-
-    def count_by_user(self, user_id: str) -> int:
-        return len(self.find_all(user_id=user_id))

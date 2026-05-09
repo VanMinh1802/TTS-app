@@ -81,11 +81,6 @@ def _object_last_modified(obj: dict) -> datetime:
     return datetime.min
 
 
-def _model_display_name_from_folder(folder_name: str) -> str:
-    voice_id = _voice_id_for_folder(folder_name)
-    return _display_name_for_voice_id(voice_id)
-
-
 def build_voice_registry_from_objects(objects: list[dict], public_base_url: str, bucket_name: str) -> dict[str, dict]:
     """Build a voice registry from R2 object listing."""
     registry: dict[str, dict] = {}
@@ -251,7 +246,6 @@ def load_default_voice_registry() -> dict[str, dict]:
             return registry
     except Exception as exc:
         logger.warning("Failed to load voice registry from R2; using fallback registry: %s", exc)
-        pass
 
     fallback_registry = {
         "ngochuyen": {

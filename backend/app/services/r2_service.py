@@ -145,11 +145,6 @@ class R2LibraryService:
         return settings.R2_LIBRARY_BUCKET_NAME
 
     @property
-    def s3_client(self) -> boto3.client:
-        """Get or create R2 library client."""
-        return self.client
-
-    @property
     def client(self) -> boto3.client:
         """Get or create R2 library client."""
         if self._client is None:

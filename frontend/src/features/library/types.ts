@@ -3,14 +3,6 @@ export interface SyncStatus {
   cloud: boolean;
 }
 
-export type StatusBadge = 'local' | 'cloud' | 'synced';
-
-export function computeStatusBadge(syncStatus: SyncStatus): StatusBadge {
-  if (syncStatus.local && syncStatus.cloud) return 'synced';
-  if (syncStatus.local) return 'local';
-  return 'cloud';
-}
-
 export interface LibraryRecord {
   id: string;
   text_content: string;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { generateTts } from '@/features/voice/api/voice-api';
 import { apiRequest } from '@/lib/api-client';
 import type { TTSGenerateRequest, TTSGenerateResponse } from '@/features/voice/types/voice-types';
@@ -9,6 +9,7 @@ interface UseTtsGenerateReturn {
   clientGenerate: (request: TTSGenerateRequest) => Promise<TTSGenerateResponse>;
   progress: number;
   isUsingWorker: boolean;
+  generating: boolean;
   prefetchModel: (voiceId: string) => void;
   cancelGeneration: () => void;
 }
@@ -28,8 +29,28 @@ async function convertToMp3(wavDataUrl: string): Promise<string | null> {
 export function useTtsGenerate(): UseTtsGenerateReturn {
   const [progress, setProgress] = useState(0);
   const [isUsingWorker, setIsUsingWorker] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const workerRef = useRef<Worker | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      if (abortRef.current) {
+        abortRef.current.abort();
+        abortRef.current = null;
+      }
+      if (workerRef.current) {
+        workerRef.current.postMessage({ type: 'cancel' });
+        workerRef.current.terminate();
+        workerRef.current = null;
+      }
+    };
+  }, []);
 
   const getWorker = useCallback(() => {
     if (!workerRef.current && typeof Worker !== 'undefined') {
@@ -73,6 +94,7 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
   const clientGenerate = useCallback(async (request: TTSGenerateRequest): Promise<TTSGenerateResponse> => {
     setProgress(0);
     setIsUsingWorker(true);
+    setGenerating(true);
 
     try {
       const worker = getWorker();
@@ -85,6 +107,8 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
       }
 
       return new Promise((resolve, reject) => {
+        const done = () => { setIsUsingWorker(false); setGenerating(false); };
+
         worker.onmessage = (event: MessageEvent) => {
           const { type } = event.data;
 
@@ -119,7 +143,7 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
             const reader = new FileReader();
             reader.onload = () => {
               const wavUrl = reader.result as string;
-              resolveWithMp3(resolve, wavUrl, wavDuration, request.voice_id);
+              resolveWithMp3(resolve, wavUrl, wavDuration, request.voice_id).finally(done);
             };
             reader.readAsDataURL(blob);
 
@@ -133,7 +157,7 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
             console.warn('[TTS] Worker error, falling back to server:', event.data.message);
             setIsUsingWorker(false);
             generateTts(request).then((resp) => {
-              resolveWithMp3(resolve, resp.audio_url, resp.duration, request.voice_id);
+              resolveWithMp3(resolve, resp.audio_url, resp.duration, request.voice_id).finally(done);
             }).catch(reject);
           }
         };
@@ -143,7 +167,7 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
           console.warn('[TTS] Worker crashed, falling back to server');
           setIsUsingWorker(false);
           generateTts(request).then((resp) => {
-            resolveWithMp3(resolve, resp.audio_url, resp.duration, request.voice_id);
+            resolveWithMp3(resolve, resp.audio_url, resp.duration, request.voice_id).finally(done);
           }).catch(reject);
         };
 
@@ -164,13 +188,14 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
             worker.onerror = null;
             setIsUsingWorker(false);
             generateTts(request).then((resp) => {
-              resolveWithMp3(resolve, resp.audio_url, resp.duration, request.voice_id);
+              resolveWithMp3(resolve, resp.audio_url, resp.duration, request.voice_id).finally(done);
             }).catch(reject);
           }
         }, 30000);
       });
     } catch {
       setIsUsingWorker(false);
+      setGenerating(false);
       const serverResponse = await generateTts(request);
       return new Promise<TTSGenerateResponse>((resolve) => {
         resolveWithMp3(resolve, serverResponse.audio_url, serverResponse.duration, request.voice_id);
@@ -178,5 +203,5 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
     }
   }, [getWorker, resolveWithMp3]);
 
-  return { clientGenerate, progress, isUsingWorker, prefetchModel, cancelGeneration };
+  return { clientGenerate, progress, isUsingWorker, generating, prefetchModel, cancelGeneration };
 }

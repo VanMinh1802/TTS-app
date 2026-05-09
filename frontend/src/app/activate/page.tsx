@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -96,7 +96,7 @@ function ActivateForm() {
                     className={`w-full bg-white/5 border ${getFieldErrorClass(errors.code?.message)} rounded-xl px-5 py-4 font-mono text-center tracking-[0.15em] text-sm text-white placeholder:text-[#A1A1AA]/30 outline-none focus:bg-white/10 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]`}
                   />
                   {watch("code") && (
-                    <button onClick={() => { setValue("code", ""); setActStatus("idle"); }} className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-lg text-[#A1A1AA] hover:text-white hover:bg-white/5 transition-all">
+                    <button onClick={() => { setValue("code", ""); setActStatus("idle"); }} aria-label="Xóa mã kích hoạt" className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-lg text-[#A1A1AA] hover:text-white hover:bg-white/5 transition-all">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                   )}
@@ -165,7 +165,7 @@ function ActivateForm() {
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-[#6366F1] mt-0.5 shrink-0">4.</span>
-                  <span>Hỗ trợ qua <a href="https://zalo.me/0378438614" target="_blank" rel="noreferrer" className="text-[#D4D4D8] underline hover:text-[#818CF8] transition-colors">Zalo (0378438614)</a></span>
+                  <span>Hỗ trợ qua <a href="https://zalo.me/0378438614" target="_blank" rel="noopener noreferrer" className="text-[#D4D4D8] underline hover:text-[#818CF8] transition-colors">Zalo (0378438614)</a></span>
                 </li>
               </ul>
             </div>

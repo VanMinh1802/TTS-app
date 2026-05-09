@@ -7,6 +7,7 @@
  */
 
 import { normalizeVietnamese } from "@/lib/text-processing/vietnameseNormalizer";
+import { applyBuiltinDictionary } from "@/lib/text-processing/builtinDictionary";
 
 export interface PiperVoiceConfig {
   /** Thiếu trong một số file export; khi có `espeak.voice` app sẽ mặc định `espeak`. */
@@ -182,9 +183,10 @@ export async function loadCustomPiper(
 
     if (effectivePhonemeType === "espeak") {
       const preprocessed = normalizeVietnamese(trimmed);
-      const wasmIds = await runPiperPhonemize(preprocessed);
+      const withDict = await applyBuiltinDictionary(preprocessed);
+      const wasmIds = await runPiperPhonemize(withDict);
       if (wasmIds && wasmIds.length > 0) return wasmIds;
-      const normalized = preprocessed.normalize("NFD").toLowerCase();
+      const normalized = withDict.normalize("NFD").toLowerCase();
       return phonemesToIds([Array.from(normalized)]);
     }
 

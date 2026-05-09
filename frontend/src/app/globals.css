@@ -284,8 +284,9 @@ body {
 
 /* ---- Light mode: hover states ---- */
 .light .hover\:bg-white\/\[0\.04\]:hover { background: rgba(99, 102, 241, 0.04) !important; }
-.light .hover\:bg-white\/\[0\.02\]:hover { background: rgba(99, 102, 241, 0.02) !important; }
 .light .hover\:bg-white\/\[0\.03\]:hover { background: rgba(99, 102, 241, 0.05) !important; }
+.light .hover\:bg-white\/\[0\.02\]:hover { background: rgba(99, 102, 241, 0.02) !important; }
+.light .hover\:bg-white\/\[0\.01\]\:hover { background: rgba(99, 102, 241, 0.015) !important; }
 
 /* ---- Light mode: Dropdown option text ---- */
 .light .text-\[\#C4B99A\] { color: #4F46E5 !important; }
@@ -310,6 +311,8 @@ body {
 .light .bg-white\/\[0\.02\] { background: rgba(99, 102, 241, 0.02) !important; }
 .light .bg-\[\#0D100A\] { background-color: #FFFFFF !important; }
 .light .bg-\[\#0D100A\]\/50 { background-color: rgba(99, 102, 241, 0.03) !important; }
+.light .bg-\[\#0D100A\]\/60 { background-color: rgba(99, 102, 241, 0.04) !important; }
+.light .bg-\[\#0D100A\]\/80 { background-color: rgba(99, 102, 241, 0.05) !important; }
 .light .bg-\[\#050508\]\/90 { background: rgba(255, 255, 255, 0.92) !important; }
 .light .bg-\[\#050508\]\/95 { background: rgba(255, 255, 255, 0.95) !important; }
 
@@ -402,6 +405,7 @@ body {
 /* ---- Light mode: Toast Container ---- */
 .toast-card {
   background: rgba(10, 10, 15, 0.96);
+  -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
 }
 .light .toast-card {
@@ -436,7 +440,7 @@ body {
 .light .bg-\[\#0D100A\]\/30 { background-color: rgba(99, 102, 241, 0.02) !important; }
 
 /* Drawer/overlay backgrounds */
-.light .bg-\[\#050508\]\/80 { background: rgba(255, 255, 255, 0.85) !important; backdrop-filter: blur(12px) !important; }
+.light .bg-\[\#050508\]\/80 { background: rgba(255, 255, 255, 0.85) !important; -webkit-backdrop-filter: blur(12px) !important; backdrop-filter: blur(12px) !important; }
 .light .bg-\[\#050508\]\/95 { background: rgba(255, 255, 255, 0.95) !important; }
 
 /* Drawer */
@@ -476,6 +480,7 @@ body {
 /* Drawer overlay */
 .light .fixed.inset-0.z-\[100\]:where(.bg-\[\#050604\]\/60) {
   background: rgba(255, 255, 255, 0.7) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
   backdrop-filter: blur(8px) !important;
 }
 

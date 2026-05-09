@@ -4,11 +4,6 @@ from fastapi import HTTPException, Request, status
 from app.core.settings import settings
 
 
-def generate_csrf_token() -> str:
-    """Generate a cryptographically random CSRF token."""
-    return secrets.token_urlsafe(32)
-
-
 def validate_csrf_request(request: Request) -> None:
     """Validate CSRF double-submit cookie against header."""
     cookie_token = request.cookies.get(settings.CSRF_COOKIE_NAME)

@@ -53,9 +53,7 @@ async def normalize_text(request: NormalizeRequest):
 
     try:
         normalized_text, original_len, normalized_len, proc_time = normalize_vietnamese(
-            text=request.text,
-            mode=request.mode,
-            dialect=request.dialect
+            text=request.text
         )
 
         return NormalizeResponse(

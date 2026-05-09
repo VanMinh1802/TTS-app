@@ -72,24 +72,6 @@ export function StaggerItem({ children, className }: { children: ReactNode; clas
 
 
 
-// Button Press Effect
-interface PressButtonProps extends HTMLMotionProps<"button"> {
-  children: ReactNode;
-}
-
-export function PressButton({ children, className, ...props }: PressButtonProps) {
-  return (
-    <motion.button
-      whileTap={{ scale: 0.95, boxShadow: "0px 0px 0px #000" }}
-      transition={spring.snappy}
-      className={className}
-      {...props}
-    >
-      {children}
-    </motion.button>
-  );
-}
-
 
 
 // Card Hover Tilt

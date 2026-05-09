@@ -5,7 +5,7 @@ from .abbreviations import expand_abbreviations
 from .symbols import normalize_symbols
 from app.utils.text_utils import cleanup_grammar
 
-def normalize_vietnamese(text: str, mode: str = "standard") -> tuple[str, int, int, float]:
+def normalize_vietnamese(text: str) -> tuple[str, int, int, float]:
     import time
     start = time.time()
     

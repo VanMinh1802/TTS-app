@@ -73,7 +73,8 @@ class TestQuotaUsage:
         assert service.check_quota("user-1", "storage", 100000) is True
         assert service.check_quota("user-1", "api_calls", 100000) is True
 
-        remaining = service.get_remaining(quota)
+        status = service.get_quota_status("user-1")
+        remaining = status["remaining"]
         assert remaining["characters"] is None
         assert remaining["storage_mb"] is None
         assert remaining["api_calls"] is None

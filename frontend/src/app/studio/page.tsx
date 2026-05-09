@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FadeIn } from "@/components/motion";
 import { VoiceSelector, VoiceSettings, TextInput, CustomDictionary, StudioHeader, PreviewPanel } from "@/features/studio";
 import dynamic from "next/dynamic";
@@ -14,6 +14,7 @@ import type { StudioVoice } from "@/features/voice/types/voice-types";
 import { useLocalLibrary } from "@/features/library/hooks/useLocalLibrary";
 import { useNotifications } from "@/shared/notifications/notification-store";
 import { useT } from "@/shared/i18n";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 const STORAGE_KEY = "studio_draft_text";
 const STORAGE_KEY_VOICE = "studio_voice_id";
@@ -28,15 +29,66 @@ export default function StudioPage() {
   const [speed, setSpeed] = useState(1);
   const [text, setText] = useState(DEFAULT_TEXT);
   const [dictionary, setDictionary] = useState<DictionaryEntry[]>([]);
-  const [generating, setGenerating] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [currentWavUrl, setCurrentWavUrl] = useState<string | null>(null);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isTextOverLimit, setIsTextOverLimit] = useState(false);
+  const [showLeaveWarning, setShowLeaveWarning] = useState(false);
+  const pendingNavRef = useRef<((...args: any[]) => void) | null>(null);
 
-  const { saveLocalRecord } = useLocalLibrary();
-  const { clientGenerate, progress, isUsingWorker, prefetchModel, cancelGeneration } = useTtsGenerate();
+  const { saveLocalRecord, records: libraryRecords } = useLocalLibrary();
+  const { clientGenerate, progress, isUsingWorker, generating: hookGenerating, prefetchModel, cancelGeneration } = useTtsGenerate();
+
+  // Navigation warning when generating (browser + client-side)
+  useEffect(() => {
+    if (!hookGenerating) return;
+
+    const beforeUnloadHandler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+
+    // Intercept link clicks for client-side navigation
+    const clickHandler = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest('a[href]') as HTMLAnchorElement | null;
+      if (!anchor) return;
+      const href = anchor.getAttribute('href');
+      if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      pendingNavRef.current = () => {
+        if (anchor.target === '_blank') {
+          window.open(href, '_blank');
+        } else {
+          window.location.assign(href);
+        }
+      };
+      Promise.resolve().then(() => setShowLeaveWarning(true));
+    };
+
+    // Intercept browser back/forward
+    const popStateHandler = (e: PopStateEvent) => {
+      e.preventDefault();
+      window.history.pushState(null, '', window.location.href);
+      pendingNavRef.current = () => {
+        window.removeEventListener('popstate', popStateHandler);
+        window.history.back();
+      };
+      Promise.resolve().then(() => setShowLeaveWarning(true));
+    };
+
+    document.addEventListener('click', clickHandler, true);
+    window.addEventListener('popstate', popStateHandler);
+    window.addEventListener('beforeunload', beforeUnloadHandler);
+
+    return () => {
+      document.removeEventListener('click', clickHandler, true);
+      window.removeEventListener('popstate', popStateHandler);
+      window.removeEventListener('beforeunload', beforeUnloadHandler);
+      pendingNavRef.current = null;
+    };
+  }, [hookGenerating]);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,10 +107,10 @@ export default function StudioPage() {
       } catch (loadError) {
         if (!cancelled) {
           setVoices([
-            { id: "vi_female", name: "Giọng nữ tiếng Việt", lang: "Tiếng Việt", available: true },
-            { id: "vi_male", name: "Giọng nam tiếng Việt", lang: "Tiếng Việt", available: true },
+            { id: "baouyen", name: "Bảo Uyên (Nữ miền Bắc)", lang: "Tiếng Việt", available: true },
+            { id: "namminh", name: "Nam Minh (Nam miền Bắc)", lang: "Tiếng Việt", available: true },
           ]);
-          setSelectedVoice("vi_female");
+          setSelectedVoice("baouyen");
           setError(loadError instanceof Error ? loadError.message : "Không thể tải danh sách giọng đọc.");
         }
       }
@@ -98,7 +150,7 @@ export default function StudioPage() {
   }, []);
 
   const sortedVoices = useMemo(() => [...voices].sort((a, b) => a.name.localeCompare(b.name, "vi")), [voices]);
-  const voiceId = useMemo(() => selectedVoice || voices[0]?.id || "vi_female", [selectedVoice, voices]);
+  const voiceId = useMemo(() => selectedVoice || voices[0]?.id || "baouyen", [selectedVoice, voices]);
 
   const handleSelectVoice = useCallback((nextVoiceId: string) => {
     setSelectedVoice(nextVoiceId);
@@ -123,8 +175,7 @@ export default function StudioPage() {
   }, [audioUrl, currentWavUrl]);
 
   const handleGenerate = useCallback(async () => {
-    if (!text.trim() || isTextOverLimit) return;
-    setGenerating(true);
+    if (!text.trim() || isTextOverLimit || hookGenerating) return;
     setAudioUrl(null);
     setCurrentWavUrl(null);
     setError(null);
@@ -163,10 +214,8 @@ export default function StudioPage() {
       const message = generateError instanceof Error ? generateError.message : t.studio.errorGenerate;
       setError(message);
       notify({ severity: "error", title: t.studio.errorGenerateTitle, message, source: "studio" });
-    } finally {
-      setGenerating(false);
     }
-  }, [text, isTextOverLimit, voiceId, speed, dictionary, clientGenerate, saveLocalRecord, notify, t]);
+  }, [text, isTextOverLimit, hookGenerating, voiceId, speed, dictionary, clientGenerate, saveLocalRecord, notify, t]);
 
   const handleAddDictionary = useCallback(async (entry: { word: string; pronunciation?: string }) => {
     try {
@@ -215,7 +264,7 @@ export default function StudioPage() {
     <main className="relative min-h-[100dvh] overflow-hidden px-4 pb-16 pt-24 text-[#F4F4F5] selection:bg-[#6366F1]/30">
       <div className="relative mx-auto max-w-7xl space-y-6">
         <FadeIn delay={0.1}>
-          <StudioHeader onOpenLibrary={() => setIsLibraryOpen(true)} />
+          <StudioHeader onOpenLibrary={() => setIsLibraryOpen(true)} libraryCount={libraryRecords.length} />
         </FadeIn>
 
         {error ? (
@@ -240,7 +289,7 @@ export default function StudioPage() {
                   audioUrl={audioUrl}
                   onCopy={handleCopyAudioUrl}
                   onDownload={handleDownloadAudio}
-                  loading={generating}
+                  loading={hookGenerating}
                   progress={progress}
                   autoPlay={!!audioUrl}
                   wavAvailable={!!currentWavUrl}
@@ -267,10 +316,10 @@ export default function StudioPage() {
                 <button
                   type="button"
                   onClick={handleGenerate}
-                  disabled={generating || isTextOverLimit || !text.trim()}
+                  disabled={hookGenerating || isTextOverLimit || !text.trim()}
                   className="aether-btn aether-btn-primary w-full py-4 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                 >
-                  {generating ? (
+                  {hookGenerating ? (
                     <>
                       <span className="animate-spin h-4 w-4 border-2 border-[#111111] border-t-transparent rounded-full"></span>
                       {t.studio.generating}
@@ -284,7 +333,7 @@ export default function StudioPage() {
                     </>
                   )}
                 </button>
-                {generating && (
+                {hookGenerating && (
                   <button
                     onClick={() => cancelGeneration()}
                     className="w-full py-3 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-medium hover:bg-red-500/20 transition-all"
@@ -299,6 +348,24 @@ export default function StudioPage() {
       </div>
 
       <StudioLibraryDrawer isOpen={isLibraryOpen} onClose={() => setIsLibraryOpen(false)} />
+
+      <ConfirmModal
+        open={showLeaveWarning}
+        title="Đang tạo audio"
+        message="Audio đang được tạo. Nếu rời trang, quá trình sẽ bị hủy. Bạn có chắc muốn rời?"
+        confirmLabel="Rời trang"
+        cancelLabel="Ở lại"
+        variant="danger"
+        onConfirm={() => {
+          setShowLeaveWarning(false);
+          pendingNavRef.current?.();
+          pendingNavRef.current = null;
+        }}
+        onClose={() => {
+          setShowLeaveWarning(false);
+          pendingNavRef.current = null;
+        }}
+      />
     </main>
   );
 }

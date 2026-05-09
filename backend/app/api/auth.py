@@ -8,7 +8,6 @@ from app.core.uow import UnitOfWork
 from app.core.exceptions import ServiceError
 from app.core.settings import settings
 from app.core.security import decode_token, create_access_token, create_refresh_token, create_csrf_token
-from app.db import get_db
 from app.models.user import User
 from app.schemas.auth import (
     APIKeyCreate,

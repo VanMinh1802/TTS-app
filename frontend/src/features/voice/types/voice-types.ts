@@ -1,24 +1,5 @@
 import { z } from "zod";
 
-export const voiceLibrarySchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  language: z.string(),
-  gender: z.string(),
-  is_custom: z.boolean(),
-  owner_id: z.string().nullable().optional(),
-  model_url: z.string().nullable().optional(),
-  config_url: z.string().nullable().optional(),
-  sample_url: z.string().nullable().optional(),
-  folder: z.string().nullable().optional(),
-  is_active: z.boolean(),
-  created_at: z.string().nullable().optional(),
-  updated_at: z.string().nullable().optional(),
-  region: z.string().optional(),
-  style: z.string().optional(),
-  priority: z.number().optional(),
-});
-
 export const studioVoiceSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -58,7 +39,6 @@ export const ttsGenerateResponseSchema = z.object({
 });
 
 
-export type VoiceLibraryEntry = z.infer<typeof voiceLibrarySchema>;
 export type StudioVoice = z.infer<typeof studioVoiceSchema>;
 export type TTSDictionaryEntry = z.infer<typeof ttsDictionaryEntrySchema>;
 export type TTSGenerateRequest = z.infer<typeof ttsGenerateRequestSchema>;

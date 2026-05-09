@@ -16,7 +16,6 @@ from app.schemas.tts import (
     TTSResponse,
 )
 from app.services.normalizer import normalize_vietnamese
-from app.services.quota_service import QuotaService
 from app.services.tts_service import VOICE_ALIASES, _get_models, _get_piper_voice, tts_service
 from app.utils.text_utils import cleanup_grammar
 
@@ -96,7 +95,7 @@ async def generate_tts(
     text = tts_service._apply_user_dictionary(request.text, request.user_dictionary or [])
 
     try:
-        normalized, _, _, _ = normalize_vietnamese(text, mode="standard")
+        normalized, _, _, _ = normalize_vietnamese(text)
     except ValueError:
         normalized = text
 

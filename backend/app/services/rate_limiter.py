@@ -4,12 +4,9 @@ import time
 from typing import Optional, Tuple
 
 from fastapi import Depends, HTTPException, Request, Response
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-from starlette.responses import JSONResponse
 
 from app.api.auth import get_current_user
-from app.core.redis import get_redis, is_redis_available
+from app.core.redis import get_redis
 from app.models.user import User
 
 logger = logging.getLogger(__name__)

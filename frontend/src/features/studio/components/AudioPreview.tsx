@@ -1,5 +1,6 @@
 ﻿'use client';
 
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useT } from "@/shared/i18n";
 
@@ -17,8 +18,65 @@ interface AudioPreviewProps {
   onPlayingChange?: (playing: boolean) => void;
 }
 
+function formatTime(seconds: number): string {
+  if (!isFinite(seconds) || seconds < 0) return '0:00';
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
 export function AudioPreview({ audioUrl, loading, onDownload, onCopy, wavAvailable, mp3Size, wavSize, error, progress, autoPlay, onPlayingChange }: AudioPreviewProps) {
   const t = useT();
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [speed, setSpeed] = useState(1);
+
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+      }
+    };
+  }, [audioUrl]);
+
+  const handlePlayPause = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) {
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+    }
+  }, []);
+
+  const handleSeek = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const audio = audioRef.current;
+    if (!audio || !duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    audio.currentTime = pct * duration;
+  }, [duration]);
+
+  const [speedOpen, setSpeedOpen] = useState(false);
+  const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
+  const handleSpeedSet = useCallback((s: number) => {
+    setSpeed(s);
+    setSpeedOpen(false);
+    if (audioRef.current) audioRef.current.playbackRate = s;
+  }, []);
+
+  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = parseFloat(e.target.value);
+    setVolume(v);
+    if (audioRef.current) audioRef.current.volume = v;
+  }, []);
+
+  const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
   return (
     <div className="flex flex-col h-full">
       {error && (
@@ -58,58 +116,161 @@ export function AudioPreview({ audioUrl, loading, onDownload, onCopy, wavAvailab
             key="audio"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="space-y-4 rounded-[16px] border border-white/10 bg-[#0D100A]/50 p-4"
+            className="rounded-[16px] border border-white/10 bg-[#0D100A]/50 p-4"
           >
             <audio
-              controls
-              className="w-full"
+              ref={audioRef}
+              className="hidden"
               src={audioUrl}
               autoPlay={autoPlay}
-              onPlay={() => onPlayingChange?.(true)}
-              onPause={() => onPlayingChange?.(false)}
-              onEnded={() => onPlayingChange?.(false)}
+              onPlay={() => { setIsPlaying(true); onPlayingChange?.(true); }}
+              onPause={() => { setIsPlaying(false); onPlayingChange?.(false); }}
+              onEnded={() => { setIsPlaying(false); onPlayingChange?.(false); }}
+              onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
+              onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
             />
-            <div className="flex gap-3 justify-center">
-              <div className="relative group/download inline-flex">
+
+            {/* Custom Audio Player */}
+            <div className="rounded-[14px] border border-[#6366F1]/15 bg-[#0A0A10] p-4">
+              {/* Seek Bar */}
+              <div
+                className="relative h-2 bg-white/8 rounded-full cursor-pointer group/seek mb-4"
+                onClick={handleSeek}
+              >
+                <div
+                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#6366F1] to-[#C968F7] rounded-full pointer-events-none transition-all duration-75"
+                  style={{ width: `${progressPct}%` }}
+                />
+                <div
+                  className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-[0_0_8px_rgba(99,102,241,0.6)] opacity-0 group-hover/seek:opacity-100 transition-opacity pointer-events-none"
+                  style={{ left: `calc(${progressPct}% - 7px)` }}
+                />
+              </div>
+
+              {/* Controls Row */}
+              <div className="flex items-center gap-3">
+                {/* Play/Pause */}
                 <button
                   type="button"
-                  onClick={() => onDownload('mp3')}
-                  className="flex items-center gap-2 px-4 py-2 border border-[var(--color-meridian-primary)]/30 bg-[var(--color-meridian-primary)]/10 hover:bg-[var(--color-meridian-primary)]/20 rounded-[8px] rounded-r-none font-light uppercase tracking-widest text-[10px] text-[var(--color-meridian-secondary)] transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  onClick={handlePlayPause}
+                  className="flex-shrink-0 w-10 h-10 rounded-full bg-[#6366F1]/15 hover:bg-[#6366F1]/25 border border-[#6366F1]/25 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+                  aria-label={isPlaying ? 'Pause' : 'Play'}
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                  {mp3Size ? `${t.studio.audioDownload} MP3 (~${Math.round(mp3Size / 1024)}KB)` : t.studio.audioDownload}
+                  {isPlaying ? (
+                    <svg className="w-4 h-4 text-[#818CF8]" fill="currentColor" viewBox="0 0 24 24">
+                      <rect x="6" y="4" width="4" height="16" rx="1" />
+                      <rect x="14" y="4" width="4" height="16" rx="1" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4 text-[#818CF8] ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5.14v14l11-7-11-7z" />
+                    </svg>
+                  )}
                 </button>
-                {wavAvailable && (
-                  <>
-                    <button
-                      type="button"
-                      className="flex items-center px-2 py-2 border border-l-0 border-[var(--color-meridian-primary)]/30 bg-[var(--color-meridian-primary)]/10 hover:bg-[var(--color-meridian-primary)]/20 rounded-[8px] rounded-l-none text-[var(--color-meridian-secondary)] transition-all"
-                      aria-label="Download options"
-                    >
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" /></svg>
-                    </button>
-                    <div className="absolute right-0 top-full mt-1 w-48 bg-[#1A1A2E] border border-white/10 rounded-[8px] shadow-lg opacity-0 invisible group-hover/download:opacity-100 group-hover/download:visible transition-all z-50">
-                      <button
-                        type="button"
-                        onClick={() => onDownload('wav')}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:bg-white/5 rounded-[8px] font-light"
-                      >
-                        <span>WAV (lossless</span>
-                        <span className="text-[#A1A1AA]">
-                          {wavSize ? `~${(wavSize / (1024 * 1024)).toFixed(1)}MB)` : ''}
-                        </span>
-                      </button>
+
+                {/* Time Display */}
+                <span className="text-[11px] tabular-nums text-[#D4D4D8] min-w-[70px]">
+                  {formatTime(currentTime)} <span className="text-[#71717A]">/ {formatTime(duration)}</span>
+                </span>
+
+                <div className="flex-1" />
+
+                {/* Playback Speed */}
+                <div className="relative flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setSpeedOpen(v => !v)}
+                    onBlur={() => setTimeout(() => setSpeedOpen(false), 150)}
+                    className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-all ${
+                      speed !== 1
+                        ? 'text-[#818CF8] bg-[#6366F1]/15 border-[#6366F1]/30'
+                        : 'text-[#A1A1AA] bg-white/5 border-white/8 hover:bg-white/10 hover:text-white'
+                    }`}
+                    title="Tốc độ phát"
+                  >
+                    {speed}x
+                  </button>
+                  {speedOpen && (
+                    <div className="absolute bottom-full right-0 mb-2 bg-[#1A1A2E] border border-white/10 rounded-[10px] shadow-xl py-1.5 min-w-[80px] z-50">
+                      {SPEEDS.map(s => (
+                        <button
+                          key={s}
+                          type="button"
+                          onMouseDown={(e) => { e.preventDefault(); handleSpeedSet(s); }}
+                          className={`w-full px-4 py-2 text-left text-[11px] font-medium transition-colors ${
+                            s === speed
+                              ? 'text-[#818CF8] bg-[#6366F1]/10'
+                              : 'text-[#D4D4D8] hover:bg-white/5 hover:text-white'
+                          }`}
+                        >
+                          {s}x
+                        </button>
+                      ))}
                     </div>
-                  </>
-                )}
+                  )}
+                </div>
+
+                {/* Volume */}
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <svg className="w-3.5 h-3.5 text-[#71717A]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+                  </svg>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={volume}
+                    onChange={handleVolumeChange}
+                    className="w-16 h-1 accent-[#6366F1] cursor-pointer"
+                    aria-label="Volume"
+                  />
+                </div>
               </div>
+            </div>
+
+            <div className={`mt-4 grid gap-3 ${wavAvailable ? 'grid-cols-3' : 'grid-cols-2'}`}>
+              <button
+                type="button"
+                onClick={() => onDownload('mp3')}
+                className="flex flex-col items-center gap-1.5 px-3 py-3 rounded-[12px] border border-[#6366F1]/30 bg-[#6366F1]/10 hover:bg-[#6366F1]/20 transition-all hover:scale-[1.02] active:scale-[0.98] group"
+              >
+                <svg className="w-5 h-5 text-[#818CF8] group-hover:text-white transition-colors" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+                </svg>
+                <span className="text-xs font-semibold text-[#D4D4D8] group-hover:text-white transition-colors">MP3</span>
+                {mp3Size ? (
+                  <span className="text-[10px] text-[#71717A] group-hover:text-[#A1A1AA] transition-colors">~{Math.round(mp3Size / 1024)} KB</span>
+                ) : null}
+              </button>
+
+              {wavAvailable && (
+                <button
+                  type="button"
+                  onClick={() => onDownload('wav')}
+                  className="flex flex-col items-center gap-1.5 px-3 py-3 rounded-[12px] border border-white/10 bg-white/5 hover:bg-white/10 transition-all hover:scale-[1.02] active:scale-[0.98] group"
+                >
+                  <svg className="w-5 h-5 text-[#A1A1AA] group-hover:text-white transition-colors" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+                  </svg>
+                  <span className="text-xs font-semibold text-[#D4D4D8] group-hover:text-white transition-colors">WAV</span>
+                  {wavSize ? (
+                    <span className="text-[10px] text-[#71717A] group-hover:text-[#A1A1AA] transition-colors">~{(wavSize / (1024 * 1024)).toFixed(1)} MB</span>
+                  ) : (
+                    <span className="text-[10px] text-[#6366F1]">lossless</span>
+                  )}
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={onCopy}
-                className="flex items-center gap-2 px-4 py-2 border border-white/10 bg-white/5 hover:bg-white/10 rounded-[8px] font-light uppercase tracking-widest text-[10px] text-gray-300 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="flex flex-col items-center gap-1.5 px-3 py-3 rounded-[12px] border border-white/10 bg-white/5 hover:bg-white/10 transition-all hover:scale-[1.02] active:scale-[0.98] group"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                {t.studio.copyLink}
+                <svg className="w-5 h-5 text-[#A1A1AA] group-hover:text-white transition-colors" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"/>
+                </svg>
+                <span className="text-xs font-semibold text-[#D4D4D8] group-hover:text-white transition-colors">{t.studio.copyLink}</span>
               </button>
             </div>
           </motion.div>

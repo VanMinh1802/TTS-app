@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.core.uow import UnitOfWork
 from app.services.auth_service import AuthService
-from app.services.tts_service import TTSService, tts_service
 from app.services.quota_service import QuotaService
 from app.services.dictionary_service import DictionaryService
 from app.services.library_service import LibraryService
@@ -19,10 +18,6 @@ def get_uow(db: Session = Depends(get_db)) -> UnitOfWork:
 
 def get_auth_service(uow: UnitOfWork = Depends(get_uow)) -> AuthService:
     return AuthService(uow)
-
-
-def get_tts_service() -> TTSService:
-    return tts_service
 
 
 def get_quota_service(uow: UnitOfWork = Depends(get_uow)) -> QuotaService:
@@ -48,7 +43,6 @@ def get_analytics_service(uow: UnitOfWork = Depends(get_uow)) -> AnalyticsServic
 __all__ = [
     "get_uow",
     "get_auth_service",
-    "get_tts_service",
     "get_quota_service",
     "get_dictionary_service",
     "get_library_service",

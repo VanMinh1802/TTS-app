@@ -6,7 +6,6 @@ from typing import Optional
 
 from google.oauth2 import id_token
 from google.auth.transport import requests
-from sqlalchemy import select, func
 
 from app.core.security import (
     create_access_token,

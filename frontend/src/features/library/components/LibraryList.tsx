@@ -29,13 +29,13 @@ export function LibraryList({ records, onPlay, onDelete, onDownload, onUploadToC
       <div className="aether-glass rounded-[24px] overflow-hidden min-w-[640px]">
         {/* Header */}
         <div className="flex items-center gap-4 px-6 py-4 border-b border-white/[0.06]">
-          <div className="w-10 shrink-0" />
-          <div className="flex-1 text-[10px] font-bold uppercase tracking-[0.15em] text-[#818CF8]">Nội dung</div>
+          <div className="w-11 shrink-0" />
+          <div className="flex-1 min-w-0 text-[10px] font-bold uppercase tracking-[0.15em] text-[#818CF8]">Nội dung</div>
           <div className="shrink-0 w-28 text-right text-[10px] font-bold uppercase tracking-[0.15em] text-[#818CF8]">Giọng đọc</div>
           <div className="shrink-0 w-14 text-center text-[10px] font-bold uppercase tracking-[0.15em] text-[#818CF8]">T.gian</div>
           <div className="shrink-0 w-24 text-right text-[10px] font-bold uppercase tracking-[0.15em] text-[#818CF8]">Ngày</div>
           <div className="shrink-0 w-24 text-right text-[10px] font-bold uppercase tracking-[0.15em] text-[#818CF8]">Trạng thái</div>
-          <div className="shrink-0 w-16" />
+          <div className="shrink-0 w-[104px]" />
         </div>
 
         {/* Rows */}

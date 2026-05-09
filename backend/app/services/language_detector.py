@@ -119,9 +119,3 @@ def detect_language(text: str) -> tuple[str, float, list[dict]]:
         confidence = 0.5
     
     return overall_lang, confidence, segments
-
-
-def detect_language_simple(text: str) -> str:
-    """Simple language detection."""
-    lang, _, _ = detect_language(text)
-    return lang

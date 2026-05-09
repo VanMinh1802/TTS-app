@@ -6,6 +6,7 @@ import { FadeIn } from "@/components/motion";
 import { apiRequest } from "@/lib/api-client";
 import { useNotifications } from "@/shared/notifications/notification-store";
 import { ApiKeyStats } from "./ApiKeyStats";
+import { ApiKeyGuide } from "./ApiKeyGuide";
 import { CreateKeyModal } from "./CreateKeyModal";
 import type { ApiKeyCreateFormData } from "@/lib/validators";
 import { RevokeConfirmModal } from "./RevokeConfirmModal";
@@ -223,6 +224,8 @@ export default function APIKeysPage() {
             </div>
           </div>
         </FadeIn>
+
+        <ApiKeyGuide />
 
         <CreateKeyModal show={showCreate} onClose={() => setShowCreate(false)} onGenerate={handleGenerate} isGenerating={isGenerating} />
         <RevokeConfirmModal show={showConfirm} onClose={() => setShowConfirm(null)} onRevoke={handleRevoke} />

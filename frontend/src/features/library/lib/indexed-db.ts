@@ -73,20 +73,6 @@ export function getCurrentUserId(): string {
   return cachedUserId;
 }
 
-export async function deleteAllRecordsByUser(userId: string): Promise<void> {
-  const db = await openDB();
-  const records = await getRecordsFromDB(userId);
-  const tx = db.transaction(STORE_NAME, 'readwrite');
-  const store = tx.objectStore(STORE_NAME);
-  for (const r of records) {
-    store.delete(r.id);
-  }
-  return new Promise((resolve, reject) => {
-    tx.oncomplete = () => { db.close(); resolve(); };
-    tx.onerror = () => { db.close(); reject(tx.error); };
-  });
-}
-
 export async function updateRecordStatus(id: string, syncStatus: { local: boolean; cloud: boolean }): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {

@@ -18,7 +18,6 @@ class Settings(BaseSettings):
     # App
     APP_NAME: str = "GenVoice API"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = False
 
     # API
     API_V1_PREFIX: str = "/api"
@@ -34,7 +33,6 @@ class Settings(BaseSettings):
 
     # Auth - Google
     GOOGLE_CLIENT_ID: str = ""
-    GOOGLE_CLIENT_SECRET: str = ""
 
     # Auth - Cookie / CSRF
     AUTH_COOKIE_NAME: str = "access_token"
@@ -89,10 +87,6 @@ class Settings(BaseSettings):
 
     # Quota Management
     DEFAULT_QUOTA_TIER: str = "free"
-
-    # TTS
-    MAX_TTS_TEXT_LENGTH: int = 10000
-    DEFAULT_TTS_SAMPLE_RATE: int = 22050
 
     # Database Pool
     DB_POOL_SIZE: int = 10

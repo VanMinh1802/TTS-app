@@ -11,15 +11,6 @@ class UserRepository(BaseRepository[User]):
     def get_by_email(self, email: str) -> Optional[User]:
         return self.find_one(email=email)
 
-    def get_active_by_id(self, user_id: str) -> Optional[User]:
-        user = self.get(user_id)
-        if user and user.is_active:
-            return user
-        return None
-
-    def list_active(self) -> list[User]:
-        return self.find_all(is_active=True)
-
 
 class APIKeyRepository(BaseRepository[APIKey]):
     def __init__(self, session):
