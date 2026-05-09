@@ -1,10 +1,8 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
 import { FadeIn } from "@/components/motion";
-
-import { VoiceSelector, VoiceSettings, TextInput, CustomDictionary, StudioHero, PreviewPanel, PronunciationCheck, GrammarFixModal, SmartChunking } from "@/features/studio";
+import { VoiceSelector, VoiceSettings, TextInput, CustomDictionary, StudioHeader, PreviewPanel } from "@/features/studio";
 import dynamic from "next/dynamic";
 
 const StudioLibraryDrawer = dynamic(() => import("@/features/studio/components/StudioLibraryDrawer").then(mod => mod.StudioLibraryDrawer), { ssr: false });
@@ -12,11 +10,10 @@ import type { DictionaryEntry } from "@/features/studio";
 import { getDictionaryEntries, createDictionaryEntry, deleteDictionaryEntry, updateDictionaryEntry } from "@/features/dictionary/api/dictionary-api";
 import { getStudioVoices } from "@/features/voice/api/voice-api";
 import { useTtsGenerate } from "@/features/tts";
-import type { StudioVoice, NormalizationMeta } from "@/features/voice/types/voice-types";
+import type { StudioVoice } from "@/features/voice/types/voice-types";
 import { useLocalLibrary } from "@/features/library/hooks/useLocalLibrary";
 import { useNotifications } from "@/shared/notifications/notification-store";
 import { useT } from "@/shared/i18n";
-import { getCurrentUser } from "@/features/auth/api/auth-api";
 
 const STORAGE_KEY = "studio_draft_text";
 const STORAGE_KEY_VOICE = "studio_voice_id";
@@ -37,22 +34,9 @@ export default function StudioPage() {
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isTextOverLimit, setIsTextOverLimit] = useState(false);
-  const [normMeta, setNormMeta] = useState<NormalizationMeta | null>(null);
-  const [isPronunciationOpen, setIsPronunciationOpen] = useState(false);
-  const [isGrammarOpen, setIsGrammarOpen] = useState(false);
-  const [isChunkingOpen, setIsChunkingOpen] = useState(false);
-  const [chunks, setChunks] = useState<Array<{ text: string; label: string }>>([]);
-  const [showSuccessCard, setShowSuccessCard] = useState(false);
-  const [isPro, setIsPro] = useState(false);
-  
-  useEffect(() => {
-    getCurrentUser().then(u => {
-      setIsPro(u.subscription_tier === 'pro' || u.subscription_tier === 'enterprise');
-    }).catch(() => {});
-  }, []);
-  
+
   const { saveLocalRecord } = useLocalLibrary();
-  const { clientGenerate, progress: workerProgress, isUsingWorker, prefetchModel, cancelGeneration } = useTtsGenerate();
+  const { clientGenerate, progress, isUsingWorker, prefetchModel, cancelGeneration } = useTtsGenerate();
 
   useEffect(() => {
     let cancelled = false;
@@ -97,20 +81,17 @@ export default function StudioPage() {
     };
   }, []);
 
-  // Prefetch ONNX model when voice changes
   useEffect(() => {
     if (selectedVoice && voices.length > 0) {
       prefetchModel(selectedVoice);
     }
   }, [selectedVoice, voices.length, prefetchModel]);
 
-  // Restore draft text from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) setText(saved);
   }, []);
 
-  // Restore speed from localStorage on mount
   useEffect(() => {
     const savedSpeed = localStorage.getItem(STORAGE_KEY_SPEED);
     if (savedSpeed) setSpeed(parseFloat(savedSpeed));
@@ -141,64 +122,51 @@ export default function StudioPage() {
     a.click();
   }, [audioUrl, currentWavUrl]);
 
-  const handleGenerationSuccess = useCallback((nextAudioUrl: string, duration: number, normalization?: NormalizationMeta | null, mp3Url?: string, wavUrl?: string) => {
-    setAudioUrl(mp3Url || nextAudioUrl);
-    if (wavUrl) setCurrentWavUrl(wavUrl);
-    setShowSuccessCard(true);
-    setTimeout(() => {
-      const audioEl = document.querySelector('audio') as HTMLAudioElement | null;
-      audioEl?.play().catch(() => {});
-    }, 100);
-    if (normalization) setNormMeta(normalization);
-    notify({ severity: "success", title: t.studio.successTitle, message: t.studio.successMessage, source: "studio", actionLabel: t.studio.audioDownload, actionHref: mp3Url || nextAudioUrl });
-    const mp3DataUrl = mp3Url || nextAudioUrl;
-    const wavDataUrl = wavUrl || nextAudioUrl;
-    const base64Data = mp3DataUrl.split(',')[1] || '';
-    const fileSizeBytes = Math.round(base64Data.length * 0.75);
-    saveLocalRecord({ 
-      id: crypto.randomUUID(), 
-      audio_url: wavDataUrl,
-      audio_mp3: mp3DataUrl,
-      text_content: text, 
-      voice_id: voiceId,
-      duration,
-      file_size_bytes: fileSizeBytes,
-      created_at: new Date().toISOString() 
-    });
-  }, [saveLocalRecord, text, voiceId]);
-
-  const handleGenerationError = useCallback((generateError: unknown) => {
-    const message = generateError instanceof Error ? generateError.message : t.studio.errorGenerate;
-    setError(message);
-    notify({ severity: "error", title: t.studio.errorGenerateTitle, message, source: "studio" });
-  }, []);
-
   const handleGenerate = useCallback(async () => {
     if (!text.trim() || isTextOverLimit) return;
     setGenerating(true);
     setAudioUrl(null);
     setCurrentWavUrl(null);
     setError(null);
-    setNormMeta(null);
-    setShowSuccessCard(false);
 
     try {
       const response = await clientGenerate({
         text,
         voice_id: voiceId,
         speed,
-          user_dictionary: dictionary.length > 0 ? dictionary.map(d => ({
+        user_dictionary: dictionary.length > 0 ? dictionary.map(d => ({
           word: d.word,
           pronunciation: d.pronunciation || d.word,
         })) : undefined,
       });
-      handleGenerationSuccess(response.audio_url, response.duration, response.normalization, response.audio_mp3, response.audio_wav);
+      setAudioUrl(response.audio_mp3 || response.audio_url);
+      if (response.audio_wav) setCurrentWavUrl(response.audio_wav);
+      notify({ severity: "success", title: t.studio.successTitle, message: t.studio.successMessage, source: "studio", actionLabel: t.studio.audioDownload, actionHref: response.audio_mp3 || response.audio_url });
+      setTimeout(() => {
+        const audioEl = document.querySelector('audio') as HTMLAudioElement | null;
+        audioEl?.play().catch(() => {});
+      }, 100);
+      const mp3DataUrl = response.audio_mp3 || response.audio_url;
+      const base64Data = mp3DataUrl.split(',')[1] || '';
+      const fileSizeBytes = Math.round(base64Data.length * 0.75);
+      saveLocalRecord({ 
+        id: crypto.randomUUID(), 
+        audio_url: response.audio_wav || response.audio_url,
+        audio_mp3: mp3DataUrl,
+        text_content: text, 
+        voice_id: voiceId,
+        duration: response.duration,
+        file_size_bytes: fileSizeBytes,
+        created_at: new Date().toISOString() 
+      });
     } catch (generateError) {
-      handleGenerationError(generateError);
+      const message = generateError instanceof Error ? generateError.message : t.studio.errorGenerate;
+      setError(message);
+      notify({ severity: "error", title: t.studio.errorGenerateTitle, message, source: "studio" });
     } finally {
       setGenerating(false);
     }
-  }, [text, isTextOverLimit, voiceId, speed, dictionary, handleGenerationError, handleGenerationSuccess, clientGenerate]);
+  }, [text, isTextOverLimit, voiceId, speed, dictionary, clientGenerate, saveLocalRecord, notify, t]);
 
   const handleAddDictionary = useCallback(async (entry: { word: string; pronunciation?: string }) => {
     try {
@@ -243,72 +211,64 @@ export default function StudioPage() {
     notify({ severity: "success", title: "Đã cập nhật", message: `Đã cập nhật "${word}".`, source: "studio" });
   }, [dictionary, notify]);
 
-  const handleGrammarApply = useCallback((corrected: string) => {
-    setText(corrected);
-    localStorage.setItem(STORAGE_KEY, corrected);
-    setIsGrammarOpen(false);
-  }, []);
-
   return (
     <main className="relative min-h-[100dvh] overflow-hidden px-4 pb-16 pt-24 text-[#F4F4F5] selection:bg-[#6366F1]/30">
       <div className="relative mx-auto max-w-7xl space-y-6">
-        <StudioHero />
+        <FadeIn delay={0.1}>
+          <StudioHeader onOpenLibrary={() => setIsLibraryOpen(true)} />
+        </FadeIn>
 
-        {error ? <FadeIn delay={0.1}><div className="aether-glass-wrapper rounded-[24px]" role="alert"><div className="aether-glass rounded-[24px] p-4 text-sm font-medium text-red-400 bg-red-950/20 border-red-500/20">{error}</div></div></FadeIn> : null}
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_300px] lg:grid-cols-[1fr_400px]">
-          <div className="space-y-3 flex flex-col h-full">
-            <FadeIn delay={0.2} className="flex-1 flex flex-col min-h-[120px]">
-              {/* Toolbar */}
-              <div className="aether-glass-wrapper rounded-[24px] mb-3">
-                <div className="aether-glass rounded-[24px] p-3 flex items-center gap-2 flex-wrap">
-                  <button onClick={() => setIsGrammarOpen(true)} disabled={!text.trim() || !isPro} className="flex items-center gap-2 px-4 py-3 rounded-full bg-white/5 border border-white/10 text-[10px] uppercase tracking-widest text-[#D4D4D8] hover:text-white hover:bg-white/10 hover:border-white/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px]">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
-                    Sửa chính tả {!isPro && <span className="text-[#C968F7] bg-[#C968F7]/10 border border-[#C968F7]/30 rounded-full px-2 py-0.5 text-[8px]">PRO</span>}
-                  </button>
-                  <button onClick={() => setIsPronunciationOpen(true)} disabled={!text.trim() || !isPro} className="flex items-center gap-2 px-4 py-3 rounded-full bg-white/5 border border-white/10 text-[10px] uppercase tracking-widest text-[#D4D4D8] hover:text-white hover:bg-white/10 hover:border-white/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px]">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/></svg>
-                    Kiểm tra phát âm {!isPro && <span className="text-[#C968F7] bg-[#C968F7]/10 border border-[#C968F7]/30 rounded-full px-2 py-0.5 text-[8px]">PRO</span>}
-                  </button>
-                  <button onClick={() => setIsChunkingOpen(true)} disabled={!text.trim() || text.length < 1000 || !isPro} className="flex items-center gap-2 px-4 py-3 rounded-full bg-white/5 border border-white/10 text-[10px] uppercase tracking-widest text-[#D4D4D8] hover:text-white hover:bg-white/10 hover:border-white/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px]">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
-                    Chia đoạn {!isPro && <span className="text-[#C968F7] bg-[#C968F7]/10 border border-[#C968F7]/30 rounded-full px-2 py-0.5 text-[8px]">PRO</span>}
-                  </button>
-                </div>
+        {error ? (
+          <FadeIn delay={0.15}>
+            <div className="aether-glass-wrapper rounded-[24px]" role="alert">
+              <div className="aether-glass rounded-[24px] p-4 text-sm font-medium text-red-400 bg-red-950/20 border-red-500/20">
+                {error}
               </div>
+            </div>
+          </FadeIn>
+        ) : null}
+
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_280px] lg:grid-cols-[1fr_340px] gap-6">
+          <div className="space-y-6">
+            <FadeIn delay={0.2}>
               <TextInput value={text} onChange={handleTextChange} onOverLimit={setIsTextOverLimit} />
             </FadeIn>
-            
-            {chunks.length > 0 && (
-              <div className="mt-4 space-y-2">
-                {chunks.map((chunk, i) => (
-                  <div key={i} className="p-3 bg-white/5 border border-white/10 rounded-lg">
-                    <span className="text-[10px] uppercase tracking-widest text-[#818CF8]">{chunk.label}</span>
-                    <p className="text-sm text-[#D4D4D8] mt-1">{chunk.text.slice(0, 100)}...</p>
-                  </div>
-                ))}
+
+            <FadeIn delay={0.3}>
+              <div aria-live="polite">
+                <PreviewPanel
+                  audioUrl={audioUrl}
+                  onCopy={handleCopyAudioUrl}
+                  onDownload={handleDownloadAudio}
+                  loading={generating}
+                  progress={progress}
+                  autoPlay={!!audioUrl}
+                  wavAvailable={!!currentWavUrl}
+                  mp3Size={audioUrl ? Math.round((audioUrl.split(',')[1] || '').length * 0.75) : undefined}
+                  wavSize={currentWavUrl ? Math.round((currentWavUrl.split(',')[1] || '').length * 0.75) : undefined}
+                />
               </div>
-            )}
+            </FadeIn>
+          </div>
+
+          <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+            <FadeIn delay={0.4}>
+              <VoiceSelector voices={sortedVoices} selectedVoice={selectedVoice || ""} onSelect={handleSelectVoice} />
+            </FadeIn>
+            <FadeIn delay={0.5}>
+              <VoiceSettings speed={speed} onSpeedChange={handleSpeedChange} />
+            </FadeIn>
+            <FadeIn delay={0.6}>
+              <CustomDictionary dictionary={dictionary} onAdd={handleAddDictionary} onRemove={handleRemoveDictionary} onEdit={handleEditDictionary} />
+            </FadeIn>
             
-            <FadeIn delay={0.3}><div aria-live="polite"><PreviewPanel audioUrl={audioUrl} onCopy={handleCopyAudioUrl} onDownload={handleDownloadAudio} loading={generating} normMeta={normMeta} progress={workerProgress} autoPlay={!!audioUrl} wavAvailable={!!currentWavUrl && isPro} mp3Size={audioUrl ? Math.round((audioUrl.split(',')[1] || '').length * 0.75) : undefined} wavSize={currentWavUrl ? Math.round((currentWavUrl.split(',')[1] || '').length * 0.75) : undefined} /></div></FadeIn>
-          </div>
-
-          <div className="space-y-3 lg:sticky lg:top-24 lg:self-start">
-            <FadeIn delay={0.4}><VoiceSelector voices={sortedVoices} selectedVoice={selectedVoice} onSelect={handleSelectVoice} /></FadeIn>
-            <FadeIn delay={0.5}><VoiceSettings speed={speed} onSpeedChange={handleSpeedChange} /></FadeIn>
-            <FadeIn delay={0.6}><CustomDictionary dictionary={dictionary} onAdd={handleAddDictionary} onRemove={handleRemoveDictionary} onEdit={handleEditDictionary} /></FadeIn>
-          </div>
-        </div>
-
-        {/* Floating Action Bar */}
-        {text.trim().length > 0 && (
-          <div className="sticky bottom-8 z-30 flex justify-center pt-6 pb-4">
-            <div className="aether-glass-wrapper rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-              <div className="aether-glass rounded-full p-2 flex items-center gap-3" style={{ borderRadius: '9999px' }}>
+            <FadeIn delay={0.7}>
+              <div className="flex flex-col gap-3">
                 <button
+                  type="button"
                   onClick={handleGenerate}
-                  disabled={generating || isTextOverLimit}
-                  className="aether-btn aether-btn-primary h-12 px-8 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={generating || isTextOverLimit || !text.trim()}
+                  className="aether-btn aether-btn-primary w-full py-4 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                 >
                   {generating ? (
                     <>
@@ -317,55 +277,28 @@ export default function StudioPage() {
                     </>
                   ) : (
                     <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"/></svg>
-                      {t.studio.generate}
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"/>
+                      </svg>
+                      Tạo giọng nói
                     </>
                   )}
                 </button>
                 {generating && (
-                  <button onClick={() => cancelGeneration()} className="h-12 px-6 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-medium hover:bg-red-500/20 transition-all">
+                  <button
+                    onClick={() => cancelGeneration()}
+                    className="w-full py-3 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-medium hover:bg-red-500/20 transition-all"
+                  >
                     Dừng
                   </button>
                 )}
-                <button
-                  onClick={() => setIsLibraryOpen(true)}
-                  className="h-12 px-6 rounded-full bg-gradient-to-r from-[#6366F1]/10 to-[#C968F7]/10 border border-[#6366F1]/30 text-[#818CF8] text-sm font-medium hover:text-white hover:from-[#6366F1]/20 hover:to-[#C968F7]/20 hover:border-[#6366F1]/50 transition-all flex items-center gap-2.5 shadow-[0_0_12px_rgba(99,102,241,0.08)]"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>
-                  Thư viện
-                </button>
               </div>
-            </div>
+            </FadeIn>
           </div>
-        )}
+        </div>
       </div>
+
       <StudioLibraryDrawer isOpen={isLibraryOpen} onClose={() => setIsLibraryOpen(false)} />
-      <PronunciationCheck
-        isOpen={isPronunciationOpen}
-        text={text}
-        onClose={() => setIsPronunciationOpen(false)}
-         onAddToDictionary={(entry) => handleAddDictionary({
-          word: entry.word,
-          pronunciation: entry.pronunciation,
-        })}
-      />
-      <GrammarFixModal
-        isOpen={isGrammarOpen}
-        text={text}
-        onClose={() => setIsGrammarOpen(false)}
-        onApply={handleGrammarApply}
-      />
-      <SmartChunking
-        isOpen={isChunkingOpen}
-        text={text}
-        onClose={() => setIsChunkingOpen(false)}
-        onChunksReady={(newChunks) => {
-          setChunks(newChunks);
-          setIsChunkingOpen(false);
-        }}
-      />
     </main>
   );
 }
-
-
