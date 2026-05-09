@@ -20,8 +20,4 @@ export const activateSchema = z.object({
 
 export type ActivateFormData = z.infer<typeof activateSchema>;
 
-export const geminiKeySchema = z.object({
-  geminiKey: z.string().min(1, "API key không được để trống"),
-});
 
-export type GeminiKeyFormData = z.infer<typeof geminiKeySchema>;
