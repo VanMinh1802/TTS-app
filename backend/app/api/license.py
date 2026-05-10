@@ -101,4 +101,4 @@ def activate_subscription(
     except LicenseError as e:
         raise HTTPException(status_code=400, detail=e.message)
     except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=e.message)
+        raise HTTPException(status_code=400, detail=e.message)
