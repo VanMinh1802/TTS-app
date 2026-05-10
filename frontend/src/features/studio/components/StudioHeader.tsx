@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useT } from "@/shared/i18n";
 
 interface StudioHeaderProps {
   onOpenLibrary?: () => void;
@@ -9,6 +10,7 @@ interface StudioHeaderProps {
 }
 
 export const StudioHeader = React.memo(function StudioHeader({ onOpenLibrary, libraryCount }: StudioHeaderProps) {
+  const t = useT();
   return (
     <div className="aether-glass-wrapper rounded-[24px]">
       <div className="aether-glass rounded-[24px] px-6 py-5 flex items-center justify-between">
@@ -20,9 +22,9 @@ export const StudioHeader = React.memo(function StudioHeader({ onOpenLibrary, li
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-tight text-[#F4F4F5]">
-              TTS Studio
+              {t.studio.heroTitle}
             </h1>
-            <p className="text-[11px] text-[#71717A] font-medium">Chuyển văn bản thành giọng nói</p>
+            <p className="text-[11px] text-[#71717A] font-medium">{t.studio.heroDescription}</p>
           </div>
         </div>
 
@@ -45,7 +47,7 @@ export const StudioHeader = React.memo(function StudioHeader({ onOpenLibrary, li
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/>
             </svg>
-            Thư viện
+            {t.studio.libraryButton}
             {libraryCount !== undefined && libraryCount > 0 && (
               <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-[#6366F1]/20 text-[10px] font-bold text-[#818CF8]">
                 {libraryCount}

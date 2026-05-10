@@ -46,7 +46,7 @@ export function DictionaryEntryRow({
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#818CF8]">Từ</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#818CF8]">{t.studio.dictWordCol}</span>
                 <input
                   value={editForm.word}
                   onChange={(e) => setEditForm(f => ({ ...f, word: e.target.value }))}
@@ -54,7 +54,7 @@ export function DictionaryEntryRow({
                 />
               </div>
               <div className="space-y-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#818CF8]">Cách đọc</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#818CF8]">{t.studio.dictPronunciationCol}</span>
                 <input
                   value={editForm.pronunciation}
                   onChange={(e) => setEditForm(f => ({ ...f, pronunciation: e.target.value }))}
@@ -69,14 +69,14 @@ export function DictionaryEntryRow({
                   onClick={onCancelEdit}
                   className="px-4 py-2 rounded-full border border-white/10 bg-white/5 text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA] hover:text-white hover:bg-white/10 transition-all"
                 >
-                  Hủy
+                  {t.common.cancel}
                 </button>
                 <button
                   type="button"
                   onClick={onSaveEdit}
                   className="px-4 py-2 rounded-full bg-gradient-to-r from-[#6366F1] to-[#C968F7] text-[#1A1A1A] border border-white/60 text-[10px] font-bold uppercase tracking-widest shadow-[0_0_12px_rgba(99,102,241,0.2)] hover:shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all"
                 >
-                  Lưu
+                  {t.common.save}
                 </button>
               </div>
             </div>

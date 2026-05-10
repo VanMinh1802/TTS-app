@@ -5,8 +5,10 @@ import { motion } from "framer-motion";
 import { FadeIn } from "@/components/motion";
 import { getDictionaryEntries, createDictionaryEntry, deleteDictionaryEntry, updateDictionaryEntry } from "@/features/dictionary/api/dictionary-api";
 import type { DictionaryEntry as DictEntry } from "@/features/dictionary/api/dictionary-api";
+import { useT } from "@/shared/i18n";
 
 export default function DictionaryPage() {
+  const t = useT();
   const [entries, setEntries] = useState<DictEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [word, setWord] = useState("");
@@ -49,35 +51,35 @@ export default function DictionaryPage() {
           <div className="mb-8">
             <h2 className="text-[10px] md:text-[11px] font-medium uppercase tracking-[0.3em] text-[#6366F1] mb-4 flex items-center gap-3">
               <span className="w-6 h-[1px] bg-[#6366F1]/50"></span>
-              Cơ sở dữ liệu Thuật ngữ
+              {t.dictionary.glossaryDb}
             </h2>
             <h1 className="text-4xl md:text-5xl leading-tight py-0 tracking-tight font-bold bg-gradient-to-b from-white to-[#A78BFA] bg-clip-text text-transparent">
-              Từ điển Phát âm
+              {t.dictionary.heading}
             </h1>
-            <p className="text-xs font-light text-[#A1A1AA] mt-2">{entries.length} mục đã đăng ký</p>
+            <p className="text-xs font-light text-[#A1A1AA] mt-2">{entries.length} {t.dictionary.entryCount.replace("{count}", String(entries.length))}</p>
           </div>
         </FadeIn>
 
         <FadeIn delay={0.15}>
           <div className="aether-glass-wrapper rounded-[24px] mb-6" id="add-form">
             <div className="aether-glass rounded-[24px] p-6">
-              <h2 className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#818CF8] mb-5">Thêm thuật ngữ mới</h2>
+              <h2 className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#818CF8] mb-5">{t.dictionary.addNewTerm}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">Từ gốc</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">{t.dictionary.originalWord}</label>
                   <input
                     value={word}
                     onChange={e => setWord(e.target.value)}
-                    placeholder="VD: COVID-19"
+                    placeholder={t.dictionary.wordPlaceholder}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 font-light text-sm text-white placeholder:text-[#A1A1AA]/50 outline-none focus:border-[#818CF8]/50 focus:bg-white/10 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">Phát âm</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">{t.dictionary.pronunciation}</label>
                   <input
                     value={pronunciation}
                     onChange={e => setPronunciation(e.target.value)}
-                    placeholder="VD: cô vít mười chín"
+                    placeholder={t.dictionary.pronunciationExample}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 font-light text-sm text-white placeholder:text-[#A1A1AA]/50 outline-none focus:border-[#818CF8]/50 focus:bg-white/10 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]"
                   />
                 </div>
@@ -91,7 +93,7 @@ export default function DictionaryPage() {
                     : "aether-btn-primary"
                 }`}
               >
-                Ghi nhận
+                {t.dictionary.submit}
               </button>
             </div>
           </div>
@@ -105,7 +107,7 @@ export default function DictionaryPage() {
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Tìm kiếm thuật ngữ..."
+              placeholder={t.dictionary.searchPlaceholder}
               className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 font-light text-sm text-white placeholder:text-[#A1A1AA]/50 outline-none focus:border-[#818CF8]/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]"
             />
           </div>
@@ -124,7 +126,7 @@ export default function DictionaryPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
               <p className="text-xs font-bold uppercase tracking-widest text-[#A1A1AA]">
-                {search ? "Không tìm thấy kết quả" : "Chưa có thuật ngữ nào"}
+                {search ? t.dictionary.noResults : t.dictionary.empty}
               </p>
             </div>
           </div>
@@ -142,11 +144,11 @@ export default function DictionaryPage() {
                   <div className="px-6 py-4 group">
                     {editId === entry.id ? (
                       <div className="flex flex-col sm:flex-row gap-3 items-center">
-                        <input value={editWord} onChange={e => setEditWord(e.target.value)} placeholder="Từ gốc" className="w-full bg-white/5 border border-[#818CF8]/30 rounded-xl px-4 py-2.5 text-sm font-medium text-white outline-none focus:border-[#818CF8] focus:shadow-[0_0_12px_rgba(129,140,248,0.15)] transition-all" />
-                        <input value={editPron} onChange={e => setEditPron(e.target.value)} placeholder="Phát âm" className="w-full bg-white/5 border border-[#818CF8]/30 rounded-xl px-4 py-2.5 text-sm font-medium text-white outline-none focus:border-[#818CF8] focus:shadow-[0_0_12px_rgba(129,140,248,0.15)] transition-all" />
+                        <input value={editWord} onChange={e => setEditWord(e.target.value)} placeholder={t.dictionary.originalWord} className="w-full bg-white/5 border border-[#818CF8]/30 rounded-xl px-4 py-2.5 text-sm font-medium text-white outline-none focus:border-[#818CF8] focus:shadow-[0_0_12px_rgba(129,140,248,0.15)] transition-all" />
+                        <input value={editPron} onChange={e => setEditPron(e.target.value)} placeholder={t.dictionary.pronunciation} className="w-full bg-white/5 border border-[#818CF8]/30 rounded-xl px-4 py-2.5 text-sm font-medium text-white outline-none focus:border-[#818CF8] focus:shadow-[0_0_12px_rgba(129,140,248,0.15)] transition-all" />
                         <div className="flex gap-2 shrink-0">
-                          <button onClick={handleSave} className="px-4 py-2.5 rounded-full bg-gradient-to-r from-[#6366F1] to-[#C968F7] text-[#1A1A1A] border border-white/60 text-[10px] font-bold uppercase tracking-widest shadow-[0_0_12px_rgba(99,102,241,0.2)]">Lưu</button>
-                          <button onClick={() => setEditId(null)} className="px-4 py-2.5 rounded-full bg-white/5 border border-white/10 text-[#D4D4D8] text-[10px] font-bold uppercase tracking-widest hover:bg-white/10">Hủy</button>
+                          <button onClick={handleSave} className="px-4 py-2.5 rounded-full bg-gradient-to-r from-[#6366F1] to-[#C968F7] text-[#1A1A1A] border border-white/60 text-[10px] font-bold uppercase tracking-widest shadow-[0_0_12px_rgba(99,102,241,0.2)]">{t.common.save}</button>
+                          <button onClick={() => setEditId(null)} className="px-4 py-2.5 rounded-full bg-white/5 border border-white/10 text-[#D4D4D8] text-[10px] font-bold uppercase tracking-widest hover:bg-white/10">{t.common.cancel}</button>
                         </div>
                       </div>
                     ) : (
@@ -159,10 +161,10 @@ export default function DictionaryPage() {
                           <span className="text-[14px] font-medium text-[#D4D4D8] bg-white/[0.04] px-3 py-0.5 rounded-lg border border-white/5 truncate">{entry.pronunciation}</span>
                         </div>
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0">
-                          <button onClick={() => { if (entry.id) { setEditId(entry.id); setEditWord(entry.word); setEditPron(entry.pronunciation); } }} aria-label="Chỉnh sửa thuật ngữ" className="w-8 h-8 rounded-full flex items-center justify-center text-[#71717A] hover:text-[#818CF8] hover:bg-[#6366F1]/10 transition-all">
+                          <button onClick={() => { if (entry.id) { setEditId(entry.id); setEditWord(entry.word); setEditPron(entry.pronunciation); } }} aria-label={t.dictionary.editTermLabel} className="w-8 h-8 rounded-full flex items-center justify-center text-[#71717A] hover:text-[#818CF8] hover:bg-[#6366F1]/10 transition-all">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"/></svg>
                           </button>
-                          <button onClick={() => entry.id && handleDel(entry.id)} aria-label="Xóa thuật ngữ" className="w-8 h-8 rounded-full flex items-center justify-center text-[#71717A] hover:text-red-400 hover:bg-red-500/10 transition-all">
+                          <button onClick={() => entry.id && handleDel(entry.id)} aria-label={t.dictionary.deleteTermLabel} className="w-8 h-8 rounded-full flex items-center justify-center text-[#71717A] hover:text-red-400 hover:bg-red-500/10 transition-all">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
                           </button>
                         </div>

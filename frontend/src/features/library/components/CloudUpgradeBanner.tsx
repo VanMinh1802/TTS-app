@@ -1,7 +1,9 @@
 'use client';
 import Link from 'next/link';
+import { useT } from "@/shared/i18n";
 
 export function CloudUpgradeBanner() {
+  const t = useT();
   return (
     <div className="aether-glass-wrapper rounded-[24px]">
       <div className="aether-glass rounded-[24px] flex items-center gap-4 px-6 py-4">
@@ -11,12 +13,12 @@ export function CloudUpgradeBanner() {
           </svg>
         </div>
         <div className="flex-1">
-          <p className="text-sm font-medium text-[#D4D4D8]">Sao lưu Cloud cho file âm thanh</p>
-          <p className="text-xs font-light text-[#A1A1AA]">Nâng cấp PRO để đồng bộ thư viện qua mọi thiết bị.</p>
+          <p className="text-sm font-medium text-[#D4D4D8]">{t.library.cloudBackupBanner}</p>
+          <p className="text-xs font-light text-[#A1A1AA]">{t.library.cloudBackupDesc}</p>
         </div>
         <Link href="/pricing">
           <button className="aether-btn aether-btn-primary text-xs px-5 py-2.5">
-            Nâng cấp
+            {t.library.upgrade}
           </button>
         </Link>
       </div>

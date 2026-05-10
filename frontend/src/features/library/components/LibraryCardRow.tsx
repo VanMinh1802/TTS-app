@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { LibraryRecord, getRecordDuration } from '../types';
 import { VoiceBadge } from '@/features/voice/components/VoiceBadge';
 import type { VoiceInfo } from '@/features/voice/hooks/useVoiceMap';
+import { useT } from "@/shared/i18n";
 
 interface Props {
   record: LibraryRecord;
@@ -18,6 +19,7 @@ interface Props {
 const iconSvg = 'data:image/svg+xml,...'; // placeholder
 
 export function LibraryCardRow({ record, onPlay, onDelete, onDownload, onUploadToCloud, isPlaying, isPro, getVoice }: Props) {
+  const t = useT();
   return (
     <motion.div
       className="flex items-center gap-4 px-6 py-4 border-b border-white/[0.04] hover:bg-[#6366F1]/[0.02] transition-all duration-200 group"

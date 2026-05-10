@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { LibraryRecord, getRecordDuration } from '../types';
 import { VoiceBadge } from '@/features/voice/components/VoiceBadge';
 import type { VoiceInfo } from '@/features/voice/hooks/useVoiceMap';
+import { useT } from "@/shared/i18n";
 
 interface Props {
   record: LibraryRecord;
@@ -43,6 +44,7 @@ const AudioWaveform = React.memo(function AudioWaveform({ active }: { active: bo
 });
 
 export function LibraryCard({ record, onPlay, onDelete, onDownload, onUploadToCloud, isPlaying, isPro, getVoice }: Props) {
+  const t = useT();
   return (
     <motion.div
       className="aether-glass-wrapper rounded-[24px] transition-all duration-300 hover:-translate-y-1"
@@ -135,7 +137,7 @@ export function LibraryCard({ record, onPlay, onDelete, onDownload, onUploadToCl
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
                 )}
               </svg>
-              {isPlaying ? 'Tạm dừng' : 'Phát'}
+              {isPlaying ? t.library.stop : t.library.play}
             </button>
 
             <button

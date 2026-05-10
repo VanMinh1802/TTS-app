@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { FadeIn } from "@/components/motion";
 import { UiSelect } from "@/components/ui/UiSelect";
 import { notificationService } from "@/shared/notifications/notification-store";
+import { useT } from "@/shared/i18n";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
@@ -21,6 +22,7 @@ interface Voice {
 }
 
 export default function VoicesPage() {
+  const t = useT();
   const [voices, setVoices] = useState<Voice[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({ language: "", gender: "" });
@@ -45,7 +47,7 @@ export default function VoicesPage() {
         }
       } catch (error) {
         console.error("Failed to fetch voices:", error);
-        notificationService.notify({ severity: "error", title: "Lỗi", message: "Không thể tải danh sách giọng đọc. Vui lòng thử lại." });
+        notificationService.notify({ severity: "error", title: t.voices.loadErrorTitle, message: t.voices.loadErrorMsg });
       } finally {
         setLoading(false);
       }
@@ -80,13 +82,13 @@ export default function VoicesPage() {
           <div className="mb-12">
             <h2 className="text-[10px] md:text-[11px] font-medium uppercase tracking-[0.3em] text-[#6366F1] mb-4 flex items-center gap-3">
               <span className="w-6 h-[1px] bg-[#6366F1]/50"></span>
-              Cấu hình Âm thanh
+              {t.voices.audioConfig}
             </h2>
             <h1 className="text-4xl md:text-5xl tracking-tight leading-tight py-0 mb-2 font-bold bg-gradient-to-b from-white to-[#A78BFA] bg-clip-text text-transparent">
-              Thư viện Giọng đọc
+              {t.voices.libraryHeading}
             </h1>
             <p className="text-xs font-light text-[#A1A1AA] uppercase tracking-widest">
-              ACTIVE MODELS / ONLINE: {voices.length}
+              {t.voices.activeModelsLabel} {voices.length}
             </p>
           </div>
         </FadeIn>
@@ -99,19 +101,19 @@ export default function VoicesPage() {
                 value={filter.language}
                 onChange={(v) => setFilter({...filter, language: v})}
                 options={[
-                  { value: '', label: 'Tất cả ngôn ngữ' },
-                  { value: 'vi', label: 'Tiếng Việt' },
-                  { value: 'en', label: 'Tiếng Anh' },
+                  { value: '', label: t.voices.allLanguages },
+                  { value: 'vi', label: t.voices.langVi },
+                  { value: 'en', label: t.voices.langEn },
                 ]}
               />
               <UiSelect
                 value={filter.gender}
                 onChange={(v) => setFilter({...filter, gender: v})}
                 options={[
-                  { value: '', label: 'Tất cả giới tính' },
-                  { value: 'male', label: 'Nam' },
-                  { value: 'female', label: 'Nữ' },
-                  { value: 'neutral', label: 'Trung tính' },
+                  { value: '', label: t.voices.allGenders },
+                  { value: 'male', label: t.voices.genderMale },
+                  { value: 'female', label: t.voices.genderFemale },
+                  { value: 'neutral', label: t.voices.genderNeutral },
                 ]}
               />
             </div>
@@ -124,7 +126,7 @@ export default function VoicesPage() {
             <div className="col-span-full h-48 aether-glass-wrapper rounded-[24px]">
               <div className="aether-glass h-full flex flex-col items-center justify-center border-dashed border-white/10">
                 <div className="w-6 h-6 rounded-full border-2 border-[#6366F1] border-t-transparent animate-spin mb-4" />
-                <p className="text-[10px] uppercase tracking-widest text-[#D4D4D8]">Đang đồng bộ model...</p>
+                <p className="text-[10px] uppercase tracking-widest text-[#D4D4D8]">{t.voices.syncingModel}</p>
               </div>
             </div>
           ) : voices.length === 0 ? (
@@ -133,9 +135,9 @@ export default function VoicesPage() {
                 <svg className="w-10 h-10 text-[#A1A1AA] mb-6" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                 </svg>
-                <h2 className="text-sm uppercase tracking-widest text-[#F4F4F5] mb-2">Chưa có Voice nào</h2>
+                <h2 className="text-sm uppercase tracking-widest text-[#F4F4F5] mb-2">{t.voices.noVoices}</h2>
                 <p className="text-xs font-light text-[#A1A1AA] max-w-sm">
-                  Không tìm thấy file mô hình giọng đọc. Vui lòng upload lên R2 và khởi động lại Server.
+                  {t.voices.noModelFound}
                 </p>
               </div>
             </div>
@@ -157,29 +159,29 @@ export default function VoicesPage() {
                       <div className="flex flex-col items-end gap-2">
                         {voice.is_custom && (
                           <span className="bg-[#6366F1]/10 border border-[#6366F1]/30 text-[#6366F1] text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-sm">
-                            Custom  
+                            {t.voices.customBadge}
                           </span>
                         )}
-                        <div className="flex items-center gap-1.5" title={voice.is_active ? 'Online' : 'Offline'}>
+                        <div className="flex items-center gap-1.5" title={voice.is_active ? t.voices.statusOnline : t.voices.statusOffline}>
                           <span className={`w-2 h-2 rounded-full ${voice.is_active ? 'bg-[#6366F1] shadow-[0_0_8px_rgba(99,102,241,0.8)]' : 'bg-red-500/50'}`}></span>
-                          <span className="text-[9px] uppercase tracking-widest text-[#A1A1AA]">{voice.is_active ? 'Online' : 'Offline'}</span>
+                          <span className="text-[9px] uppercase tracking-widest text-[#A1A1AA]">{voice.is_active ? t.voices.statusOnline : t.voices.statusOffline}</span>
                         </div>
                       </div>
                     </div>
                     
                     <div className="space-y-3 mb-8 flex-1">
                       <div className="flex justify-between items-end border-b border-white/5 pb-2">
-                        <span className="text-[10px] uppercase tracking-widest text-[#A1A1AA]">Ngôn ngữ</span>
-                        <span className="text-xs font-light text-[#F4F4F5]">{voice.language === 'vi' ? 'Tiếng Việt' : voice.language === 'en' ? 'Tiếng Anh' : voice.language}</span>
+                        <span className="text-[10px] uppercase tracking-widest text-[#A1A1AA]">{t.voices.metaLanguage}</span>
+                        <span className="text-xs font-light text-[#F4F4F5]">{voice.language === 'vi' ? t.voices.langVi : voice.language === 'en' ? t.voices.langEn : voice.language}</span>
                       </div>
                       <div className="flex justify-between items-end border-b border-white/5 pb-2">
-                        <span className="text-[10px] uppercase tracking-widest text-[#A1A1AA]">Giới tính</span>
-                        <span className="text-xs font-light text-[#F4F4F5]">{voice.gender === 'male' ? 'Nam' : voice.gender === 'female' ? 'Nữ' : 'Trung tính'}</span>
+                        <span className="text-[10px] uppercase tracking-widest text-[#A1A1AA]">{t.voices.metaGender}</span>
+                        <span className="text-xs font-light text-[#F4F4F5]">{voice.gender === 'male' ? t.voices.genderMale : voice.gender === 'female' ? t.voices.genderFemale : t.voices.genderNeutral}</span>
                       </div>
                       <div className="flex justify-between items-end border-b border-white/5 pb-2">
-                        <span className="text-[10px] uppercase tracking-widest text-[#A1A1AA]">Trạng thái Model</span>
+                        <span className="text-[10px] uppercase tracking-widest text-[#A1A1AA]">{t.voices.modelStatus}</span>
                         <span className={`text-xs font-light ${voice.model_url ? 'text-[#F4F4F5]' : 'text-red-400'}`}>
-                          {voice.model_url ? 'Đã liên kết' : 'Trống'}
+                          {voice.model_url ? t.voices.statusLinked : t.voices.statusEmpty}
                         </span>
                       </div>
                     </div>
@@ -196,7 +198,7 @@ export default function VoicesPage() {
                               : "bg-white/5 border-white/10 text-gray-300 hover:bg-gradient-to-r hover:from-[#6366F1] hover:to-[#C968F7] hover:text-white hover:border-transparent hover:shadow-[0_0_20px_rgba(99,102,241,0.3)]"
                         }`}
                       >
-                        {selectedVoice === voice.id ? 'Đang phát...' : !voice.sample_url ? 'Chưa có mẫu' : 'Nghe Thử'}
+                        {selectedVoice === voice.id ? t.voices.playing : !voice.sample_url ? t.voices.noSample : t.voices.listen}
                       </button>
                     </div>
                   </div>

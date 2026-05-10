@@ -182,19 +182,31 @@ export function CustomDictionary({ dictionary, onAdd, onRemove, onEdit }: Custom
               >
                 <div className="shrink-0 border-b border-white/[0.06] bg-gradient-to-b from-[#6366F1]/5 to-transparent px-6 pt-20 pb-6 flex items-center justify-between">
                     <div>
-                      <h2 className="text-xl font-semibold tracking-tight text-white">Từ đã lưu</h2>
+                      <h2 className="text-xl font-semibold tracking-tight text-white">{t.studio.savedWords}</h2>
                       <p className="text-[11px] font-light text-[#818CF8] mt-1">
-                        {dictionary.length} mục
+                        {t.studio.dictItemCount.replace('{n}', String(dictionary.length))}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setIsDrawerOpen(false)}
-                      aria-label="Đóng ngăn từ điển"
-                      className="h-10 w-10 rounded-full border border-white/10 flex items-center justify-center text-[#A1A1AA] hover:text-white hover:bg-white/10 hover:border-white/20 transition-all duration-200"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsDrawerOpen(false);
+                          setTimeout(() => document.getElementById('dict-word')?.focus(), 100);
+                        }}
+                        className="h-10 px-4 rounded-full bg-gradient-to-r from-[#6366F1]/10 to-[#C968F7]/10 border border-[#6366F1]/30 text-[#818CF8] text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-[#6366F1]/20 transition-all"
+                      >
+                        {t.studio.dictAddButton}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsDrawerOpen(false)}
+                        aria-label={t.studio.dictClosePanel}
+                        className="h-10 w-10 rounded-full border border-white/10 flex items-center justify-center text-[#A1A1AA] hover:text-white hover:bg-white/10 hover:border-white/20 transition-all duration-200"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </div>
                   </div>
 
                 <div className="shrink-0 space-y-4 border-b border-white/10 px-6 py-5">
@@ -220,7 +232,7 @@ export function CustomDictionary({ dictionary, onAdd, onRemove, onEdit }: Custom
                       <svg className="w-12 h-12 opacity-30" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 019 9v.375M10.125 2.25A3.375 3.375 0 0113.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 013.375 3.375M9 15l2.25 2.25L15 12" />
                       </svg>
-                      <p className="text-[11px] font-bold uppercase tracking-widest">Không có mục nào khớp bộ lọc.</p>
+                      <p className="text-[11px] font-bold uppercase tracking-widest">{t.studio.noFilterResults}</p>
                     </div>
                   ) : (
                     filteredEntries.map(({ entry, originalIndex }) => (

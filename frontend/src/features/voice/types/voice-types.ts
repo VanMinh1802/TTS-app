@@ -7,6 +7,7 @@ export const studioVoiceSchema = z.object({
   sample_url: z.string().nullable().optional(),
   available: z.boolean(),
   model_key: z.string().optional(),
+  updated_at: z.string().optional(),
   is_premium: z.boolean().optional(),
 });
 
@@ -31,6 +32,7 @@ export const ttsGenerateRequestSchema = z.object({
   emotion_params: emotionParamsSchema.optional(),
   user_dictionary: z.array(ttsDictionaryEntrySchema).optional(),
   model_key: z.string().optional(),
+  updated_at: z.string().optional(),
 });
 
 export const ttsGenerateResponseSchema = z.object({

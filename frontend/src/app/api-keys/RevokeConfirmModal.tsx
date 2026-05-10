@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { useT } from "@/shared/i18n";
 
 interface RevokeConfirmModalProps {
   show: string | null;
@@ -9,6 +10,7 @@ interface RevokeConfirmModalProps {
 }
 
 export function RevokeConfirmModal({ show, onClose, onRevoke }: RevokeConfirmModalProps) {
+  const t = useT();
   return (
     <AnimatePresence>
       {show && (
@@ -29,23 +31,23 @@ export function RevokeConfirmModal({ show, onClose, onRevoke }: RevokeConfirmMod
             <div className="aether-glass p-8 bg-red-950/10">
               <h2 className="text-[10px] font-medium uppercase tracking-[0.2em] text-red-400 mb-4 flex items-center gap-3">
                 <span className="w-4 h-[1px] bg-red-500/50"></span>
-                Cảnh báo bảo mật
+                {t.apiKeys.securityWarning}
               </h2>
               <p className="font-light text-sm text-[#F4F4F5] mb-6 leading-relaxed">
-                Bạn có chắc chắn muốn <span className="text-red-400 font-medium">thu hồi (revoke)</span> API Key này? Các ứng dụng đang sử dụng key này sẽ lập tức bị gián đoạn dịch vụ. Hành động này không thể hoàn tác.
+                {t.apiKeys.revokeConfirmMsg}
               </p>
               <div className="flex gap-4">
                 <button
                   onClick={onClose}
                   className="flex-1 py-2.5 rounded-[8px] bg-white/5 border border-white/10 text-[10px] font-medium uppercase tracking-widest text-[#D4D4D8] hover:bg-white/10 transition-colors"
                 >
-                  Giữ lại
+                  {t.apiKeys.keep}
                 </button>
                 <button
                   onClick={onRevoke}
                   className="flex-1 py-2.5 rounded-[8px] bg-red-500/20 border border-red-500/50 text-[10px] font-medium uppercase tracking-widest text-red-400 hover:bg-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-colors"
                 >
-                  Xác nhận Thu hồi
+                  {t.apiKeys.confirmRevoke}
                 </button>
               </div>
             </div>

@@ -2,9 +2,11 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.api.auth import get_current_user
-from app.core.di import get_license_service
+from app.core.di import get_license_service, get_uow
 from app.core.exceptions import LicenseError, NotFoundError
+from app.core.uow import UnitOfWork
 from app.models.user import User
+from app.models.activation_log import ActivationLog
 from app.schemas.license import LicenseGenerateRequest, LicenseActivateRequest, LicenseResponse
 from app.services.license_service import LicenseService
 
@@ -58,6 +60,29 @@ def delete_license(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.get("/admin/activation-logs")
+def get_activation_logs(
+    limit: int = 100,
+    success_only: bool = False,
+    current_user: User = Depends(get_admin_user),
+    uow: UnitOfWork = Depends(get_uow),
+):
+    query = uow.session.query(ActivationLog).order_by(ActivationLog.created_at.desc())
+    if success_only:
+        query = query.filter(ActivationLog.success == True)
+    logs = query.limit(min(limit, 500)).all()
+    return [
+        {
+            "id": log.id,
+            "user_id": log.user_id,
+            "code_hash": log.code_hash[:12] + "...",
+            "success": log.success,
+            "ip_address": log.ip_address,
+            "created_at": log.created_at.isoformat(),
+        }
+        for log in logs
+    ]
 
 @router.post("/subscriptions/activate")
 def activate_subscription(

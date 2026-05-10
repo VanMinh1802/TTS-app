@@ -1,7 +1,9 @@
 'use client';
 import Link from 'next/link';
+import { useT } from "@/shared/i18n";
 
 export function LibraryEmpty() {
+  const t = useT();
   return (
     <div className="aether-glass-wrapper rounded-[24px] mt-6">
       <div className="aether-glass rounded-[24px] h-64 flex flex-col items-center justify-center text-center px-4">
@@ -10,13 +12,13 @@ export function LibraryEmpty() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
         </div>
-        <h2 className="text-sm font-bold uppercase tracking-widest text-[#D4D4D8] mb-2">Chưa có bản ghi nào</h2>
+        <h2 className="text-sm font-bold uppercase tracking-widest text-[#D4D4D8] mb-2">{t.library.emptyHeading}</h2>
         <p className="text-xs font-light text-[#A1A1AA] mb-6 max-w-sm">
-          Thư viện trống. Hãy vào Studio để tạo bản ghi âm thanh đầu tiên.
+          {t.library.emptyDesc}
         </p>
         <Link href="/studio">
           <button className="aether-btn aether-btn-primary text-xs px-6 py-2.5">
-            Mở Studio
+            {t.library.openStudio}
           </button>
         </Link>
       </div>

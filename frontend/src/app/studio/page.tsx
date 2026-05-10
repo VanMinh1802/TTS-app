@@ -30,6 +30,7 @@ export default function StudioPage() {
   const isPro = user?.subscription_tier === 'pro' || user?.subscription_tier === 'enterprise';
   const { voiceMap } = useVoiceMap();
   const [voices, setVoices] = useState<StudioVoice[]>([]);
+  const [voiceLoading, setVoiceLoading] = useState(true);
   const [selectedVoice, setSelectedVoice] = useState("");
   const [speed, setSpeed] = useState(1);
   const [text, setText] = useState(DEFAULT_TEXT);
@@ -53,29 +54,35 @@ export default function StudioPage() {
       e.preventDefault();
     };
 
-    // Intercept link clicks for client-side navigation
+    let historyLocked = false;
+
+    const isExternalUrl = (href: string) =>
+      /^(https?:|mailto:|tel:)/i.test(href);
+
     const clickHandler = (e: MouseEvent) => {
       const anchor = (e.target as HTMLElement).closest('a[href]') as HTMLAnchorElement | null;
       if (!anchor) return;
       const href = anchor.getAttribute('href');
       if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+      if (isExternalUrl(href)) return;
+      if (anchor.target === '_blank') return;
+      if (anchor.hasAttribute('download')) return;
+      if (anchor.hasAttribute('data-no-warn')) return;
 
       e.preventDefault();
       e.stopPropagation();
       pendingNavRef.current = () => {
-        if (anchor.target === '_blank') {
-          window.open(href, '_blank');
-        } else {
-          window.location.assign(href);
-        }
+        window.location.assign(href);
       };
       Promise.resolve().then(() => setShowLeaveWarning(true));
     };
 
-    // Intercept browser back/forward
     const popStateHandler = (e: PopStateEvent) => {
       e.preventDefault();
-      window.history.pushState(null, '', window.location.href);
+      if (!historyLocked) {
+        window.history.pushState(null, '', window.location.href);
+        historyLocked = true;
+      }
       pendingNavRef.current = () => {
         window.removeEventListener('popstate', popStateHandler);
         window.history.back();
@@ -95,32 +102,29 @@ export default function StudioPage() {
     };
   }, [hookGenerating]);
 
+  const handleRetryVoices = useCallback(async () => {
+    setVoiceLoading(true);
+    setError(null);
+    try {
+      const nextVoices = await getStudioVoices();
+      setVoices(nextVoices);
+      setError(null);
+    } catch (loadError) {
+      setVoices([
+        { id: "baouyen", name: "Bảo Uyên (Nữ miền Bắc)", lang: "Tiếng Việt", available: true, is_premium: false },
+        { id: "ngochuyen", name: "Ngọc Huyền (Nữ miền Bắc)", lang: "Tiếng Việt", available: true, is_premium: false },
+        { id: "manhdung", name: "Mạnh Dũng (Nam miền Nam)", lang: "Tiếng Việt", available: true, is_premium: false },
+      ]);
+      setError(loadError instanceof Error ? loadError.message : t.studio.errorLoadVoices);
+    } finally {
+      setVoiceLoading(false);
+    }
+  }, [t]);
+
   useEffect(() => {
     let cancelled = false;
 
-    const loadVoices = async () => {
-      try {
-        const nextVoices = await getStudioVoices();
-        if (cancelled) return;
-        setVoices(nextVoices);
-        setSelectedVoice((current) => {
-          const savedVoice = localStorage.getItem(STORAGE_KEY_VOICE);
-          if (savedVoice && nextVoices.some((voice) => voice.id === savedVoice)) return savedVoice;
-          if (current && nextVoices.some((voice) => voice.id === current)) return current;
-          return nextVoices[0]?.id || "";
-        });
-      } catch (loadError) {
-        if (!cancelled) {
-          setVoices([
-            { id: "baouyen", name: "Bảo Uyên (Nữ miền Bắc)", lang: "Tiếng Việt", available: true, is_premium: false },
-            { id: "ngochuyen", name: "Ngọc Huyền (Nữ miền Bắc)", lang: "Tiếng Việt", available: true, is_premium: false },
-            { id: "manhdung", name: "Mạnh Dũng (Nam miền Nam)", lang: "Tiếng Việt", available: true, is_premium: false },
-          ]);
-          setSelectedVoice("baouyen");
-          setError(loadError instanceof Error ? loadError.message : "Không thể tải danh sách giọng đọc.");
-        }
-      }
-    };
+    void handleRetryVoices();
 
     const loadDictionary = async () => {
       try {
@@ -131,7 +135,6 @@ export default function StudioPage() {
       }
     };
 
-    void loadVoices();
     void loadDictionary();
 
     return () => {
@@ -146,12 +149,9 @@ export default function StudioPage() {
   }, [selectedVoice, voices.length, prefetchModel]);
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) setText(saved);
-  }, []);
-
-  useEffect(() => {
+    const savedText = localStorage.getItem(STORAGE_KEY);
     const savedSpeed = localStorage.getItem(STORAGE_KEY_SPEED);
+    if (savedText) setText(savedText);
     if (savedSpeed) setSpeed(parseFloat(savedSpeed));
   }, []);
 
@@ -170,7 +170,12 @@ export default function StudioPage() {
     setText(nextText);
     localStorage.setItem(STORAGE_KEY, nextText);
   }, []);
-  const handleCopyAudioUrl = useCallback(async () => { if (audioUrl) await navigator.clipboard.writeText(audioUrl); }, [audioUrl]);
+  const handleCopyAudioUrl = useCallback(async () => {
+    if (!audioUrl) return;
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(audioUrl);
+    }
+  }, [audioUrl]);
   const handleDownloadAudio = useCallback((format: 'mp3' | 'wav' = 'mp3') => {
     const url = format === 'wav' ? currentWavUrl : audioUrl;
     if (!url) return;
@@ -202,10 +207,6 @@ export default function StudioPage() {
       setAudioUrl(response.audio_mp3 || response.audio_url);
       if (response.audio_wav) setCurrentWavUrl(response.audio_wav);
       notify({ severity: "success", title: t.studio.successTitle, message: t.studio.successMessage, source: "studio", actionLabel: t.studio.audioDownload, actionHref: response.audio_mp3 || response.audio_url });
-      setTimeout(() => {
-        const audioEl = document.querySelector('audio') as HTMLAudioElement | null;
-        audioEl?.play().catch(() => {});
-      }, 100);
       const mp3DataUrl = response.audio_mp3 || response.audio_url;
       const base64Data = mp3DataUrl.split(',')[1] || '';
       const fileSizeBytes = Math.round(base64Data.length * 0.75);
@@ -292,6 +293,50 @@ export default function StudioPage() {
               <TextInput value={text} onChange={handleTextChange} onOverLimit={setIsTextOverLimit} />
             </FadeIn>
 
+            {/* Mobile generate button - above preview, below text */}
+            <FadeIn delay={0.25} className="block md:hidden">
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={handleGenerate}
+                  disabled={hookGenerating || isTextOverLimit || !text.trim()}
+                  className="aether-btn aether-btn-primary w-full py-4 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                >
+                  {hookGenerating ? (
+                    <>
+                      <span className="animate-spin h-4 w-4 border-2 border-[#111111] border-t-transparent rounded-full"></span>
+                      {t.studio.generating}
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"/>
+                      </svg>
+                      {t.studio.generate}
+                    </>
+                  )}
+                </button>
+                {isTextOverLimit && (
+                  <p className="text-[11px] text-red-400 text-center font-medium">
+                    Văn bản vượt quá giới hạn ký tự. Vui lòng rút ngắn.
+                  </p>
+                )}
+                {!text.trim() && !isTextOverLimit && (
+                  <p className="text-[11px] text-[#71717A] text-center">
+                    Nhập văn bản để bắt đầu tạo giọng nói
+                  </p>
+                )}
+                {hookGenerating && (
+                  <button
+                    onClick={() => cancelGeneration()}
+                    className="w-full py-3 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-medium hover:bg-red-500/20 transition-all"
+                  >
+                    {t.common.cancel}
+                  </button>
+                )}
+              </div>
+            </FadeIn>
+
             <FadeIn delay={0.3}>
               <div aria-live="polite">
                 <PreviewPanel
@@ -304,6 +349,7 @@ export default function StudioPage() {
                   wavAvailable={!!currentWavUrl}
                   mp3Size={audioUrl ? Math.round((audioUrl.split(',')[1] || '').length * 0.75) : undefined}
                   wavSize={currentWavUrl ? Math.round((currentWavUrl.split(',')[1] || '').length * 0.75) : undefined}
+                  error={error}
                 />
               </div>
             </FadeIn>
@@ -311,7 +357,7 @@ export default function StudioPage() {
 
           <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
             <FadeIn delay={0.4}>
-              <VoiceSelector voices={sortedVoices} selectedVoice={selectedVoice || ""} onSelect={handleSelectVoice} isPro={isPro} />
+              <VoiceSelector voices={sortedVoices} selectedVoice={selectedVoice || ""} onSelect={handleSelectVoice} isPro={isPro} loading={voiceLoading} error={voiceLoading ? null : error} onRetry={handleRetryVoices} />
             </FadeIn>
             <FadeIn delay={0.5}>
               <VoiceSettings speed={speed} onSpeedChange={handleSpeedChange} />
@@ -320,7 +366,7 @@ export default function StudioPage() {
               <CustomDictionary dictionary={dictionary} onAdd={handleAddDictionary} onRemove={handleRemoveDictionary} onEdit={handleEditDictionary} />
             </FadeIn>
             
-            <FadeIn delay={0.7}>
+            <FadeIn delay={0.7} className="hidden md:block">
               <div className="flex flex-col gap-3">
                 <button
                   type="button"
@@ -338,16 +384,26 @@ export default function StudioPage() {
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"/>
                       </svg>
-                      Tạo giọng nói
+                      {t.studio.generate}
                     </>
                   )}
                 </button>
+                {isTextOverLimit && (
+                  <p className="text-[11px] text-red-400 text-center font-medium">
+                    Văn bản vượt quá giới hạn ký tự. Vui lòng rút ngắn.
+                  </p>
+                )}
+                {!text.trim() && !isTextOverLimit && (
+                  <p className="text-[11px] text-[#71717A] text-center">
+                    Nhập văn bản để bắt đầu tạo giọng nói
+                  </p>
+                )}
                 {hookGenerating && (
                   <button
                     onClick={() => cancelGeneration()}
                     className="w-full py-3 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-medium hover:bg-red-500/20 transition-all"
                   >
-                    Dừng
+                    {t.common.cancel}
                   </button>
                 )}
               </div>
@@ -360,10 +416,10 @@ export default function StudioPage() {
 
       <ConfirmModal
         open={showLeaveWarning}
-        title="Đang tạo audio"
-        message="Audio đang được tạo. Nếu rời trang, quá trình sẽ bị hủy. Bạn có chắc muốn rời?"
-        confirmLabel="Rời trang"
-        cancelLabel="Ở lại"
+        title={t.studio.leaveWarningTitle}
+        message={t.studio.leaveWarningMessage}
+        confirmLabel={t.studio.leaveWarningConfirm}
+        cancelLabel={t.studio.leaveWarningCancel}
         variant="danger"
         onConfirm={() => {
           setShowLeaveWarning(false);

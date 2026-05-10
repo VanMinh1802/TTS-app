@@ -7,7 +7,7 @@ import { UiChip } from "@/components/ui/ui-kit";
 import { AudioPreview } from "./AudioPreview";
 
 export const PreviewPanel = React.memo(function PreviewPanel({ 
-  audioUrl, onCopy, onDownload, loading, progress, autoPlay, wavAvailable, mp3Size, wavSize 
+  audioUrl, onCopy, onDownload, loading, progress, autoPlay, wavAvailable, mp3Size, wavSize, error 
 }: { 
   audioUrl: string | null; 
   onCopy: () => Promise<void>; 
@@ -18,6 +18,7 @@ export const PreviewPanel = React.memo(function PreviewPanel({
   wavAvailable: boolean; 
   mp3Size?: number; 
   wavSize?: number; 
+  error?: string | null;
 }) {
   const t = useT();
   const [isPlaying, setIsPlaying] = useState(false);
@@ -60,7 +61,8 @@ export const PreviewPanel = React.memo(function PreviewPanel({
           onPlayingChange={handlePlayingChange} 
           wavAvailable={wavAvailable} 
           mp3Size={mp3Size} 
-          wavSize={wavSize} 
+          wavSize={wavSize}
+          error={error}
         />
         
         <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-2">

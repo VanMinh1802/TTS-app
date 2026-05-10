@@ -8,8 +8,10 @@ import { useAuth } from "@/features/auth";
 import { DesktopNav } from "./DesktopNav";
 import { MobileNav } from "./MobileNav";
 import { SkeletonNavbar } from "./SkeletonNavbar";
+import { useT } from "@/shared/i18n";
 
 export function Navbar() {
+  const t = useT();
   const pathname = usePathname();
   const router = useRouter();
   const { status, user, logout } = useAuth();
@@ -111,7 +113,7 @@ export function Navbar() {
             >
               <button 
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                aria-label="Menu tài khoản"
+                aria-label={t.nav.accountMenu}
                 className={`flex items-center gap-3 p-2 rounded-full border transition-all min-h-[44px] min-w-[44px] ${
                   isMenuOpen 
                     ? "bg-[#6366F1]/10 border-[#6366F1]/50 shadow-[0_0_20px_rgba(99,102,241,0.2)]" 
@@ -157,8 +159,8 @@ export function Navbar() {
                     <div className="aether-glass-wrapper rounded-[16px] shadow-2xl">
                       <div className="aether-glass p-3 overflow-hidden flex flex-col">
                         <div className="px-3 py-3 border-b border-white/10 mb-2">
-                          <p className="text-[10px] uppercase tracking-widest text-[#A1A1AA] mb-1">{user?.name || 'Tài khoản'}</p>
-                          <p className="text-sm font-medium text-[#F4F4F5] truncate">{user?.email || 'Đang tải...'}</p>
+                          <p className="text-[10px] uppercase tracking-widest text-[#A1A1AA] mb-1">{user?.name || t.nav.account}</p>
+                          <p className="text-sm font-medium text-[#F4F4F5] break-all">{user?.email || 'Đang tải...'}</p>
                           {user?.subscription_tier && user.subscription_tier !== 'free' && (
                             <span className={`inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border ${
                               user.subscription_tier === 'pro'
@@ -177,7 +179,7 @@ export function Navbar() {
                           onClick={() => setIsMenuOpen(false)}
                           className="flex items-center gap-3 px-3 py-3 text-xs font-medium uppercase tracking-widest text-[#D4D4D8] hover:text-white hover:bg-[#6366F1]/20 rounded-lg transition-colors"
                         >
-                          Cài đặt
+                          {t.nav.settings}
                         </Link>
                         {user?.is_admin && (
                         <Link 
@@ -185,14 +187,14 @@ export function Navbar() {
                           onClick={() => setIsMenuOpen(false)}
                           className="flex items-center gap-3 px-3 py-3 text-xs font-medium uppercase tracking-widest text-[#D4D4D8] hover:text-white hover:bg-[#6366F1]/20 rounded-lg transition-colors"
                         >
-                          Quản trị Hệ thống
+                          {t.nav.admin}
                         </Link>
                         )}
                         <button 
                           onClick={handleLogout}
                           className="flex items-center gap-3 w-full text-left px-3 py-3 text-xs font-medium uppercase tracking-widest text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-colors mt-1"
                         >
-                          Đăng xuất
+                          {t.nav.logout}
                         </button>
                       </div>
                     </div>
@@ -204,7 +206,7 @@ export function Navbar() {
             <div className="flex items-center gap-4">
               <Link href="/login">
                 <button className="aether-btn aether-btn-primary py-2.5 px-6 text-xs font-bold uppercase tracking-widest">
-                  Đăng nhập
+                  {t.nav.login}
                 </button>
               </Link>
             </div>
@@ -213,7 +215,7 @@ export function Navbar() {
           {/* Mobile Menu Toggle */}
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label={isMobileMenuOpen ? "Đóng menu" : "Mở menu"}
+            aria-label={isMobileMenuOpen ? t.nav.closeMenu : t.nav.openMenu}
             className="md:hidden p-2 text-[#D4D4D8] hover:text-white transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -234,6 +236,7 @@ export function Navbar() {
         onLogout={handleLogout}
         isLight={isLight}
         onToggleTheme={toggleTheme}
+        pathname={pathname}
       />
     </nav>
   );
