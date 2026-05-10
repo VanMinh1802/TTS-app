@@ -14,6 +14,8 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 bcrypt==4.2.1
 google-auth==2.40.3
+httpx==0.28.1
+requests==2.32.3
 
 # Validation
 pydantic==2.10.3
