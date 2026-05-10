@@ -34,8 +34,17 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Xử lý vòng đời ứng dụng."""
     logger.info(f"Đang khởi động {settings.APP_NAME} v{settings.APP_VERSION}")
-    init_db()
-    await init_redis()
+    try:
+        init_db()
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.critical(f"Database init failed: {e}", exc_info=True)
+        raise
+    try:
+        await init_redis()
+        logger.info("Redis initialized successfully")
+    except Exception:
+        logger.warning("Redis initialization failed, continuing without Redis")
     yield
     await close_redis()
     logger.info("Đang tắt ứng dụng")
