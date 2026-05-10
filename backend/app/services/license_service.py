@@ -30,12 +30,15 @@ class LicenseService:
         if not current_user.is_admin:
             raise PermissionDeniedError("Only admins can generate license keys")
 
+        import logging
+        logger = logging.getLogger(__name__)
         generated_codes = []
 
         for _ in range(count):
             random_part = secrets.token_urlsafe(16)
             code = f"{tier.upper()}-{duration_days}-{random_part}"
             code_hash = _hash_code(code)
+            logger.info(f"Generated: code={code}, hash={code_hash[:16]}...")
 
             key = LicenseKey(
                 code=code,
