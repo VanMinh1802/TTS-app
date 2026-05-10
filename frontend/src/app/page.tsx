@@ -27,7 +27,7 @@ export default function Home() {
           </FadeIn>
 
           <FadeIn delay={0.4}>
-            <h1 className="text-5xl md:text-7xl lg:text-[90px] leading-[1.05] tracking-tight mb-8 max-w-4xl font-bold">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-[90px] leading-[1.05] tracking-tight mb-6 md:mb-8 max-w-4xl font-bold">
               <span className="bg-gradient-to-r from-[#6366F1] to-[#C968F7] bg-clip-text text-transparent">
                 Tạo âm thanh.
               </span>
@@ -39,7 +39,7 @@ export default function Home() {
           </FadeIn>
 
           <FadeIn delay={0.6}>
-            <p className="text-base md:text-lg text-[#A1A1AA] max-w-2xl mb-12 leading-relaxed font-light">
+            <p className="text-sm md:text-lg text-[#A1A1AA] max-w-2xl mb-8 md:mb-12 leading-relaxed font-light">
               Mỗi câu chữ xứng đáng được nghe với giọng người thật. 
               <strong className="text-[#818CF8] font-light ml-1">Type2Vibe</strong> mang âm thanh tự nhiên đến nội dung của bạn.
             </p>
@@ -47,7 +47,7 @@ export default function Home() {
 
           <FadeIn delay={0.8}>
             <motion.div
-              className="flex justify-center mb-20"
+              className="flex justify-center mb-12 md:mb-20"
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.3 }}
             >
