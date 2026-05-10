@@ -34,14 +34,14 @@ class Settings(BaseSettings):
 
     # Auth - Cookie / CSRF
     AUTH_COOKIE_NAME: str = "access_token"
-    AUTH_COOKIE_SECURE: bool = True
-    AUTH_COOKIE_SAMESITE: str = "none"
+    AUTH_COOKIE_SECURE: bool = False
+    AUTH_COOKIE_SAMESITE: str = "lax"
     AUTH_COOKIE_PATH: str = "/"
     AUTH_COOKIE_MAX_AGE: int = 60 * 60 * 24
     CSRF_COOKIE_NAME: str = "csrf_token"
     CSRF_HEADER_NAME: str = "X-CSRF-Token"
-    CSRF_COOKIE_SECURE: bool = True
-    CSRF_COOKIE_SAMESITE: str = "none"
+    CSRF_COOKIE_SECURE: bool = False
+    CSRF_COOKIE_SAMESITE: str = "strict"
     CSRF_COOKIE_PATH: str = "/"
     CSRF_COOKIE_MAX_AGE: int = 60 * 60 * 24
     REFRESH_COOKIE_NAME: str = "refresh_token"

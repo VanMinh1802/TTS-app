@@ -18,4 +18,6 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 has_csrf = request.cookies.get(settings.CSRF_COOKIE_NAME)
                 if has_auth and has_csrf:
                     validate_csrf_request(request)
+                elif request.headers.get("Authorization", "").startswith("Bearer "):
+                    pass
         return await call_next(request)
