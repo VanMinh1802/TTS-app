@@ -306,7 +306,13 @@ export default function StudioPage() {
               <TextInput value={text} onChange={handleTextChange} onOverLimit={setIsTextOverLimit} />
             </FadeIn>
 
-            {/* Mobile generate button - above preview, below text */}
+            {/* Mobile: voice selector + settings before generate & preview */}
+            <div className="space-y-4 md:hidden">
+              <VoiceSelector voices={sortedVoices} selectedVoice={selectedVoice || ""} onSelect={handleSelectVoice} isPro={isPro} loading={voiceLoading} error={voiceLoading ? null : error} onRetry={handleRetryVoices} />
+              <VoiceSettings speed={speed} onSpeedChange={handleSpeedChange} />
+            </div>
+
+            {/* Mobile generate button */}
             <FadeIn delay={0.25} className="block md:hidden">
               <div className="flex flex-col gap-2">
                 <button
@@ -369,10 +375,10 @@ export default function StudioPage() {
           </div>
 
           <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-            <FadeIn delay={0.4}>
+            <FadeIn delay={0.4} className="hidden md:block">
               <VoiceSelector voices={sortedVoices} selectedVoice={selectedVoice || ""} onSelect={handleSelectVoice} isPro={isPro} loading={voiceLoading} error={voiceLoading ? null : error} onRetry={handleRetryVoices} />
             </FadeIn>
-            <FadeIn delay={0.5}>
+            <FadeIn delay={0.5} className="hidden md:block">
               <VoiceSettings speed={speed} onSpeedChange={handleSpeedChange} />
             </FadeIn>
             <FadeIn delay={0.6}>
