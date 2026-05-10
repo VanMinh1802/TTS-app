@@ -38,7 +38,7 @@ class LicenseService:
             code_hash = _hash_code(code)
 
             key = LicenseKey(
-                code=_display_code(code),
+                code=code,
                 code_hash=code_hash,
                 duration_days=duration_days,
                 tier=tier,

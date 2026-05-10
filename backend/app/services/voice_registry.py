@@ -101,6 +101,23 @@ def _checkpoint_score(base_name: str) -> tuple[int, str]:
     return 0, base_name
 
 
+def _levenshtein_ratio(a: str, b: str) -> float:
+    if not a or not b:
+        return 0.0
+    m, n = len(a), len(b)
+    if max(m, n) == 0:
+        return 1.0
+    dp = list(range(n + 1))
+    for i in range(1, m + 1):
+        prev = dp[0]
+        dp[0] = i
+        for j in range(1, n + 1):
+            tmp = dp[j]
+            dp[j] = min(dp[j] + 1, dp[j - 1] + 1, prev + (0 if a[i - 1] == b[j - 1] else 1))
+            prev = tmp
+    return 1.0 - dp[n] / max(m, n)
+
+
 def _object_last_modified(obj: dict) -> datetime:
     last_modified = obj.get("LastModified")
     if isinstance(last_modified, datetime):
@@ -139,6 +156,24 @@ def build_voice_registry_from_objects(objects: list[dict], public_base_url: str,
             candidate_entry["config_object"] = obj
 
     for voice_id, data in grouped.items():
+        complete_candidates = [
+            candidate
+            for candidate in data.values()
+            if candidate.get("model_object") and candidate.get("config_object")
+        ]
+
+        if not complete_candidates:
+            models = [c for c in data.values() if c.get("model_object")]
+            configs = {k: c for k, c in data.items() if c.get("config_object")}
+            for model_candidate in models:
+                model_name = model_candidate["model_object"]["Key"].split("/")[-1].replace(".onnx", "")
+                for config_base, config_candidate in configs.items():
+                    if model_name in config_base or config_base in model_name or _levenshtein_ratio(model_name, config_base) > 0.85:
+                        if "config_object" not in model_candidate:
+                            model_candidate["config_object"] = config_candidate["config_object"]
+                            model_candidate["folder_name"] = model_candidate.get("folder_name") or config_candidate.get("folder_name", voice_id)
+                        break
+
         complete_candidates = [
             candidate
             for candidate in data.values()
