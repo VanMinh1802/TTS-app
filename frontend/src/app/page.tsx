@@ -71,15 +71,15 @@ export default function Home() {
           </FadeIn>
 
           {/* Stats Row */}
-          <div className="w-full max-w-3xl pt-16 border-t border-white/[0.06] flex justify-center gap-12 md:gap-24">
+          <div className="w-full max-w-3xl pt-10 md:pt-16 border-t border-white/[0.06] flex justify-center gap-12 md:gap-24">
             <FadeIn delay={1.0}>
               <motion.div
                 className="text-center"
                 whileHover={{ y: -4 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="text-3xl md:text-5xl font-bold mb-1 text-white bg-gradient-to-b from-white to-[#A78BFA] bg-clip-text text-transparent">
-                  2.4M<span className="text-base font-bold opacity-70 ml-1">+</span>
+                <div className="text-2xl md:text-4xl font-bold mb-1 text-white bg-gradient-to-b from-white to-[#A78BFA] bg-clip-text text-transparent">
+                  2.4M<span className="text-sm md:text-base font-bold opacity-70 ml-1">+</span>
                 </div>
                 <div className="text-[10px] uppercase font-bold tracking-[0.2em] text-[#A1A1AA]">Ký tự đã tạo</div>
               </motion.div>
@@ -90,8 +90,8 @@ export default function Home() {
                 whileHover={{ y: -4 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="text-3xl md:text-5xl font-bold mb-1 text-white bg-gradient-to-b from-white to-[#A78BFA] bg-clip-text text-transparent">
-                  &lt;150<span className="text-base font-bold opacity-70 ml-1">ms</span>
+                <div className="text-2xl md:text-4xl font-bold mb-1 text-white bg-gradient-to-b from-white to-[#A78BFA] bg-clip-text text-transparent">
+                  &lt;150<span className="text-sm md:text-base font-bold opacity-70 ml-1">ms</span>
                 </div>
                 <div className="text-[10px] uppercase font-bold tracking-[0.2em] text-[#A1A1AA]">Độ trễ TB</div>
               </motion.div>
@@ -102,8 +102,8 @@ export default function Home() {
                 whileHover={{ y: -4 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="text-3xl md:text-5xl font-bold mb-1 text-white bg-gradient-to-b from-white to-[#A78BFA] bg-clip-text text-transparent">
-                  10<span className="text-base font-bold opacity-70 ml-1">+</span>
+                <div className="text-2xl md:text-4xl font-bold mb-1 text-white bg-gradient-to-b from-white to-[#A78BFA] bg-clip-text text-transparent">
+                  10<span className="text-sm md:text-base font-bold opacity-70 ml-1">+</span>
                 </div>
                 <div className="text-[10px] uppercase font-bold tracking-[0.2em] text-[#A1A1AA]">Giọng bản địa</div>
               </motion.div>
