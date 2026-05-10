@@ -26,12 +26,13 @@ export const getStudioVoices = async (): Promise<StudioVoice[]> => {
   return cachedStudioVoices;
 };
 
-export const generateTts = async (payload: TTSGenerateRequest): Promise<TTSGenerateResponse> => {
+export const generateTts = async (payload: TTSGenerateRequest, signal?: AbortSignal): Promise<TTSGenerateResponse> => {
   const validatedPayload = ttsGenerateRequestSchema.parse(payload);
 
   const raw = await apiRequest<TTSGenerateResponse>("/tts/generate", {
     method: "POST",
     body: JSON.stringify(validatedPayload),
+    signal,
   });
 
   const parsed = ttsGenerateResponseSchema.safeParse(raw);

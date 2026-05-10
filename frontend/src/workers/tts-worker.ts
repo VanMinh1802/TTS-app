@@ -16,6 +16,10 @@ const VOICE_FILE_NAMES: Record<string, string> = {
   namminh: 'namminh_tram',
   vietcuong: 'vietcuong_6994',
   anhkhoi: 'anhkhoi',
+  ngocduy: 'duyoryx3175',
+  thanhphuong: 'thanhphuong2',
+  tranthanh: 'tranthanh3870',
+  vietthao: 'vietthao2',
 };
 
 function getModelFileName(voiceId: string): string {
@@ -109,6 +113,10 @@ async function ensureSession(voiceId: string, modelName: string, modelKey?: stri
   const cached = sessionCache.get(versionKey);
   if (cached) return cached;
 
+  const effectiveModelName = modelKey
+    ? modelKey.split('/').pop()?.replace('.onnx', '') || modelName
+    : modelName;
+
   const promise = (async () => {
     let baseUrl: string;
     if (modelKey) {
@@ -129,14 +137,14 @@ async function ensureSession(voiceId: string, modelName: string, modelKey?: stri
     }
 
     const session = await loadCustomPiper(
-      baseUrl, modelName, undefined, PIPER_PHONEMIZE_PATHS,
+      baseUrl, effectiveModelName, undefined, PIPER_PHONEMIZE_PATHS,
       cachedEntry?.modelBuffer, cachedEntry?.configText,
     );
 
     if (!cachedEntry) {
-      const modelUrl = `${baseUrl}/${encodeURIComponent(modelName)}.onnx`;
-      const configUrl = `${baseUrl}/${encodeURIComponent(modelName)}.onnx.json`;
-      const cacheKey = modelKey || `vi/${voiceId}/${modelName}.onnx`;
+      const modelUrl = `${baseUrl}/${encodeURIComponent(effectiveModelName)}.onnx`;
+      const configUrl = `${baseUrl}/${encodeURIComponent(effectiveModelName)}.onnx.json`;
+      const cacheKey = modelKey || `vi/${voiceId}/${effectiveModelName}.onnx`;
       Promise.all([
         fetch(modelUrl).then(r => r.arrayBuffer()),
         fetch(configUrl).then(r => r.text()),

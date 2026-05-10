@@ -27,6 +27,7 @@ VOICE_DISPLAY_NAMES = {
     "minhquang": "Minh Quang",
     "mytam2": "Mỹ Tâm",
     "ngochuyen": "Ngọc Huyền",
+    "ngocduy": "Ngọc Duy",
     "ngocngan": "Ngọc Ngạn",
     "phuonganh": "Phương Anh",
     "phuongtrang": "Phương Trang",
@@ -51,6 +52,7 @@ VOICE_METADATA = {
     "minhquang": {"region": "Miền Trung", "style": "Truyền cảm", "gender": "male", "priority": 9},
     "mytam2": {"region": "Miền Nam", "style": "Ca hát", "gender": "female", "priority": 7},
     "ngochuyen": {"region": "Miền Bắc", "style": "Truyền cảm", "gender": "female", "priority": 10},
+    "ngocduy": {"region": "Miền Bắc", "style": "Truyền cảm", "gender": "male", "priority": 6},
     "ngocngan": {"region": "Miền Bắc", "style": "Tin tức", "gender": "female", "priority": 8},
     "phuonganh": {"region": "Miền Bắc", "style": "Tin tức", "gender": "female", "priority": 6},
     "phuongtrang": {"region": "Miền Nam", "style": "Truyền cảm", "gender": "female", "priority": 5},
@@ -63,6 +65,10 @@ VOICE_METADATA = {
 
 VOICE_MODEL_FILES = {
     "baouyen": "baouyen_6463",
+    "ngocduy": "duyoryx3175",
+    "thanhphuong": "thanhphuong2",
+    "tranthanh": "tranthanh3870",
+    "vietthao": "vietthao2",
 }
 
 

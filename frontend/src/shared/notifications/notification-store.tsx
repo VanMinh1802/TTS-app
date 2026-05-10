@@ -49,7 +49,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       return next;
     });
 
-    const duration = notification.severity === "error" ? 10000 : 6000;
+    const duration = notification.severity === "error" ? 4000 : 3000;
     const timer = setTimeout(() => {
       timersRef.current.delete(id);
       setNotifications((prev) => prev.filter((n) => n.id !== id));
@@ -67,7 +67,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       notifications.forEach((n) => {
         const existing = timersRef.current.get(n.id);
         if (!existing) {
-          const duration = n.severity === "error" ? 10000 : 6000;
+          const duration = n.severity === "error" ? 4000 : 3000;
           const elapsed = Date.now() - n.createdAt.getTime();
           const remaining = Math.max(0, duration - elapsed);
           const timer = setTimeout(() => {

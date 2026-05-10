@@ -71,7 +71,16 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
     if (worker) {
       worker.postMessage({ type: 'cancel' });
     }
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
     setProgress(0);
+    setGenerating(false);
     setIsUsingWorker(false);
   }, []);
 
@@ -96,11 +105,15 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
     setIsUsingWorker(true);
     setGenerating(true);
 
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+    const signal = abortRef.current.signal;
+
     try {
       const worker = getWorker();
       if (!worker) {
         setIsUsingWorker(false);
-        const serverResponse = await generateTts(request);
+        const serverResponse = await generateTts(request, signal);
         return new Promise<TTSGenerateResponse>((resolve) => {
           resolveWithMp3(resolve, serverResponse.audio_url, serverResponse.duration, request.voice_id);
         });
@@ -156,7 +169,7 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
             if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
             console.warn('[TTS] Worker error, falling back to server:', event.data.message);
             setIsUsingWorker(false);
-            generateTts(request).then((resp) => {
+            generateTts(request, signal).then((resp) => {
               resolveWithMp3(resolve, resp.audio_url, resp.duration, request.voice_id).finally(done);
             }).catch(reject);
           }
@@ -166,7 +179,7 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
           if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
           console.warn('[TTS] Worker crashed, falling back to server');
           setIsUsingWorker(false);
-          generateTts(request).then((resp) => {
+          generateTts(request, signal).then((resp) => {
             resolveWithMp3(resolve, resp.audio_url, resp.duration, request.voice_id).finally(done);
           }).catch(reject);
         };
@@ -188,7 +201,7 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
             worker.onmessage = null;
             worker.onerror = null;
             setIsUsingWorker(false);
-            generateTts(request).then((resp) => {
+            generateTts(request, signal).then((resp) => {
               resolveWithMp3(resolve, resp.audio_url, resp.duration, request.voice_id).finally(done);
             }).catch(reject);
           }
@@ -197,7 +210,7 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
     } catch {
       setIsUsingWorker(false);
       setGenerating(false);
-      const serverResponse = await generateTts(request);
+      const serverResponse = await generateTts(request, signal);
       return new Promise<TTSGenerateResponse>((resolve) => {
         resolveWithMp3(resolve, serverResponse.audio_url, serverResponse.duration, request.voice_id);
       });
