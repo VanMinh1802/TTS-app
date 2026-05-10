@@ -7,7 +7,7 @@ import { LibraryPage } from '@/features/library';
 export default function LibraryRoute() {
   const t = useT();
   return (
-    <div className="min-h-screen relative text-[#F4F4F5] overflow-hidden font-light pt-24 pb-12">
+    <div className="min-h-screen relative text-[#F4F4F5] overflow-hidden font-light pt-4 pb-12">
       <div className="absolute inset-0 pointer-events-none aether-bg-gradient" />
       <main className="max-w-7xl mx-auto px-6 relative z-10">
         <FadeIn>

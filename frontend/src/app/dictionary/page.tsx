@@ -44,7 +44,7 @@ export default function DictionaryPage() {
   const filtered = entries.filter(e => e.word.toLowerCase().includes(search.toLowerCase()) || e.pronunciation.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="min-h-screen relative text-[#F4F4F5] overflow-hidden font-light pt-24 pb-12">
+    <div className="min-h-screen relative text-[#F4F4F5] overflow-hidden font-light pt-4 pb-12">
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 50% 0%, rgba(99,102,241,0.05) 0%, transparent 70%)' }} />
       <main className="max-w-7xl mx-auto px-6 relative z-10">
         <FadeIn>

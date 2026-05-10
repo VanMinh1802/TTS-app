@@ -79,7 +79,7 @@ export default function RootLayout({
           <AppProviders>
             <div className="min-h-screen w-full flex flex-col">
               <Navbar />
-              <main id="main-content" className="flex-1 w-full pt-16">{children}</main>
+              <main id="main-content" className="flex-1 w-full pt-20">{children}</main>
             </div>
             <ToastContainer />
           </AppProviders>

@@ -84,7 +84,7 @@ export default function DashboardPage() {
   const item = { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } };
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-12 min-h-screen pt-32">
+    <main className="max-w-7xl mx-auto px-6 py-12 min-h-screen pt-4">
       {/* Welcome */}
       <motion.div variants={container} initial="initial" animate="animate" className="mb-8">
         <motion.div variants={item} className="flex items-center justify-between">

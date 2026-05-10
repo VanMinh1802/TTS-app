@@ -17,7 +17,7 @@ export default function Home() {
       <div className="absolute inset-0 pointer-events-none z-0 aether-bg-gradient opacity-40" />
       <WebGLBackground />
 
-      <main className="max-w-7xl mx-auto w-full relative z-10 flex-1 flex flex-col pt-24 md:pt-[12vh] pb-6 px-6">
+      <main className="max-w-7xl mx-auto w-full relative z-10 flex-1 flex flex-col pt-4 md:pt-[6vh] pb-6 px-6">
         <div className="flex flex-col items-center text-center w-full">
           <FadeIn delay={0.2}>
             <div className="aether-badge mb-10 font-bold">

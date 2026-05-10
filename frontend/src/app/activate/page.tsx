@@ -62,7 +62,7 @@ function ActivateForm() {
   };
 
   return (
-    <div className="min-h-screen relative text-[#F4F4F5] overflow-hidden font-light flex items-center justify-center pt-16 pb-12">
+    <div className="min-h-screen relative text-[#F4F4F5] overflow-hidden font-light flex items-center justify-center pt-4 pb-12">
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 50% 50%, rgba(99,102,241,0.05) 0%, transparent 60%)' }} />
       <main className="max-w-md w-full mx-auto px-6 relative z-10">
         <FadeIn>

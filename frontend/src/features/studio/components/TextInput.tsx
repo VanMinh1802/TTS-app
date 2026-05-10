@@ -28,7 +28,7 @@ export function TextInput({ value, onChange, onOverLimit }: TextInputProps) {
               value={value}
               onChange={(e) => onChange(e.target.value.slice(0, maxChars))}
               maxLength={maxChars}
-              className="w-full flex-1 min-h-[360px] px-4 pt-8 pb-4 bg-transparent rounded-t-[24px] font-medium text-[16px] tracking-wide resize-none focus:outline-none focus:ring-2 focus:ring-[#6366F1]/50 text-white placeholder:text-[#A1A1AA] transition-all leading-relaxed drop-shadow-sm"
+              className="w-full flex-1 min-h-[240px] md:min-h-[360px] px-4 pt-8 pb-4 bg-transparent rounded-t-[24px] font-medium text-[16px] tracking-wide resize-none focus:outline-none focus:ring-2 focus:ring-[#6366F1]/50 text-white placeholder:text-[#A1A1AA] transition-all leading-relaxed drop-shadow-sm"
               placeholder={t.studio.textInputPlaceholder}
               role="textbox"
             />

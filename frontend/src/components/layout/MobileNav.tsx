@@ -32,7 +32,7 @@ export function MobileNav({ isMobileMenuOpen, isLoggedIn, onClose, onLogout, isL
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
-          className="md:hidden bg-[#050508]/95 backdrop-blur-xl border-b border-white/10"
+          className="md:hidden bg-[#050508]/95 backdrop-blur-xl border-b border-white/10 max-h-[calc(100dvh-80px)] overflow-y-auto"
         >
           <div className="px-6 py-6 flex flex-col gap-3">
             {isLoggedIn ? (
