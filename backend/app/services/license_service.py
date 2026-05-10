@@ -53,13 +53,17 @@ class LicenseService:
     def activate_key(self, current_user: User, code: str, request=None) -> bool:
         from app.services.quota_service import QuotaService, QUOTA_LIMITS
         from app.models.activation_log import ActivationLog
+        import logging
+        logger = logging.getLogger(__name__)
 
         if request:
             from app.services.rate_limiter import check_activation_rate_limit
             if not check_activation_rate_limit(request):
                 raise LicenseError("Too many activation attempts. Try again in a minute.")
 
-        code_hash = _hash_code(code)
+        clean_code = code.strip()
+        code_hash = _hash_code(clean_code)
+        logger.info(f"Activation attempt: code_len={len(clean_code)}, hash={code_hash[:16]}...")
         key = self.uow.licenses.find_one(code_hash=code_hash)
 
         if not key:
