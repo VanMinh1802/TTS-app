@@ -142,6 +142,19 @@ def get_current_user(
     )
 
 
+def get_optional_user(
+    request: Request,
+    authorization: Annotated[Optional[str], Header()] = None,
+    x_api_key: Annotated[Optional[str], Header()] = None,
+    auth_service: AuthService = Depends(get_auth_service),
+) -> Optional[User]:
+    """Get current user if authenticated, otherwise return None."""
+    try:
+        return get_current_user(request, authorization, x_api_key, auth_service)
+    except HTTPException:
+        return None
+
+
 @router.post("/login/google", response_model=TokenResponse)
 async def login_google(
     google_request: GoogleLoginRequest,

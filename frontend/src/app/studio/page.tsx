@@ -9,12 +9,14 @@ const StudioLibraryDrawer = dynamic(() => import("@/features/studio/components/S
 import type { DictionaryEntry } from "@/features/studio";
 import { getDictionaryEntries, createDictionaryEntry, deleteDictionaryEntry, updateDictionaryEntry } from "@/features/dictionary/api/dictionary-api";
 import { getStudioVoices } from "@/features/voice/api/voice-api";
+import { useVoiceMap } from "@/features/voice/hooks/useVoiceMap";
 import { useTtsGenerate } from "@/features/tts";
 import type { StudioVoice } from "@/features/voice/types/voice-types";
 import { useLocalLibrary } from "@/features/library/hooks/useLocalLibrary";
 import { useNotifications } from "@/shared/notifications/notification-store";
 import { useT } from "@/shared/i18n";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { useAuth } from "@/features/auth";
 
 const STORAGE_KEY = "studio_draft_text";
 const STORAGE_KEY_VOICE = "studio_voice_id";
@@ -24,6 +26,9 @@ const DEFAULT_TEXT = "Xin chào các bạn! Hôm nay chúng ta sẽ cùng nhau k
 export default function StudioPage() {
   const t = useT();
   const { notify } = useNotifications();
+  const { user } = useAuth();
+  const isPro = user?.subscription_tier === 'pro' || user?.subscription_tier === 'enterprise';
+  const { voiceMap } = useVoiceMap();
   const [voices, setVoices] = useState<StudioVoice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState("");
   const [speed, setSpeed] = useState(1);
@@ -107,8 +112,9 @@ export default function StudioPage() {
       } catch (loadError) {
         if (!cancelled) {
           setVoices([
-            { id: "baouyen", name: "Bảo Uyên (Nữ miền Bắc)", lang: "Tiếng Việt", available: true },
-            { id: "namminh", name: "Nam Minh (Nam miền Bắc)", lang: "Tiếng Việt", available: true },
+            { id: "baouyen", name: "Bảo Uyên (Nữ miền Bắc)", lang: "Tiếng Việt", available: true, is_premium: false },
+            { id: "ngochuyen", name: "Ngọc Huyền (Nữ miền Bắc)", lang: "Tiếng Việt", available: true, is_premium: false },
+            { id: "manhdung", name: "Mạnh Dũng (Nam miền Nam)", lang: "Tiếng Việt", available: true, is_premium: false },
           ]);
           setSelectedVoice("baouyen");
           setError(loadError instanceof Error ? loadError.message : "Không thể tải danh sách giọng đọc.");
@@ -181,10 +187,13 @@ export default function StudioPage() {
     setError(null);
 
     try {
+      const selectedModelKey = voices.find(v => v.id === voiceId)?.model_key;
+
       const response = await clientGenerate({
         text,
         voice_id: voiceId,
         speed,
+        model_key: selectedModelKey,
         user_dictionary: dictionary.length > 0 ? dictionary.map(d => ({
           word: d.word,
           pronunciation: d.pronunciation || d.word,
@@ -302,7 +311,7 @@ export default function StudioPage() {
 
           <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
             <FadeIn delay={0.4}>
-              <VoiceSelector voices={sortedVoices} selectedVoice={selectedVoice || ""} onSelect={handleSelectVoice} />
+              <VoiceSelector voices={sortedVoices} selectedVoice={selectedVoice || ""} onSelect={handleSelectVoice} isPro={isPro} />
             </FadeIn>
             <FadeIn delay={0.5}>
               <VoiceSettings speed={speed} onSpeedChange={handleSpeedChange} />
@@ -347,7 +356,7 @@ export default function StudioPage() {
         </div>
       </div>
 
-      <StudioLibraryDrawer isOpen={isLibraryOpen} onClose={() => setIsLibraryOpen(false)} />
+      <StudioLibraryDrawer isOpen={isLibraryOpen} onClose={() => setIsLibraryOpen(false)} voiceMap={voiceMap} />
 
       <ConfirmModal
         open={showLeaveWarning}

@@ -16,10 +16,12 @@ import { CloudUpgradeBanner } from './CloudUpgradeBanner';
 import { FormatPickerModal } from './FormatPickerModal';
 import { LibraryRecord, LibraryViewMode, LibraryTab } from '../types';
 import { notificationService } from "@/shared/notifications/notification-store";
+import { useVoiceMap } from '@/features/voice/hooks/useVoiceMap';
 
 export function LibraryPage() {
   const { user } = useAuth();
   const isPro = user?.subscription_tier === 'pro' || user?.subscription_tier === 'enterprise';
+  const { voiceMap, getVoice } = useVoiceMap();
   const { loading: localLoading } = useLocalLibrary();
   const { records, loading, error, refresh } = useLibraryRecords(isPro);
   const { syncProgress, startSync, isSyncing } = useLibrarySync();
@@ -142,7 +144,7 @@ export function LibraryPage() {
       )}
       {!isPro && <div className="mb-4"><CloudUpgradeBanner /></div>}
       <LibraryTabs activeTab={filter.tab} counts={tabCounts} isPro={isPro} onTabChange={handleTabChange} />
-      <LibraryToolbar filter={filter} onFilterChange={setFilter} viewMode={viewMode} onViewModeChange={setViewMode} availableVoices={availableVoices} totalRecords={records.length} />
+      <LibraryToolbar filter={filter} onFilterChange={setFilter} viewMode={viewMode} onViewModeChange={setViewMode} availableVoices={availableVoices} totalRecords={records.length} getVoice={getVoice} />
       {isPro && records.filter(r => r.sync_status.local && !r.sync_status.cloud).length > 0 && (
         <div className="flex justify-end mb-4">
           <button
@@ -177,9 +179,9 @@ export function LibraryPage() {
             transition={{ duration: 0.25 }}
           >
             {viewMode === 'grid' ? (
-              <LibraryGrid records={filteredRecords} onPlay={handlePlay} onDelete={handleDelete} onDownload={handleDownload} onUploadToCloud={handleUploadToCloud} playingId={playingId} isPro={isPro} />
+              <LibraryGrid records={filteredRecords} onPlay={handlePlay} onDelete={handleDelete} onDownload={handleDownload} onUploadToCloud={handleUploadToCloud} playingId={playingId} isPro={isPro} getVoice={getVoice} />
             ) : (
-              <LibraryList records={filteredRecords} onPlay={handlePlay} onDelete={handleDelete} onDownload={handleDownload} onUploadToCloud={handleUploadToCloud} playingId={playingId} isPro={isPro} />
+              <LibraryList records={filteredRecords} onPlay={handlePlay} onDelete={handleDelete} onDownload={handleDownload} onUploadToCloud={handleUploadToCloud} playingId={playingId} isPro={isPro} getVoice={getVoice} />
             )}
           </motion.div>
         )}

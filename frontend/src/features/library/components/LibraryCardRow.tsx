@@ -1,6 +1,8 @@
 'use client';
 import { motion } from 'framer-motion';
 import { LibraryRecord, getRecordDuration } from '../types';
+import { VoiceBadge } from '@/features/voice/components/VoiceBadge';
+import type { VoiceInfo } from '@/features/voice/hooks/useVoiceMap';
 
 interface Props {
   record: LibraryRecord;
@@ -10,11 +12,12 @@ interface Props {
   onUploadToCloud?: (record: LibraryRecord) => void;
   isPlaying: boolean;
   isPro: boolean;
+  getVoice?: (id: string) => VoiceInfo;
 }
 
 const iconSvg = 'data:image/svg+xml,...'; // placeholder
 
-export function LibraryCardRow({ record, onPlay, onDelete, onDownload, onUploadToCloud, isPlaying, isPro }: Props) {
+export function LibraryCardRow({ record, onPlay, onDelete, onDownload, onUploadToCloud, isPlaying, isPro, getVoice }: Props) {
   return (
     <motion.div
       className="flex items-center gap-4 px-6 py-4 border-b border-white/[0.04] hover:bg-[#6366F1]/[0.02] transition-all duration-200 group"
@@ -48,7 +51,7 @@ export function LibraryCardRow({ record, onPlay, onDelete, onDownload, onUploadT
       </div>
 
       <div className="shrink-0 w-28 text-right">
-        <span className="aether-badge text-[10px] tracking-[0.15em] px-3 py-1">{record.voice_id}</span>
+        <VoiceBadge voiceId={record.voice_id} getVoice={getVoice} />
       </div>
 
       <div className="shrink-0 w-14 text-center">

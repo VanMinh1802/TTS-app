@@ -53,6 +53,8 @@ export async function loadCustomPiper(
   modelName: string,
   wasmBaseUrl?: string,
   piperPhonemizePaths?: PiperPhonemizePaths,
+  cachedModelBuffer?: ArrayBuffer,
+  cachedConfig?: string,
 ): Promise<PiperCustomSession> {
   const ort = await import("onnxruntime-web");
 
@@ -60,37 +62,48 @@ export async function loadCustomPiper(
     ort.env.wasm.wasmPaths = wasmBaseUrl;
   }
 
-  const modelUrl = `${baseUrl.replace(/\/$/, "")}/${encodeURIComponent(modelName)}.onnx`;
-  const configUrl = `${baseUrl.replace(/\/$/, "")}/${encodeURIComponent(modelName)}.onnx.json`;
-
-  const [modelRes, configRes] = await Promise.all([
-    fetch(modelUrl),
-    fetch(configUrl),
-  ]);
-  if (!modelRes.ok)
-    throw new Error(`Failed to load model: ${modelRes.status} ${modelUrl}`);
-  if (!configRes.ok)
-    throw new Error(`Failed to load config: ${configRes.status} ${configUrl}`);
-
-  const configText = await configRes.text();
-  if (
-    /^\s*Entry not found\s*$/i.test(configText) ||
-    /^\s*<!DOCTYPE/i.test(configText)
-  ) {
-    throw new Error(
-      "Voice or model config not found. The selected voice may be unavailable.",
-    );
-  }
+  let modelBuffer: ArrayBuffer;
   let voiceConfig: PiperVoiceConfig;
-  try {
-    voiceConfig = JSON.parse(configText) as PiperVoiceConfig;
-  } catch {
-    throw new Error(
-      "Invalid voice config format. The selected voice may be unavailable.",
-    );
-  }
 
-  const modelBuffer = await modelRes.arrayBuffer();
+  if (cachedModelBuffer && cachedConfig) {
+    modelBuffer = cachedModelBuffer;
+    try {
+      voiceConfig = JSON.parse(cachedConfig) as PiperVoiceConfig;
+    } catch {
+      throw new Error("Invalid cached voice config. Reloading from source.");
+    }
+  } else {
+    const modelUrl = `${baseUrl.replace(/\/$/, "")}/${encodeURIComponent(modelName)}.onnx`;
+    const configUrl = `${baseUrl.replace(/\/$/, "")}/${encodeURIComponent(modelName)}.onnx.json`;
+
+    const [modelRes, configRes] = await Promise.all([
+      fetch(modelUrl),
+      fetch(configUrl),
+    ]);
+    if (!modelRes.ok)
+      throw new Error(`Failed to load model: ${modelRes.status} ${modelUrl}`);
+    if (!configRes.ok)
+      throw new Error(`Failed to load config: ${configRes.status} ${configUrl}`);
+
+    const configText = await configRes.text();
+    if (
+      /^\s*Entry not found\s*$/i.test(configText) ||
+      /^\s*<!DOCTYPE/i.test(configText)
+    ) {
+      throw new Error(
+        "Voice or model config not found. The selected voice may be unavailable.",
+      );
+    }
+    try {
+      voiceConfig = JSON.parse(configText) as PiperVoiceConfig;
+    } catch {
+      throw new Error(
+        "Invalid voice config format. The selected voice may be unavailable.",
+      );
+    }
+
+    modelBuffer = await modelRes.arrayBuffer();
+  }
 
   const session = await ort.InferenceSession.create(
     new Uint8Array(modelBuffer),

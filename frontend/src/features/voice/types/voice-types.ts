@@ -6,6 +6,8 @@ export const studioVoiceSchema = z.object({
   lang: z.string(),
   sample_url: z.string().nullable().optional(),
   available: z.boolean(),
+  model_key: z.string().optional(),
+  is_premium: z.boolean().optional(),
 });
 
 export const ttsVoicesResponseSchema = z.object({
@@ -28,6 +30,7 @@ export const ttsGenerateRequestSchema = z.object({
   speed: z.number(),
   emotion_params: emotionParamsSchema.optional(),
   user_dictionary: z.array(ttsDictionaryEntrySchema).optional(),
+  model_key: z.string().optional(),
 });
 
 export const ttsGenerateResponseSchema = z.object({

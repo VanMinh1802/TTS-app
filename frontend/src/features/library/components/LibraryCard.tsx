@@ -2,6 +2,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { LibraryRecord, getRecordDuration } from '../types';
+import { VoiceBadge } from '@/features/voice/components/VoiceBadge';
+import type { VoiceInfo } from '@/features/voice/hooks/useVoiceMap';
 
 interface Props {
   record: LibraryRecord;
@@ -11,6 +13,7 @@ interface Props {
   onUploadToCloud?: (record: LibraryRecord) => void;
   isPlaying: boolean;
   isPro: boolean;
+  getVoice?: (id: string) => VoiceInfo;
 }
 
 const AudioWaveform = React.memo(function AudioWaveform({ active }: { active: boolean }) {
@@ -39,7 +42,7 @@ const AudioWaveform = React.memo(function AudioWaveform({ active }: { active: bo
   );
 });
 
-export function LibraryCard({ record, onPlay, onDelete, onDownload, onUploadToCloud, isPlaying, isPro }: Props) {
+export function LibraryCard({ record, onPlay, onDelete, onDownload, onUploadToCloud, isPlaying, isPro, getVoice }: Props) {
   return (
     <motion.div
       className="aether-glass-wrapper rounded-[24px] transition-all duration-300 hover:-translate-y-1"
@@ -83,9 +86,7 @@ export function LibraryCard({ record, onPlay, onDelete, onDownload, onUploadToCl
         <div className="p-5 space-y-4 flex flex-col flex-1">
           {/* Meta row */}
           <div className="flex items-center justify-between">
-            <span className="aether-badge text-[10px] tracking-[0.15em] px-3 py-1">
-              {record.voice_id}
-            </span>
+            <VoiceBadge voiceId={record.voice_id} getVoice={getVoice} />
             <span className="text-[11px] font-light tracking-wider text-[#A1A1AA]">
               {getRecordDuration(record) != null ? `${getRecordDuration(record)!.toFixed(1)}s` : '--'}
             </span>

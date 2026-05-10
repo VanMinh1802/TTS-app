@@ -119,7 +119,17 @@ export function Navbar() {
                 }`}
               >
                 <div className="w-9 h-9 bg-[#6366F1]/20 text-[#818CF8] flex items-center justify-center text-sm font-semibold rounded-full border border-[#6366F1]/30 relative">
-                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#00E676] shadow-[0_0_8px_#00E676]"></span>
+                  {user?.subscription_tier && user.subscription_tier !== 'free' ? (
+                    <span className={`absolute -top-1 -right-1 px-1 py-0.5 rounded-full text-[7px] font-bold uppercase border ${
+                      user.subscription_tier === 'pro'
+                        ? 'bg-[#6366F1] text-white border-[#818CF8]/50 shadow-[0_0_8px_rgba(99,102,241,0.4)]'
+                        : 'bg-amber-500 text-black border-amber-400/50 shadow-[0_0_8px_rgba(251,191,36,0.4)]'
+                    }`}>
+                      {user.subscription_tier === 'pro' ? 'P' : 'E'}
+                    </span>
+                  ) : (
+                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#00E676] shadow-[0_0_8px_#00E676]"></span>
+                  )}
                   <motion.svg 
                     animate={{ rotate: isMenuOpen ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
@@ -149,6 +159,18 @@ export function Navbar() {
                         <div className="px-3 py-3 border-b border-white/10 mb-2">
                           <p className="text-[10px] uppercase tracking-widest text-[#A1A1AA] mb-1">{user?.name || 'Tài khoản'}</p>
                           <p className="text-sm font-medium text-[#F4F4F5] truncate">{user?.email || 'Đang tải...'}</p>
+                          {user?.subscription_tier && user.subscription_tier !== 'free' && (
+                            <span className={`inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border ${
+                              user.subscription_tier === 'pro'
+                                ? 'bg-gradient-to-r from-[#6366F1]/15 to-[#C968F7]/15 border-[#818CF8]/40 text-[#818CF8]'
+                                : 'bg-amber-500/10 border-amber-500/40 text-amber-400'
+                            }`}>
+                              <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                              </svg>
+                              {user.subscription_tier.toUpperCase()}
+                            </span>
+                          )}
                         </div>
                         <Link 
                           href="/settings" 
