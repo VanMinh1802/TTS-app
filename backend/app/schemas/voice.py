@@ -14,6 +14,7 @@ class VoiceResponse(BaseModel):
     sample_url: Optional[str] = None
     folder: Optional[str] = None
     is_active: bool = True
+    is_premium: bool = False
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     

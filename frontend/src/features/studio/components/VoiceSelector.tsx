@@ -106,7 +106,7 @@ export function VoiceSelector({ voices, selectedVoice, onSelect, isPro = false, 
               const isLocked = lockedByTier && voice.is_premium;
               return {
                 value: voice.id,
-                label: voice.is_premium
+                label: voice.is_premium && lockedByTier
                   ? `${voice.name} \u{1F512} PRO`
                   : voice.name,
                 disabled: isLocked,

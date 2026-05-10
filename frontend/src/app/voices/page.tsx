@@ -6,6 +6,7 @@ import { FadeIn } from "@/components/motion";
 import { UiSelect } from "@/components/ui/UiSelect";
 import { notificationService } from "@/shared/notifications/notification-store";
 import { useT } from "@/shared/i18n";
+import { useAuth } from "@/features/auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
@@ -16,6 +17,7 @@ interface Voice {
   gender: string;
   is_custom: boolean;
   is_active: boolean;
+  is_premium: boolean;
   model_url?: string;
   config_url?: string;
   sample_url?: string;
@@ -23,6 +25,8 @@ interface Voice {
 
 export default function VoicesPage() {
   const t = useT();
+  const { user } = useAuth();
+  const isPro = user?.subscription_tier === 'pro' || user?.subscription_tier === 'enterprise';
   const [voices, setVoices] = useState<Voice[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({ language: "", gender: "" });
@@ -153,8 +157,14 @@ export default function VoicesPage() {
                   <div className="aether-glass p-6 h-full flex flex-col">
                     <div className="flex justify-between items-start mb-6">
                       <div>
-                        <h3 className="text-xl font-bold text-[#F4F4F5] mb-1">{voice.name}</h3>
-                        {/* <p className="text-[10px] uppercase tracking-[0.2em] text-[#A1A1AA] font-mono">{voice.id}</p> */}
+                        <h3 className="text-xl font-bold text-[#F4F4F5] mb-1 inline-flex items-center gap-2">
+                          {voice.name}
+                          {voice.is_premium && !isPro && (
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-full px-2 py-0.5">
+                              PRO
+                            </span>
+                          )}
+                        </h3>
                       </div>
                       <div className="flex flex-col items-end gap-2">
                         {voice.is_custom && (

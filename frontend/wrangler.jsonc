@@ -30,6 +30,9 @@
 			"bucket_name": "frontend-opennext-cache"
 		}
 	],
+	"vars": {
+		"NEXT_PUBLIC_API_URL": "https://tts-app-imdy.onrender.com/api"
+	},
 	"images": {
 		// Enable image optimization
 		// see https://opennext.js.org/cloudflare/howtos/image

@@ -336,6 +336,7 @@ def build_voice_cache_from_registry(registry: dict[str, dict]) -> dict[str, dict
             "sample_url": data.get("sample_url"),
             "folder": data.get("folder"),
             "is_active": data.get("is_active", True),
+            "is_premium": voice_id not in FREE_VOICE_IDS,
             "created_at": data.get("created_at"),
             "updated_at": data.get("updated_at"),
         }
