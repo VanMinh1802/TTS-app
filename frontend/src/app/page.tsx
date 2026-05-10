@@ -27,7 +27,7 @@ export default function Home() {
           </FadeIn>
 
           <FadeIn delay={0.4}>
-            <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-[90px] leading-[1.05] tracking-tight mb-6 md:mb-8 max-w-4xl font-bold">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-[75px] leading-[1.05] tracking-tight mb-6 md:mb-8 max-w-4xl font-bold">
               <span className="bg-gradient-to-r from-[#6366F1] to-[#C968F7] bg-clip-text text-transparent">
                 Tạo âm thanh.
               </span>
