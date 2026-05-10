@@ -284,7 +284,7 @@ export default function StudioPage() {
   }, [dictionary, notify]);
 
   return (
-    <main className="relative min-h-[100dvh] overflow-hidden px-4 pb-16 pt-4 text-[#F4F4F5] selection:bg-[#6366F1]/30">
+    <main className="relative min-h-[calc(100dvh-5rem)] overflow-hidden px-4 pb-16 pt-4 text-[#F4F4F5] selection:bg-[#6366F1]/30">
       <div className="relative mx-auto max-w-7xl space-y-6">
         <FadeIn delay={0.1}>
           <StudioHeader onOpenLibrary={() => setIsLibraryOpen(true)} libraryCount={libraryRecords.length} />

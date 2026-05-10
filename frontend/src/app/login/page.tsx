@@ -56,7 +56,7 @@ function LoginForm() {
   });
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center px-4 relative text-[#F4F4F5] overflow-hidden font-light">
+    <div className="min-h-[calc(100dvh-5rem)] flex items-center justify-center px-4 relative text-[#F4F4F5] overflow-hidden font-light">
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 50% 50%, rgba(99,102,241,0.05) 0%, transparent 60%)' }}></div>
 
       <motion.div
@@ -237,7 +237,7 @@ export default function LoginPage() {
 
   if (!GOOGLE_CLIENT_ID) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 text-[#F4F4F5] font-light">
+      <div className="min-h-[calc(100dvh-5rem)] flex items-center justify-center px-4 text-[#F4F4F5] font-light">
         <div className="aether-glass-wrapper rounded-[24px] max-w-md w-full border-red-500/20">
           <div className="aether-glass p-8 bg-red-950/10 text-center">
             <svg className="w-10 h-10 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 24 24">

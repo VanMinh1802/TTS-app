@@ -5,7 +5,7 @@ import { useT } from "@/shared/i18n";
 export default function Error({ error, reset }: { error: Error; reset: () => void }) {
   const t = useT();
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-[calc(100dvh-5rem)] flex items-center justify-center px-4">
       <div className="aether-glass-wrapper rounded-[24px] max-w-md w-full">
         <div className="aether-glass p-8 text-center">
           <div className="w-14 h-14 rounded-full border border-red-500/30 bg-red-500/10 flex items-center justify-center mx-auto mb-4">
