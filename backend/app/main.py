@@ -36,21 +36,25 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Xử lý vòng đời ứng dụng."""
-    logger.info(f"Đang khởi động {settings.APP_NAME} v{settings.APP_VERSION}")
+    print("[LIFESPAN] Starting...", file=sys.stderr, flush=True)
     try:
+        print("[LIFESPAN] Calling init_db()...", file=sys.stderr, flush=True)
         init_db()
-        logger.info("Database initialized successfully")
+        print("[LIFESPAN] DB initialized OK", file=sys.stderr, flush=True)
     except Exception as e:
-        logger.critical(f"Database init failed: {e}", exc_info=True)
+        print(f"[LIFESPAN] DB init FAILED: {e}", file=sys.stderr, flush=True)
+        import traceback
+        traceback.print_exc(file=sys.stderr)
         raise
     try:
+        print("[LIFESPAN] Calling init_redis()...", file=sys.stderr, flush=True)
         await init_redis()
-        logger.info("Redis initialized successfully")
-    except Exception:
-        logger.warning("Redis initialization failed, continuing without Redis")
+        print("[LIFESPAN] Redis initialized OK", file=sys.stderr, flush=True)
+    except Exception as e:
+        print(f"[LIFESPAN] Redis init FAILED: {e}", file=sys.stderr, flush=True)
     yield
     await close_redis()
-    logger.info("Đang tắt ứng dụng")
+    print("[LIFESPAN] Shutdown complete", file=sys.stderr, flush=True)
 
 
 # Create FastAPI app
