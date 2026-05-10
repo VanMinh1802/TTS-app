@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import { useT } from "@/shared/i18n";
 
 interface StudioHeaderProps {
@@ -29,15 +28,7 @@ export const StudioHeader = React.memo(function StudioHeader({ onOpenLibrary, li
         </div>
 
         <div className="flex items-center gap-3">
-          <Link
-            href="/projects"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-full text-[11px] font-medium text-[#A1A1AA] bg-white/[0.03] border border-white/8 hover:text-white hover:bg-white/[0.06] hover:border-white/15 transition-all"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"/>
-            </svg>
-            Projects
-          </Link>
+
 
           <button
             type="button"

@@ -111,8 +111,23 @@ export function WebGLBackground() {
     const timeLocation = gl.getUniformLocation(shaderProgram, "u_time");
     const mouseLocation = gl.getUniformLocation(shaderProgram, "u_mouse");
 
+    const handleResize = () => {
+      const dpr = window.devicePixelRatio || 1;
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      }
+    };
+
+    handleResize();
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(canvas);
+
     const handleMouse = (e: MouseEvent) => {
-      const rect = canvas!.getBoundingClientRect();
+      const rect = canvas.getBoundingClientRect();
       mouse.tx = (e.clientX - rect.left) / rect.width;
       mouse.ty = 1.0 - (e.clientY - rect.top) / rect.height;
     };
@@ -124,14 +139,6 @@ export function WebGLBackground() {
       if (!active.current) return;
       mouse.x += (mouse.tx - mouse.x) * 0.05;
       mouse.y += (mouse.ty - mouse.y) * 0.05;
-
-      const displayWidth = canvas!.clientWidth;
-      const displayHeight = canvas!.clientHeight;
-      if (canvas!.width !== displayWidth || canvas!.height !== displayHeight) {
-        canvas!.width = displayWidth;
-        canvas!.height = displayHeight;
-        gl!.viewport(0, 0, canvas!.width, canvas!.height);
-      }
 
       gl!.clearColor(0.0, 0.0, 0.0, 0.0);
       gl!.clear(gl!.COLOR_BUFFER_BIT);
@@ -156,6 +163,7 @@ export function WebGLBackground() {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      resizeObserver.disconnect();
       document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("mousemove", handleMouse);
     };
