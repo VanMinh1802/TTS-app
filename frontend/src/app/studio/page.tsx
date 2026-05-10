@@ -163,7 +163,9 @@ export default function StudioPage() {
       if (savedVoice && voices.some(v => v.id === savedVoice)) {
         setSelectedVoice(savedVoice);
       } else {
-        setSelectedVoice(voices[0]?.id);
+        setSelectedVoice(
+          voices.some(v => v.id === "baouyen") ? "baouyen" : voices[0]?.id
+        );
       }
     }
   }, [voices, selectedVoice]);
