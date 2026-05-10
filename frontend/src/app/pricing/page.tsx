@@ -8,7 +8,7 @@ import { getCurrentUser } from "@/features/auth/api/auth-api";
 import { notificationService } from "@/shared/notifications/notification-store";
 import { useT } from "@/shared/i18n";
 
-const faqKeys = ["cancel", "dataSafety", "eWallet"] as const;
+const faqKeys = ["Cancel", "DataSafety", "EWallet"] as const;
 
 export default function PricingPage() {
   const t = useT();
@@ -179,7 +179,7 @@ export default function PricingPage() {
                 {faqKeys.map((key, i) => (
                   <div key={key} className="border-b border-white/[0.04] last:border-none">
                     <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full flex items-center justify-between py-4 text-left group">
-                      <span className="text-sm font-medium text-[#D4D4D8] group-hover:text-white transition-colors">{((t.pricing as any).faq as Record<string, string>)[key]}</span>
+                      <span className="text-sm font-medium text-[#D4D4D8] group-hover:text-white transition-colors">{t.pricing["faq" + key]}</span>
                       <motion.svg className="w-4 h-4 shrink-0 text-[#A1A1AA]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" animate={{ rotate: openFaq === i ? 180 : 0 }} transition={{ duration: 0.2 }}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                       </motion.svg>
@@ -187,7 +187,7 @@ export default function PricingPage() {
                     <AnimatePresence initial={false}>
                       {openFaq === i && (
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }} className="overflow-hidden">
-                          <p className="text-sm font-light text-[#A1A1AA] leading-relaxed pb-4 pl-0">{((t.pricing as any).faq as Record<string, string>)[`${key}Answer`]}</p>
+                          <p className="text-sm font-light text-[#A1A1AA] leading-relaxed pb-4 pl-0">{t.pricing["faq" + key + "Answer"]}</p>
                         </motion.div>
                       )}
                     </AnimatePresence>
