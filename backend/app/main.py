@@ -1,5 +1,8 @@
 """Điểm khởi động ứng dụng FastAPI."""
 
+import sys
+print("[STARTUP] main.py loaded", file=sys.stderr, flush=True)
+
 import logging
 from contextlib import asynccontextmanager
 
