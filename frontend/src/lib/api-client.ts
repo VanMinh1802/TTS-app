@@ -164,6 +164,11 @@ export const apiRequest = async <T>(path: string, options: ApiRequestOptions = {
   const requestHeaders = buildHeaders(headers, hasJsonBody);
   attachCsrfToken(requestHeaders, fetchOptions.method ?? "GET");
 
+  const token = localStorage.getItem("access_token");
+  if (token && !requestHeaders.has("Authorization")) {
+    requestHeaders.set("Authorization", `Bearer ${token}`);
+  }
+
   const response = await fetch(`${getApiBaseUrl()}${path}`, {
     ...fetchOptions,
     credentials: "include",

@@ -34,7 +34,10 @@ function LoginForm() {
       }
 
       try {
-        await loginWithGoogle(cred);
+        const response = await loginWithGoogle(cred);
+        if (response.access_token) {
+          localStorage.setItem("access_token", response.access_token);
+        }
         notify({ severity: "success", title: t.login.authSuccessTitle, message: t.login.authSuccessMsg, source: "auth" });
         const callbackUrl = searchParams.get("callbackUrl");
         if (callbackUrl && callbackUrl.startsWith("/")) {

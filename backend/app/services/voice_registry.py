@@ -44,7 +44,7 @@ VOICE_METADATA = {
     "banmai": {"region": "Miền Bắc", "style": "Tin tức", "gender": "female", "priority": 9},
     "baouyen": {"region": "Miền Bắc", "style": "Truyền cảm", "gender": "female", "priority": 10},
     "chieuthanh": {"region": "Miền Nam", "style": "Truyền thống", "gender": "male", "priority": 6},
-    "giabao": {"region": "Miền Nam", "style": "Truyền cảm", "gender": "female", "priority": 5},
+    "giabao": {"region": "Miền Nam", "style": "Truyền cảm", "gender": "male", "priority": 5},
     "lacphi": {"region": "Miền Trung", "style": "Du lịch", "gender": "female", "priority": 5},
     "maiphuong": {"region": "Miền Bắc", "style": "Quảng cáo", "gender": "female", "priority": 7},
     "manhdung": {"region": "Miền Nam", "style": "Doanh nghiệp", "gender": "male", "priority": 10},
@@ -53,14 +53,14 @@ VOICE_METADATA = {
     "mytam2": {"region": "Miền Nam", "style": "Ca hát", "gender": "female", "priority": 7},
     "ngochuyen": {"region": "Miền Bắc", "style": "Truyền cảm", "gender": "female", "priority": 10},
     "ngocduy": {"region": "Miền Bắc", "style": "Truyền cảm", "gender": "male", "priority": 6},
-    "ngocngan": {"region": "Miền Bắc", "style": "Tin tức", "gender": "female", "priority": 8},
+    "ngocngan": {"region": "Miền Bắc", "style": "Tin tức", "gender": "male", "priority": 8},
     "phuonganh": {"region": "Miền Bắc", "style": "Tin tức", "gender": "female", "priority": 6},
     "phuongtrang": {"region": "Miền Nam", "style": "Truyền cảm", "gender": "female", "priority": 5},
     "thanhphuong": {"region": "Miền Bắc", "style": "Giáo dục", "gender": "female", "priority": 6},
-    "thientam": {"region": "Miền Trung", "style": "Du lịch", "gender": "female", "priority": 4},
+    "thientam": {"region": "Miền Trung", "style": "Du lịch", "gender": "male", "priority": 4},
     "tranthanh": {"region": "Miền Nam", "style": "Giải trí", "gender": "male", "priority": 10},
     "vietcuong": {"region": "Miền Bắc", "style": "Hiện đại", "gender": "male", "priority": 8},
-    "vietthao": {"region": "Miền Bắc", "style": "Truyền cảm", "gender": "female", "priority": 7},
+    "vietthao": {"region": "Miền Bắc", "style": "Truyền cảm", "gender": "male", "priority": 7},
 }
 
 VOICE_MODEL_FILES = {
