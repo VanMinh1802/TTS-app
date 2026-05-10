@@ -178,6 +178,7 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
             text: request.text,
             speed: request.speed,
             dictionary: request.user_dictionary || [],
+            modelKey: request.model_key,
           }
         });
 

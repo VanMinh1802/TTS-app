@@ -4,11 +4,13 @@ import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocalLibrary } from '@/features/library/hooks/useLocalLibrary';
+import type { VoiceInfo } from '@/features/voice/hooks/useVoiceMap';
 import Link from 'next/link';
 
 interface StudioLibraryDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  voiceMap?: Map<string, VoiceInfo>;
 }
 
 interface AudioRecord {
@@ -21,7 +23,26 @@ interface AudioRecord {
   created_at: string;
 }
 
-export function StudioLibraryDrawer({ isOpen, onClose }: StudioLibraryDrawerProps) {
+function VoiceBadge({ voiceId, voiceMap }: { voiceId: string; voiceMap?: Map<string, VoiceInfo> }) {
+  const info = voiceMap?.get(voiceId);
+  const name = info?.name ?? voiceId;
+  const isPremium = info?.isPremium ?? false;
+
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-[9px] font-medium uppercase tracking-widest rounded-full px-2 py-0.5 shadow-[0_0_6px_rgba(99,102,241,0.1)] ${
+      isPremium
+        ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30'
+        : 'text-[#818CF8] bg-[#6366F1]/10 border border-[#818CF8]/30'
+    }`}>
+      {name}
+      {isPremium && (
+        <span className="text-[7px] font-bold text-amber-500">PRO</span>
+      )}
+    </span>
+  );
+}
+
+export function StudioLibraryDrawer({ isOpen, onClose, voiceMap }: StudioLibraryDrawerProps) {
   const { records, loading, refreshLocalRecords } = useLocalLibrary();
   const [playing, setPlaying] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -30,7 +51,6 @@ export function StudioLibraryDrawer({ isOpen, onClose }: StudioLibraryDrawerProp
     if (isOpen) {
       refreshLocalRecords();
     } else {
-      // Stop audio when closing
       setPlaying(null);
       if (audioRef.current) {
         audioRef.current.pause();
@@ -39,7 +59,6 @@ export function StudioLibraryDrawer({ isOpen, onClose }: StudioLibraryDrawerProp
     }
   }, [isOpen, refreshLocalRecords]);
 
-  // Clean up when unmounting
   useEffect(() => {
     return () => {
       if (audioRef.current) {
@@ -83,7 +102,6 @@ export function StudioLibraryDrawer({ isOpen, onClose }: StudioLibraryDrawerProp
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Overlay */}
           <motion.div
             key="library-overlay"
             initial={{ opacity: 0 }}
@@ -94,7 +112,6 @@ export function StudioLibraryDrawer({ isOpen, onClose }: StudioLibraryDrawerProp
             onClick={onClose}
           />
 
-          {/* Drawer */}
           <motion.aside
             key="library-drawer"
             initial={{ x: "110%" }}
@@ -103,7 +120,6 @@ export function StudioLibraryDrawer({ isOpen, onClose }: StudioLibraryDrawerProp
             transition={{ type: "tween", ease: [0.4, 0, 0.2, 1], duration: 0.3 }}
             className="fixed right-0 top-0 z-[101] flex h-dvh w-[420px] max-w-[92vw] flex-col overflow-hidden border-l border-white/10 bg-[#050508]/95 backdrop-blur-[40px] text-[#F4F4F5] shadow-[-10px_0_40px_rgba(0,0,0,0.6)]"
           >
-            {/* Header */}
             <div className="shrink-0 border-b border-white/[0.06] bg-gradient-to-b from-[#6366F1]/5 to-transparent px-6 pt-20 pb-5">
               <div className="flex items-center justify-between">
                 <div>
@@ -123,7 +139,6 @@ export function StudioLibraryDrawer({ isOpen, onClose }: StudioLibraryDrawerProp
               </div>
             </div>
 
-            {/* Content */}
             <div className="custom-scroll flex-1 overflow-y-auto divide-y divide-white/5 p-4">
               {loading ? (
                 <div className="flex h-full flex-col items-center justify-center gap-3 text-[#A1A1AA]">
@@ -171,9 +186,7 @@ export function StudioLibraryDrawer({ isOpen, onClose }: StudioLibraryDrawerProp
                             {record.text_content}
                           </p>
                           <div className="flex items-center gap-2 mt-2">
-                            <span className="inline-flex items-center gap-1.5 text-[9px] font-medium uppercase tracking-widest text-[#818CF8] bg-[#6366F1]/10 border border-[#818CF8]/30 rounded-full px-2 py-0.5 shadow-[0_0_6px_rgba(99,102,241,0.1)]">
-                              {record.voice_id}
-                            </span>
+                            <VoiceBadge voiceId={record.voice_id} voiceMap={voiceMap} />
                             {record.duration && (
                               <span className="text-[9px] font-light text-[#A1A1AA]">{record.duration.toFixed(1)}s</span>
                             )}
@@ -187,7 +200,6 @@ export function StudioLibraryDrawer({ isOpen, onClose }: StudioLibraryDrawerProp
               )}
             </div>
 
-            {/* Footer */}
             <div className="shrink-0 border-t border-white/[0.06] px-6 py-5">
               <Link href="/library" onClick={onClose}>
                 <button className="w-full py-3 rounded-xl bg-gradient-to-r from-[#6366F1]/10 to-[#C968F7]/10 border border-[#6366F1]/30 text-[#818CF8] text-[10px] font-bold uppercase tracking-widest hover:text-white hover:from-[#6366F1]/20 hover:to-[#C968F7]/20 transition-all active:scale-[0.98] shadow-[0_0_12px_rgba(99,102,241,0.08)]">

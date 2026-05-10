@@ -1,9 +1,7 @@
 'use client';
-import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { FilterState, LibraryViewMode } from '../types';
 import { UiSelect } from '@/components/ui/UiSelect';
-import { LibraryRecord } from '../types';
+import type { VoiceInfo } from '@/features/voice/hooks/useVoiceMap';
 
 interface Props {
   filter: FilterState;
@@ -12,12 +10,18 @@ interface Props {
   onViewModeChange: (mode: LibraryViewMode) => void;
   availableVoices: string[];
   totalRecords?: number;
+  getVoice?: (id: string) => VoiceInfo;
 }
 
-export function LibraryToolbar({ filter, onFilterChange, viewMode, onViewModeChange, availableVoices, totalRecords }: Props) {
+export function LibraryToolbar({ filter, onFilterChange, viewMode, onViewModeChange, availableVoices, totalRecords, getVoice }: Props) {
+  const resolveLabel = (voiceId: string) => {
+    if (!getVoice) return voiceId;
+    const info = getVoice(voiceId);
+    return info.isPremium ? `${info.name} (PRO)` : info.name;
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-3 py-4">
-      {/* Search */}
       <div className="relative flex-1 min-w-[200px]">
         <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#A1A1AA]/50 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -31,18 +35,16 @@ export function LibraryToolbar({ filter, onFilterChange, viewMode, onViewModeCha
         />
       </div>
 
-      {/* Voice filter */}
       <UiSelect
         value={filter.voiceFilter ?? ''}
         onChange={(v) => onFilterChange({ voiceFilter: v || null })}
         options={[
           { value: '', label: 'Tất cả giọng đọc' },
-          ...availableVoices.map((v) => ({ value: v, label: v })),
+          ...availableVoices.map((v) => ({ value: v, label: resolveLabel(v) })),
         ]}
         placeholder="Tất cả giọng đọc"
       />
 
-      {/* Sort */}
       <UiSelect
         value={filter.sortBy}
         onChange={(v) => onFilterChange({ sortBy: v as FilterState['sortBy'] })}
@@ -53,7 +55,6 @@ export function LibraryToolbar({ filter, onFilterChange, viewMode, onViewModeCha
         ]}
       />
 
-      {/* View toggle */}
       <div className="flex bg-white/5 border border-white/10 rounded-full overflow-hidden">
         <button
           onClick={() => onViewModeChange('grid')}

@@ -29,7 +29,8 @@ function escapeRegex(str: string): string {
 // === IndexedDB Model Cache ===
 interface ModelCacheEntry {
   voiceId: string;
-  buffer: ArrayBuffer;
+  modelBuffer: ArrayBuffer;
+  configText: string;
   downloadedAt: number;
   size: number;
 }
@@ -47,7 +48,7 @@ function openModelDB(): Promise<IDBDatabase> {
   });
 }
 
-async function loadModelFromDb(voiceId: string): Promise<ArrayBuffer | null> {
+async function loadModelFromDb(voiceId: string): Promise<ModelCacheEntry | null> {
   try {
     const db = await openModelDB();
     return new Promise((resolve) => {
@@ -56,23 +57,28 @@ async function loadModelFromDb(voiceId: string): Promise<ArrayBuffer | null> {
       req.onsuccess = () => {
         db.close();
         const entry = req.result as ModelCacheEntry | undefined;
-        resolve(entry?.buffer ?? null);
+        if (entry?.modelBuffer && entry?.configText) {
+          resolve(entry);
+        } else {
+          resolve(null);
+        }
       };
       req.onerror = () => { db.close(); resolve(null); };
     });
   } catch { return null; }
 }
 
-async function saveModelToDb(voiceId: string, buffer: ArrayBuffer): Promise<void> {
+async function saveModelToDb(voiceId: string, modelBuffer: ArrayBuffer, configText: string): Promise<void> {
   try {
     const db = await openModelDB();
     return new Promise((resolve) => {
       const tx = db.transaction(STORE_NAME, 'readwrite');
       const entry: ModelCacheEntry = {
         voiceId,
-        buffer,
+        modelBuffer,
+        configText,
         downloadedAt: Date.now(),
-        size: buffer.byteLength,
+        size: modelBuffer.byteLength,
       };
       tx.objectStore(STORE_NAME).put(entry);
       tx.oncomplete = () => { db.close(); resolve(); };
@@ -86,15 +92,22 @@ const sessionCache = new Map<string, Promise<PiperCustomSession>>();
 let defaultVoice = '';
 let isCancelled = false;
 
-async function ensureSession(voiceId: string, modelName: string): Promise<PiperCustomSession> {
+async function ensureSession(voiceId: string, modelName: string, modelKey?: string): Promise<PiperCustomSession> {
   const cached = sessionCache.get(voiceId);
   if (cached) return cached;
 
   const promise = (async () => {
-    const baseUrl = `${R2_PUBLIC_URL}/vi/${voiceId}`;
+    let baseUrl: string;
+    if (modelKey) {
+      const lastSlash = modelKey.lastIndexOf('/');
+      const folder = modelKey.substring(3, lastSlash);
+      baseUrl = `${R2_PUBLIC_URL}/vi/${folder}`;
+    } else {
+      baseUrl = `${R2_PUBLIC_URL}/vi/${voiceId}`;
+    }
 
-    const cachedModel = await loadModelFromDb(voiceId);
-    if (cachedModel) {
+    const cachedEntry = await loadModelFromDb(voiceId);
+    if (cachedEntry) {
       self.postMessage({ type: 'progress', value: 15 });
       self.postMessage({ type: 'cache-status', fromCache: true, url: voiceId });
     } else {
@@ -102,10 +115,20 @@ async function ensureSession(voiceId: string, modelName: string): Promise<PiperC
       self.postMessage({ type: 'cache-status', fromCache: false, url: voiceId });
     }
 
-    const session = await loadCustomPiper(baseUrl, modelName, undefined, PIPER_PHONEMIZE_PATHS);
+    const session = await loadCustomPiper(
+      baseUrl, modelName, undefined, PIPER_PHONEMIZE_PATHS,
+      cachedEntry?.modelBuffer, cachedEntry?.configText,
+    );
 
-    const modelUrl = `${baseUrl}/${encodeURIComponent(modelName)}.onnx`;
-    fetch(modelUrl).then(r => r.arrayBuffer()).then(buf => saveModelToDb(voiceId, buf)).catch(() => {});
+    // Cache model + config for next visit if not already cached
+    if (!cachedEntry) {
+      const modelUrl = `${baseUrl}/${encodeURIComponent(modelName)}.onnx`;
+      const configUrl = `${baseUrl}/${encodeURIComponent(modelName)}.onnx.json`;
+      Promise.all([
+        fetch(modelUrl).then(r => r.arrayBuffer()),
+        fetch(configUrl).then(r => r.text()),
+      ]).then(([buf, cfg]) => saveModelToDb(voiceId, buf, cfg)).catch(() => {});
+    }
 
     return session;
   })();
@@ -136,12 +159,12 @@ self.onmessage = async function (event: MessageEvent) {
   }
 
   if (type === 'generate') {
-    const { voiceId, text, speed, dictionary } = data;
+    const { voiceId, text, speed, dictionary, modelKey } = data;
     if (!voiceId) return;
     try {
       const modelName = getModelFileName(voiceId);
 
-      const session = await ensureSession(voiceId, modelName);
+      const session = await ensureSession(voiceId, modelName, modelKey);
       self.postMessage({ type: 'progress', value: 50 });
 
       let processedText = text;

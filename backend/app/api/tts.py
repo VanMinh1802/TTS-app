@@ -2,11 +2,12 @@
 import asyncio
 import base64
 import logging
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
-from app.api.auth import get_current_user
+from app.api.auth import get_current_user, get_optional_user
 from app.core.messages import BACKEND_MESSAGES
 from app.core.di import get_quota_service
 from app.models.user import User
@@ -17,7 +18,10 @@ from app.schemas.tts import (
 )
 from app.services.normalizer import normalize_vietnamese
 from app.services.tts_service import VOICE_ALIASES, _get_models, _get_piper_voice, tts_service
+from app.services.voice_registry import FREE_VOICE_IDS
 from app.utils.text_utils import cleanup_grammar
+
+PREMIUM_TIERS = {"pro", "enterprise"}
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/tts", tags=["TTS"])
@@ -83,6 +87,13 @@ async def generate_tts(
     if request.voice_id not in models and request.voice_id not in VOICE_ALIASES:
         request.voice_id = "vi_female"
 
+    resolved_voice_id = VOICE_ALIASES.get(request.voice_id, request.voice_id)
+    if resolved_voice_id not in FREE_VOICE_IDS and user.subscription_tier not in PREMIUM_TIERS:
+        raise HTTPException(
+            status_code=403,
+            detail="This voice requires a PRO subscription. Upgrade to access premium voices.",
+        )
+
     char_count = len(request.text)
 
     if not quota_service.check_quota(user.id, "api_calls", 1):
@@ -122,8 +133,8 @@ async def generate_tts(
 
 
 @router.get("/voices")
-async def list_voices():
-    """List available voices."""
+async def list_voices(user: Optional[User] = Depends(get_optional_user)):
+    """List available voices with tier information."""
     models = _get_models()
     canonical_voice_ids = [
         voice_id for voice_id in models.keys()
@@ -137,6 +148,8 @@ async def list_voices():
                 "lang": "Vietnamese",
                 "sample_url": models[voice_id].get("sample_url"),
                 "available": True,
+                "is_premium": voice_id not in FREE_VOICE_IDS,
+                "model_key": models[voice_id].get("path", f"vi/{voice_id}/{voice_id}.onnx"),
             }
             for voice_id in canonical_voice_ids
         ]

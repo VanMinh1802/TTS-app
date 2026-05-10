@@ -11,11 +11,15 @@ from app.core.settings import settings, get_r2_public_base_url, get_r2_client_en
 logger = logging.getLogger(__name__)
 
 
+FREE_VOICE_IDS = {"baouyen", "manhdung", "ngochuyen"}
+
 VOICE_DISPLAY_NAMES = {
     "anhkhoi": "Anh Khôi",
+    "anhtai": "Anh Tài",
     "banmai": "Ban Mai",
     "baouyen": "Bảo Uyên",
     "chieuthanh": "Chiếu Thành",
+    "giabao": "Gia Bảo",
     "lacphi": "Lạc Phi",
     "maiphuong": "Mai Phương",
     "manhdung": "Mạnh Dũng",
@@ -24,13 +28,22 @@ VOICE_DISPLAY_NAMES = {
     "mytam2": "Mỹ Tâm",
     "ngochuyen": "Ngọc Huyền",
     "ngocngan": "Ngọc Ngạn",
+    "phuonganh": "Phương Anh",
+    "phuongtrang": "Phương Trang",
+    "thanhphuong": "Thanh Phương",
+    "thientam": "Thiện Tâm",
+    "tranthanh": "Trấn Thành",
+    "vietcuong": "Việt Cường",
+    "vietthao": "Việt Thảo",
 }
 
 VOICE_METADATA = {
     "anhkhoi": {"region": "Miền Bắc", "style": "Hiện đại", "gender": "male", "priority": 8},
+    "anhtai": {"region": "Miền Bắc", "style": "Truyền cảm", "gender": "male", "priority": 5},
     "banmai": {"region": "Miền Bắc", "style": "Tin tức", "gender": "female", "priority": 9},
     "baouyen": {"region": "Miền Bắc", "style": "Truyền cảm", "gender": "female", "priority": 10},
     "chieuthanh": {"region": "Miền Nam", "style": "Truyền thống", "gender": "male", "priority": 6},
+    "giabao": {"region": "Miền Nam", "style": "Truyền cảm", "gender": "female", "priority": 5},
     "lacphi": {"region": "Miền Trung", "style": "Du lịch", "gender": "female", "priority": 5},
     "maiphuong": {"region": "Miền Bắc", "style": "Quảng cáo", "gender": "female", "priority": 7},
     "manhdung": {"region": "Miền Nam", "style": "Doanh nghiệp", "gender": "male", "priority": 10},
@@ -39,6 +52,13 @@ VOICE_METADATA = {
     "mytam2": {"region": "Miền Nam", "style": "Ca hát", "gender": "female", "priority": 7},
     "ngochuyen": {"region": "Miền Bắc", "style": "Truyền cảm", "gender": "female", "priority": 10},
     "ngocngan": {"region": "Miền Bắc", "style": "Tin tức", "gender": "female", "priority": 8},
+    "phuonganh": {"region": "Miền Bắc", "style": "Tin tức", "gender": "female", "priority": 6},
+    "phuongtrang": {"region": "Miền Nam", "style": "Truyền cảm", "gender": "female", "priority": 5},
+    "thanhphuong": {"region": "Miền Bắc", "style": "Giáo dục", "gender": "female", "priority": 6},
+    "thientam": {"region": "Miền Trung", "style": "Du lịch", "gender": "female", "priority": 4},
+    "tranthanh": {"region": "Miền Nam", "style": "Giải trí", "gender": "male", "priority": 10},
+    "vietcuong": {"region": "Miền Bắc", "style": "Hiện đại", "gender": "male", "priority": 8},
+    "vietthao": {"region": "Miền Bắc", "style": "Truyền cảm", "gender": "female", "priority": 7},
 }
 
 VOICE_MODEL_FILES = {
