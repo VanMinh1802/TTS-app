@@ -17,7 +17,7 @@
 
 ```
 ┌──────────────────────────┐     ┌──────────────────────────┐
-│  Cloudflare Workers      │     │  Render (US East)        │
+│  Cloudflare Workers      │     │  Render (Free)           │
 │  Next.js 16 (OpenNext)   │────▶│  FastAPI + Piper ONNX    │
 │  frontend.workers.dev    │ API │  tts-app.onrender.com    │
 └──────────────────────────┘     └──────────┬───────────────┘
@@ -314,6 +314,86 @@ Full API documentation available at `/docs` when running.
 
 ---
 
+## Voice Library
+
+12 Vietnamese voices with region, gender, and style metadata:
+
+| Voice ID | Display Name | Region | Gender | Style |
+|---|---|---|---|---|
+| `ngochuyen` | Ngọc Huyền | Miền Bắc | Female | Truyền cảm |
+| `baouyen` | Bảo Uyên | Miền Bắc | Female | Truyền cảm |
+| `banmai` | Ban Mai | Miền Bắc | Female | Tin tức |
+| `ngocngan` | Ngọc Ngạn | Miền Bắc | Female | Tin tức |
+| `maiphuong` | Mai Phương | Miền Bắc | Female | Quảng cáo |
+| `manhdung` | Mạnh Dũng | Miền Nam | Male | Doanh nghiệp |
+| `mytam2` | Mỹ Tâm | Miền Nam | Female | Ca hát |
+| `chieuthanh` | Chiếu Thành | Miền Nam | Male | Truyền thống |
+| `minhquang` | Minh Quang | Miền Trung | Male | Truyền cảm |
+| `lacphi` | Lạc Phi | Miền Trung | Female | Du lịch |
+| `anhkhoi` | Anh Khôi | Miền Bắc | Male | Hiện đại |
+| `minhkhang` | Minh Khang | Miền Bắc | Male | Giáo dục |
+
+Voice models stored in Cloudflare R2 bucket: `genvoice-models/vi/{voice_id}/`
+
+---
+
+## Vietnamese Text Normalization
+
+Before TTS synthesis, Vietnamese text passes through a multi-step normalization pipeline to convert numbers, dates, currencies, and special characters into readable spoken form:
+
+```
+Input: "Ngày 26/03/2026, giá 150.000 đồng"
+  → normalizers → numbers, dates, currency, abbreviations, symbols
+Output: "Ngày hai mươi sáu tháng ba năm hai nghìn không trăm hai mươi sáu, giá một trăm năm mươi nghìn đồng"
+```
+
+| Step | Module | Example |
+|---|---|---|
+| 1 | Unicode normalization | NFC canonical form |
+| 2 | Special characters | `&` → "và", `@` → "a còng" |
+| 3 | Punctuation | Standardize quotes, dashes |
+| 4 | Thousand separators | `150.000` → `150000` |
+| 5 | Date conversion | `26/03/2026` → "ngày hai mươi sáu tháng ba..." |
+| 6 | Time conversion | `14:30` → "mười bốn giờ ba mươi phút" |
+| 7 | Currency conversion | `150.000đ` → "một trăm năm mươi nghìn đồng" |
+| 8 | Number conversion | `123` → "một trăm hai mươi ba" |
+| 9 | Measurement units | `5km` → "năm ki-lô-mét" |
+| 10 | Roman numerals | `III` → "ba" |
+| 11 | Ordinal numbers | `tập 5` → "tập năm" |
+| 12 | Percentage | `50%` → "năm mươi phần trăm" |
+| 13 | Phone numbers | `0901234567` → spoken digits |
+| 14 | Decimals | `3.5` → "ba phẩy năm" |
+| 15 | Ranges | `10-20m` → "mười đến hai mươi mét" |
+| 16 | Whitespace | Trim & collapse |
+
+Implementation: `backend/app/services/normalizer/` (Python) + `frontend/src/lib/text-processing/builtinDictionary.ts` (17K+ entries)
+
+---
+
+## Training New Voices
+
+New TTS voices can be created via the Piper TTS fine-tuning pipeline. See the comprehensive guide:
+
+📖 **[Voice Training Guide](.sdlc/docs/train-model.md)** — Complete A-Z pipeline from raw audio to deployed ONNX model
+
+**Quick overview:**
+
+```
+Raw Audio (MP3/M4A)
+  → Convert to WAV
+  → Extract vocals (Demucs)
+  → Slice into 2-10s chunks
+  → Transcribe (Whisper large-v2)
+  → Manual correction
+  → Piper preprocess
+  → Fine-tune from checkpoint (~1000 epochs)
+  → Export ONNX
+  → Upload to Cloudflare R2 bucket
+  → Available instantly in Studio
+```
+
+---
+
 ## Deployment
 
 ### Frontend → Cloudflare Workers
@@ -370,3 +450,13 @@ npx vitest run
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
+
+---
+
+## Further Reading
+
+- **[Project Knowledge Base](PROJECT_KNOWLEDGE.md)** — Comprehensive architecture docs, TTS engine internals, audio processing, IndexedDB schema (legacy v1 reference)
+- **[Voice Training Guide](.sdlc/docs/train-model.md)** — Complete pipeline from raw audio to deployed ONNX voice model
+- **[API Documentation](https://tts-app-imdy.onrender.com/docs)** — Live Swagger UI with all endpoints
+- **[Cloudflare Dashboard](https://dash.cloudflare.com)** — Worker & R2 management
+- **[Render Dashboard](https://dashboard.render.com)** — Backend service management
