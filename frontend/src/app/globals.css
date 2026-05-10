@@ -72,22 +72,35 @@ body {
               rgba(5, 5, 8, 0.95);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-radius: 32px;
+  border-radius: 20px;
   box-shadow: 
     inset 0 1px 1px rgba(255, 255, 255, 0.08), 
     inset 0 24px 48px -24px rgba(99, 102, 241, 0.15);
 }
 
+@media (min-width: 768px) {
+  .aether-glass,
+  .aether-card {
+    border-radius: 32px;
+  }
+}
+
 /* Aether Gradient Border Shell */
 .aether-glass-wrapper {
   padding: 1px;
-  border-radius: 32px;
+  border-radius: 20px;
   background: linear-gradient(to bottom, rgba(99, 102, 241, 0.35), rgba(139, 92, 246, 0.15), rgba(0, 0, 0, 0.6));
   box-shadow: 
     0 20px 40px -10px rgba(0, 0, 0, 0.5),
     0 1px 2px rgba(0, 0, 0, 0.3);
   transition: box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1),
               border-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (min-width: 768px) {
+  .aether-glass-wrapper {
+    border-radius: 32px;
+  }
 }
 
 .aether-glass-wrapper:hover,
@@ -111,9 +124,9 @@ body {
 /* Aether Buttons */
 .aether-btn {
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  padding: 12px 28px;
+  padding: 10px 22px;
   border-radius: 9999px;
   transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
@@ -121,6 +134,13 @@ body {
   justify-content: center;
   gap: 8px;
   letter-spacing: 0.01em;
+}
+
+@media (min-width: 768px) {
+  .aether-btn {
+    font-size: 13px;
+    padding: 12px 28px;
+  }
 }
 
 .aether-btn-primary {
@@ -159,15 +179,24 @@ body {
 .aether-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  letter-spacing: 0.12em;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #818CF8;
   border: 1px solid rgba(99, 102, 241, 0.25);
   background: rgba(99, 102, 241, 0.08);
-  padding: 6px 16px;
+  padding: 4px 12px;
   border-radius: 9999px;
+}
+
+@media (min-width: 768px) {
+  .aether-badge {
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    padding: 6px 16px;
+  }
 }
 
 .aether-badge-dot {
@@ -582,4 +611,12 @@ body {
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
+
+  .aether-glass-wrapper.rounded-\[24px\] {
+    border-radius: 16px;
+  }
+  .aether-glass-wrapper.rounded-\[24px\] .aether-glass.rounded-\[24px\] {
+    border-radius: 16px;
+  }
+}
 }
