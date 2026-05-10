@@ -25,17 +25,14 @@ def _load_models() -> dict[str, dict]:
     return build_tts_model_map_from_registry(registry)
 
 
-MODELS = _load_models()
+_MODELS_CACHE: Optional[dict[str, dict]] = None
 
 
 def _get_models() -> dict[str, dict]:
-    """Return the current TTS model registry."""
-    return MODELS
-
-
-def get_models() -> dict[str, dict]:
-    """Public accessor for the current TTS model registry."""
-    return MODELS
+    global _MODELS_CACHE
+    if _MODELS_CACHE is None:
+        _MODELS_CACHE = _load_models()
+    return _MODELS_CACHE
 
 
 VOICE_ALIASES = {
@@ -53,7 +50,7 @@ def _load_model_from_r2(voice_id: str) -> Optional[tuple[bytes, dict]]:
     from app.core.settings import settings, get_r2_client_endpoint
 
     canonical_voice_id = VOICE_ALIASES.get(voice_id, voice_id)
-    model_config = MODELS.get(canonical_voice_id) or MODELS.get(voice_id)
+    model_config = _get_models().get(canonical_voice_id) or _get_models().get(voice_id)
     if not model_config:
         return None
     model_path = model_config["path"]
