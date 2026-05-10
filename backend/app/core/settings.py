@@ -69,6 +69,7 @@ class Settings(BaseSettings):
     REDIS_PORT: int = 6379
     REDIS_PASSWORD: str = ""
     REDIS_DB: int = 0
+    REDIS_SSL: bool = False
 
     # Cloudflare R2 (TTS Models)
     R2_ACCESS_KEY_ID: str = ""
