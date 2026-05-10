@@ -58,11 +58,13 @@ async def lifespan(app: FastAPI):
 
 
 # Create FastAPI app
+print("[STARTUP-APP] Creating FastAPI app...", file=sys.stderr, flush=True)
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     lifespan=lifespan,
 )
+print("[STARTUP-APP] FastAPI app created", file=sys.stderr, flush=True)
 
 # Add exception handlers
 from fastapi import HTTPException
@@ -142,4 +144,6 @@ async def health_check():
         "status": "healthy" if db_status == "connected" else "unhealthy",
         "database": db_status,
     }
+
+print("[STARTUP-END] main.py module fully loaded", file=sys.stderr, flush=True)
 
