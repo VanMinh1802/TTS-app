@@ -1,8 +1,6 @@
 """Application configuration settings."""
 from functools import lru_cache
-from typing import List
 
-from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -54,12 +52,11 @@ class Settings(BaseSettings):
     PASSWORD_REQUIRE_NUMBER: bool = True
 
     # CORS
-    CORS_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173",
-    ]
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
 
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 60
@@ -101,14 +98,6 @@ class Settings(BaseSettings):
     REDIS_MAX_CONNECTIONS: int = 50
     REDIS_RETRY_ON_TIMEOUT: bool = True
     REDIS_HEALTH_CHECK_INTERVAL: int = 30
-
-    @field_validator("CORS_ORIGINS", mode="before")
-    @classmethod
-    def parse_cors_origins(cls, v):
-        """Parse CORS origins from string or list."""
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",")]
-        return v
 
 
 def _validate_required(settings: Settings) -> None:
