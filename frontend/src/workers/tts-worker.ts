@@ -12,6 +12,7 @@ const DB_VERSION = 1;
 const STORE_NAME = 'models';
 
 const VOICE_FILE_NAMES: Record<string, string> = {
+  anhtai: 'taian4',
   baouyen: 'baouyen_6463',
   namminh: 'namminh_tram',
   vietcuong: 'vietcuong_6994',

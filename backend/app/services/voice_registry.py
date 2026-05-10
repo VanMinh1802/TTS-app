@@ -64,6 +64,7 @@ VOICE_METADATA = {
 }
 
 VOICE_MODEL_FILES = {
+    "anhtai": "taian4",
     "baouyen": "baouyen_6463",
     "ngocduy": "duyoryx3175",
     "thanhphuong": "thanhphuong2",
