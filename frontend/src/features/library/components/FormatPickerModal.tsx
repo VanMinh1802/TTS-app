@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import type { LibraryRecord } from '../types';
+import { useT } from "@/shared/i18n";
 
 interface FormatPickerModalProps {
   show: boolean;
@@ -26,6 +27,7 @@ export function FormatPickerModal({
   mode,
   onChoose,
 }: FormatPickerModalProps) {
+  const t = useT();
   return (
     <AnimatePresence>
       {show && record && (
@@ -44,12 +46,12 @@ export function FormatPickerModal({
             className="bg-[#0E0E14] border border-white/10 rounded-[20px] p-6 w-full max-w-sm"
           >
             <h3 className="text-sm font-light text-[#D4D4D8] mb-1">
-              {mode === 'download' ? 'Chọn định dạng tải xuống' : 'Chọn định dạng tải lên'}
+              {mode === 'download' ? t.library.formatDownload : t.library.formatUpload}
             </h3>
             <p className="text-[11px] text-[#A1A1AA] mb-5 font-light">
               {mode === 'download'
-                ? 'Bạn muốn tải bản nén nhẹ hay bản gốc chất lượng cao?'
-                : 'Bạn muốn lưu trữ bản nén tiết kiệm dung lượng hay bản gốc không nén?'}
+                ? t.library.formatQuestionDownload
+                : t.library.formatQuestionUpload}
             </p>
 
             <div className="space-y-3">
@@ -61,9 +63,9 @@ export function FormatPickerModal({
                   MP3
                 </div>
                 <div className="text-left flex-1">
-                  <div className="text-sm font-light text-[#D4D4D8]">MP3 (nén)</div>
+                  <div className="text-sm font-light text-[#D4D4D8]">{t.library.formatMp3}</div>
                   <div className="text-[11px] text-[#A1A1AA]">
-                    Dung lượng nhỏ ~{formatSize(record.audio_mp3)} · Tải nhanh · Tiết kiệm
+                    {t.library.formatMp3Desc.replace('{size}', formatSize(record.audio_mp3))}
                   </div>
                 </div>
               </button>
@@ -78,7 +80,7 @@ export function FormatPickerModal({
                 <div className="text-left flex-1">
                   <div className="text-sm font-light text-[#D4D4D8]">WAV (lossless)</div>
                   <div className="text-[11px] text-[#A1A1AA]">
-                    Chất lượng gốc ~{formatSize(record.audio_url)} · Không nén · Chất lượng cao
+                    {t.library.formatWavDesc.replace('{size}', formatSize(record.audio_url))}
                   </div>
                 </div>
               </button>
@@ -88,7 +90,7 @@ export function FormatPickerModal({
               onClick={onClose}
               className="w-full mt-4 py-2.5 text-[11px] text-[#A1A1AA] hover:text-[#D4D4D8] font-light uppercase tracking-wider transition-colors"
             >
-              Huỷ
+              {t.common.cancel}
             </button>
           </motion.div>
         </motion.div>

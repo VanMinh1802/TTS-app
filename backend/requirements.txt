@@ -18,9 +18,6 @@ pydantic==2.10.3
 pydantic-settings==2.7.0
 email-validator==2.2.0
 
-# CORS (starlette is a transitive dep of fastapi)
-# starlette - let fastapi resolve version
-
 # Environment
 python-dotenv==1.0.1
 
@@ -30,10 +27,14 @@ boto3==1.37.0
 # Rate Limiting
 redis==5.2.1
 
+# TTS Engine
+piper-tts==1.4.2
+numpy
+
+# Audio processing
+pydub==0.25.1
+
 # Testing
 pytest==8.3.4
 pytest-asyncio==0.25.2
 httpx==0.28.1
-
-# Audio processing
-pydub==0.25.1

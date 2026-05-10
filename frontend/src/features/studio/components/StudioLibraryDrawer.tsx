@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocalLibrary } from '@/features/library/hooks/useLocalLibrary';
 import type { VoiceInfo } from '@/features/voice/hooks/useVoiceMap';
+import { useT } from "@/shared/i18n";
 import Link from 'next/link';
 
 interface StudioLibraryDrawerProps {
@@ -43,6 +44,7 @@ function VoiceBadge({ voiceId, voiceMap }: { voiceId: string; voiceMap?: Map<str
 }
 
 export function StudioLibraryDrawer({ isOpen, onClose, voiceMap }: StudioLibraryDrawerProps) {
+  const t = useT();
   const { records, loading, refreshLocalRecords } = useLocalLibrary();
   const [playing, setPlaying] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -123,16 +125,16 @@ export function StudioLibraryDrawer({ isOpen, onClose, voiceMap }: StudioLibrary
             <div className="shrink-0 border-b border-white/[0.06] bg-gradient-to-b from-[#6366F1]/5 to-transparent px-6 pt-20 pb-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-semibold tracking-tight text-white">Thư viện Âm thanh</h2>
+                  <h2 className="text-xl font-semibold tracking-tight text-white">{t.studio.libraryAudioLibrary}</h2>
                   <p className="text-[11px] font-light text-[#A1A1AA] mt-1">
-                    {loading ? "Đang tải..." : `${records.length} bản ghi`}
+                    {loading ? t.common.loading : t.studio.libraryRecordCount.replace('{n}', String(records.length))}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={onClose}
                   className="h-10 w-10 rounded-full border border-white/10 flex items-center justify-center text-[#A1A1AA] hover:text-white hover:bg-white/10 hover:border-white/20 transition-all duration-200"
-                  aria-label="Đóng thư viện"
+                  aria-label={t.studio.libraryClose}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
@@ -143,7 +145,7 @@ export function StudioLibraryDrawer({ isOpen, onClose, voiceMap }: StudioLibrary
               {loading ? (
                 <div className="flex h-full flex-col items-center justify-center gap-3 text-[#A1A1AA]">
                   <div className="w-5 h-5 rounded-full border-2 border-[#6366F1] border-t-transparent animate-spin" />
-                  <p className="text-[10px] font-bold uppercase tracking-widest">Đang tải...</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest">{t.common.loading}</p>
                 </div>
               ) : records.length === 0 ? (
                 <div className="flex h-full flex-col items-center justify-center text-center text-[#A1A1AA] gap-4">
@@ -151,8 +153,8 @@ export function StudioLibraryDrawer({ isOpen, onClose, voiceMap }: StudioLibrary
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-widest mb-1">Chưa có bản ghi nào</p>
-                    <p className="text-xs font-light">Tạo giọng nói đầu tiên trong Studio</p>
+                    <p className="text-[11px] font-bold uppercase tracking-widest mb-1">{t.studio.libraryEmptyHeading}</p>
+                    <p className="text-xs font-light">{t.studio.libraryEmptyDesc}</p>
                   </div>
                 </div>
               ) : (
@@ -204,7 +206,7 @@ export function StudioLibraryDrawer({ isOpen, onClose, voiceMap }: StudioLibrary
               <Link href="/library" onClick={onClose}>
                 <button className="w-full py-3 rounded-xl bg-gradient-to-r from-[#6366F1]/10 to-[#C968F7]/10 border border-[#6366F1]/30 text-[#818CF8] text-[10px] font-bold uppercase tracking-widest hover:text-white hover:from-[#6366F1]/20 hover:to-[#C968F7]/20 transition-all active:scale-[0.98] shadow-[0_0_12px_rgba(99,102,241,0.08)]">
                   <span className="flex items-center justify-center gap-2">
-                    Quản lý Thư viện
+                    {t.studio.libraryManage}
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
                   </span>
                 </button>

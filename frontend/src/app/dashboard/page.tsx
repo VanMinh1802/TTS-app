@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { apiRequest } from "@/lib/api-client";
 import { useAuth } from "@/features/auth";
 import { notificationService } from "@/shared/notifications/notification-store";
+import { useT } from "@/shared/i18n";
 import { CounterText } from "./components/CounterText";
 import { SkeletonCard } from "@/components/ui/SkeletonCard";
 import { ProgressTooltip } from "./components/ProgressTooltip";
@@ -30,15 +31,16 @@ interface QuotaStatus {
   reset_at: string | null;
 }
 
-function getGreeting(): string {
+function getGreeting(d: Record<string, string>): string {
   const hour = new Date().getHours();
-  if (hour < 5) return "Chào buổi tối";
-  if (hour < 12) return "Chào buổi sáng";
-  if (hour < 18) return "Chào buổi chiều";
-  return "Chào buổi tối";
+  if (hour < 5) return d.greetingNight;
+  if (hour < 12) return d.greetingMorning;
+  if (hour < 18) return d.greetingAfternoon;
+  return d.greetingEvening;
 }
 
 export default function DashboardPage() {
+  const t = useT();
   const { user } = useAuth();
   const [quota, setQuota] = useState<QuotaStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,12 +53,12 @@ export default function DashboardPage() {
         if (quotaData.limits.characters_per_month && quotaData.limits.characters_per_month > 0) {
           const percentUsed = (quotaData.usage.characters_this_month / quotaData.limits.characters_per_month) * 100;
           if (percentUsed > 90) {
-            notificationService.notify({ severity: "warning", title: "Sắp hết quota", message: "Bạn sắp hết quota ký tự trong tháng này. Hãy nâng cấp gói để tiếp tục sử dụng." });
+            notificationService.notify({ severity: "warning", title: t.dashboard.quotaWarningTitle, message: t.dashboard.quotaWarningMsg });
           }
         }
       } catch (err) {
         console.error("Failed to fetch dashboard data:", err);
-        notificationService.notify({ severity: "error", title: "Lỗi", message: "Không thể tải thông tin quota. Vui lòng thử lại." });
+        notificationService.notify({ severity: "error", title: t.dashboard.quotaLoadErrorTitle, message: t.dashboard.quotaLoadErrorMsg });
       } finally {
         setLoading(false);
       }
@@ -64,18 +66,18 @@ export default function DashboardPage() {
     fetchQuota();
   }, []);
 
-  const greeting = getGreeting();
+  const greeting = getGreeting(t.dashboard);
 
   const stats = [
-    { label: "Ký tự đã dùng", value: quota?.usage.characters_this_month || 0 },
-    { label: "API Calls hôm nay", value: quota?.usage.api_calls_today || 0 },
-    { label: "Lưu trữ", value: quota?.usage.storage_used_mb || 0, suffix: " MB" },
+    { label: t.dashboard.charsUsed, value: quota?.usage.characters_this_month || 0 },
+    { label: t.dashboard.apiCallsToday, value: quota?.usage.api_calls_today || 0 },
+    { label: t.dashboard.storage, value: quota?.usage.storage_used_mb || 0, suffix: " MB" },
   ];
 
   const progressRows = [
-    { label: "Ký tự / Tháng", key: "characters", used: quota?.usage.characters_this_month || 0, limit: quota?.limits.characters_per_month ?? null, unit: "ký tự", color: "from-[#6366F1] to-[#818CF8]", glow: "#818CF8" },
-    { label: "Dung lượng", key: "storage", used: quota?.usage.storage_used_mb || 0, limit: quota?.limits.storage_mb ?? null, unit: "MB", color: "from-[#C968F7] to-[#D8B4E2]", glow: "#C968F7" },
-    { label: "API Calls / Ngày", key: "api", used: quota?.usage.api_calls_today || 0, limit: quota?.limits.api_calls_per_day ?? null, unit: "lượt", color: "from-[#22C55E] to-[#16A34A]", glow: "#22C55E" },
+    { label: t.dashboard.charsPerMonth, key: "characters", used: quota?.usage.characters_this_month || 0, limit: quota?.limits.characters_per_month ?? null, unit: t.dashboard.charUnit, color: "from-[#6366F1] to-[#818CF8]", glow: "#818CF8" },
+    { label: t.dashboard.storageQuota, key: "storage", used: quota?.usage.storage_used_mb || 0, limit: quota?.limits.storage_mb ?? null, unit: "MB", color: "from-[#C968F7] to-[#D8B4E2]", glow: "#C968F7" },
+    { label: t.dashboard.apiCallsPerDay, key: "api", used: quota?.usage.api_calls_today || 0, limit: quota?.limits.api_calls_per_day ?? null, unit: t.dashboard.callUnit, color: "from-[#22C55E] to-[#16A34A]", glow: "#22C55E" },
   ];
 
   const container = { animate: { transition: { staggerChildren: 0.08 } } };
@@ -90,7 +92,7 @@ export default function DashboardPage() {
             <h1 className="text-2xl md:text-3xl leading-tight py-0 font-bold text-white">
               {greeting}, <span className="bg-gradient-to-r from-[#818CF8] to-[#C968F7] bg-clip-text text-transparent">{user?.name || user?.email?.split("@")[0] || "..."}</span>
             </h1>
-            <span className="aether-badge mt-2">{quota?.tier === "pro" ? "Gói Chuyên Nghiệp" : "Gói Cơ Bản"}</span>
+            <span className="aether-badge mt-2">{quota?.tier === "pro" ? t.dashboard.proPlan : t.dashboard.basicPlan}</span>
           </div>
         </motion.div>
 
@@ -126,7 +128,7 @@ export default function DashboardPage() {
           <motion.div variants={item}>
             <div className="aether-glass-wrapper rounded-[24px] h-full">
               <div className="aether-glass p-8 h-full flex flex-col">
-                <h2 className="text-[18px] font-semibold tracking-wide text-white mb-8">Tổng quan Tài nguyên</h2>
+                <h2 className="text-[18px] font-semibold tracking-wide text-white mb-8">{t.dashboard.resourceOverview}</h2>
                 <div className="space-y-6 flex-1">
                   {progressRows.map((row) => (
                     <ProgressTooltip key={row.key} label={row.label} used={row.used} limit={row.limit} unit={row.unit}>
@@ -164,7 +166,7 @@ export default function DashboardPage() {
                   </svg>
                 </div>
                 <h2 className="text-[20px] font-semibold tracking-wide text-white mb-1 relative z-10 group-hover:text-[#818CF8] transition-colors">TTS Studio</h2>
-                <p className="text-[11px] font-medium tracking-widest uppercase text-[#A1A1AA] relative z-10">Tổng hợp Âm thanh</p>
+                <p className="text-[11px] font-medium tracking-widest uppercase text-[#A1A1AA] relative z-10">{t.dashboard.audioSynthesis}</p>
               </div>
             </div>
           </Link>

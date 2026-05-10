@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import { FadeIn } from "@/components/motion";
 import { useAuth } from "@/features/auth";
+import { useT } from "@/shared/i18n";
 
 export default function SettingsPage() {
+  const t = useT();
   const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -24,9 +26,9 @@ export default function SettingsPage() {
           <div className="mb-10">
             <h2 className="text-[10px] md:text-[11px] font-medium uppercase tracking-[0.3em] text-[#6366F1] mb-4 flex items-center gap-3">
               <span className="w-6 h-[1px] bg-[#6366F1]/50"></span>
-              Cấu hình Hệ thống
+              {t.settings.systemConfig}
             </h2>
-            <h1 className="text-4xl md:text-5xl leading-tight py-0 tracking-tight font-bold bg-gradient-to-b from-white to-[#A78BFA] bg-clip-text text-transparent">Cài đặt Tài khoản</h1>
+            <h1 className="text-4xl md:text-5xl leading-tight py-0 tracking-tight font-bold bg-gradient-to-b from-white to-[#A78BFA] bg-clip-text text-transparent">{t.settings.accountSettings}</h1>
           </div>
         </FadeIn>
 
@@ -39,13 +41,13 @@ export default function SettingsPage() {
                     {name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <h2 className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#818CF8]">Hồ sơ Cá nhân</h2>
+                    <h2 className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#818CF8]">{t.settings.personalProfile}</h2>
                     <p className="text-xs text-[#A1A1AA]">{email}</p>
                   </div>
                 </div>
                 <div className="space-y-5">
                   <div className="space-y-1.5">
-                    <label htmlFor="settings-name" className="text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">Họ và tên</label>
+                    <label htmlFor="settings-name" className="text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">{t.settings.fullName}</label>
                     <div className="relative">
                       <input
                         id="settings-name"
@@ -58,7 +60,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <label htmlFor="settings-email" className="text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">Email</label>
+                    <label htmlFor="settings-email" className="text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">{t.settings.emailLabel}</label>
                     <div className="relative">
                       <input
                         id="settings-email"

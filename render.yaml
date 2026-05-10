@@ -3,10 +3,57 @@ services:
     name: tts-app-backend
     rootDir: backend
     runtime: python
+    plan: standard
+    healthCheckPath: /health
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: "3.10.11"
-    healthCheckPath: /health
-    plan: starter
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        sync: false
+      - key: AUTH_COOKIE_SECURE
+        value: "true"
+      - key: CSRF_COOKIE_SECURE
+        value: "true"
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: REDIS_HOST
+        sync: false
+      - key: REDIS_PORT
+        value: "6379"
+      - key: REDIS_PASSWORD
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET_NAME
+        value: "genvoice-models"
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ENDPOINT_URL
+        sync: false
+      - key: R2_PUBLIC_URL
+        sync: false
+      - key: R2_LIBRARY_ACCESS_KEY_ID
+        sync: false
+      - key: R2_LIBRARY_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_LIBRARY_BUCKET_NAME
+        value: "tts-app-library"
+      - key: R2_LIBRARY_PUBLIC_URL
+        sync: false
+      - key: REFRESH_COOKIE_NAME
+        value: "refresh_token"
+      - key: AUTH_COOKIE_SAMESITE
+        value: "none"
+
+  - type: redis
+    name: tts-app-redis
+    plan: free
+    ipAllowList: []

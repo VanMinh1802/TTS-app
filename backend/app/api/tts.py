@@ -9,9 +9,10 @@ from pydantic import BaseModel
 
 from app.api.auth import get_current_user, get_optional_user
 from app.core.messages import BACKEND_MESSAGES
-from app.core.di import get_quota_service
+from app.core.di import get_quota_service, get_analytics_service
 from app.models.user import User
 from app.services.quota_service import QuotaService
+from app.services.analytics_service import AnalyticsService
 from app.schemas.tts import (
     TTSRequest,
     TTSResponse,
@@ -75,6 +76,7 @@ async def generate_tts(
     http_request: Request,
     user: User = Depends(get_current_user),
     quota_service: QuotaService = Depends(get_quota_service),
+    analytics_service: AnalyticsService = Depends(get_analytics_service),
 ):
     """Generate TTS audio using Piper model from R2."""
     if len(request.text) > MAX_TEXT_LENGTH:
@@ -125,6 +127,13 @@ async def generate_tts(
     quota_service.consume_quota(user.id, "api_calls", 1)
     quota_service.consume_quota(user.id, "characters", char_count)
 
+    analytics_service.update_usage(
+        user_id=user.id,
+        feature="tts",
+        characters_used=char_count,
+        api_calls=1,
+    )
+
     return TTSResponse(
         audio_url=audio_url,
         duration=duration,
@@ -150,6 +159,7 @@ async def list_voices(user: Optional[User] = Depends(get_optional_user)):
                 "available": True,
                 "is_premium": voice_id not in FREE_VOICE_IDS,
                 "model_key": models[voice_id].get("path", f"vi/{voice_id}/{voice_id}.onnx"),
+                "updated_at": models[voice_id].get("updated_at", ""),
             }
             for voice_id in canonical_voice_ids
         ]

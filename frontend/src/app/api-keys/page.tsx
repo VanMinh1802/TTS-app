@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { FadeIn } from "@/components/motion";
 import { apiRequest } from "@/lib/api-client";
 import { useNotifications } from "@/shared/notifications/notification-store";
+import { useT } from "@/shared/i18n";
 import { ApiKeyStats } from "./ApiKeyStats";
 import { ApiKeyGuide } from "./ApiKeyGuide";
 import { CreateKeyModal } from "./CreateKeyModal";
@@ -33,6 +34,7 @@ interface QuotaStatus {
 }
 
 export default function APIKeysPage() {
+  const t = useT();
   const { notify } = useNotifications();
   const [keys, setKeys] = useState<APIKey[]>([]);
   const [quota, setQuota] = useState<QuotaStatus | null>(null);
@@ -51,7 +53,7 @@ export default function APIKeysPage() {
       setQuota(quotaRes);
     } catch (err) {
       console.error("Failed to fetch API Keys:", err);
-      notify({ severity: "error", title: "Lỗi", message: "Không thể tải danh sách API Keys." });
+      notify({ severity: "error", title: t.apiKeys.loadErrorTitle, message: t.apiKeys.loadErrorMsg });
     } finally {
       setLoading(false);
     }
@@ -77,9 +79,9 @@ export default function APIKeysPage() {
       setNewKeyData({ name: res.name, fullKey: res.key });
       setShowCreate(false);
       fetchData();
-      notify({ severity: "success", title: "Thành công", message: "Đã khởi tạo API Key mới." });
+      notify({ severity: "success", title: t.apiKeys.createSuccessTitle, message: t.apiKeys.createSuccessMsg });
     } catch (err) {
-      notify({ severity: "error", title: "Lỗi", message: "Không thể khởi tạo API Key." });
+      notify({ severity: "error", title: t.apiKeys.createErrorTitle, message: t.apiKeys.createErrorMsg });
     } finally {
       setIsGenerating(false);
     }
@@ -91,15 +93,15 @@ export default function APIKeysPage() {
       await apiRequest(`/auth/api-keys/${showConfirm}`, { method: "DELETE" });
       setKeys(prev => prev.map(k => k.id === showConfirm ? { ...k, is_active: false } : k));
       setShowConfirm(null);
-      notify({ severity: "success", title: "Thành công", message: "Đã thu hồi API Key." });
+      notify({ severity: "success", title: t.apiKeys.revokeSuccessTitle, message: t.apiKeys.revokeSuccessMsg });
     } catch (err) {
-      notify({ severity: "error", title: "Lỗi", message: "Không thể thu hồi API Key." });
+      notify({ severity: "error", title: t.apiKeys.revokeErrorTitle, message: t.apiKeys.revokeErrorMsg });
     }
   };
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
-    notify({ severity: "info", title: "Đã sao chép", message: label });
+    notify({ severity: "info", title: t.apiKeys.copied, message: label });
   };
 
   const formatDate = (dateStr: string) => {
@@ -121,14 +123,14 @@ export default function APIKeysPage() {
             <div>
               <h2 className="text-[10px] md:text-[11px] font-medium uppercase tracking-[0.3em] text-[#6366F1] mb-4 flex items-center gap-3">
                 <span className="w-6 h-[1px] bg-[#6366F1]/50"></span>
-                Xác thực Hệ thống
+                {t.apiKeys.systemAuth}
               </h2>
-              <h1 className="text-4xl md:text-5xl leading-tight py-0 tracking-tight font-bold bg-gradient-to-b from-white to-[#A78BFA] bg-clip-text text-transparent">Quản lý API Keys</h1>
+              <h1 className="text-4xl md:text-5xl leading-tight py-0 tracking-tight font-bold bg-gradient-to-b from-white to-[#A78BFA] bg-clip-text text-transparent">{t.apiKeys.heading}</h1>
               <p className="text-xs font-light text-[#A1A1AA] mt-2">{keys.length} key · {stats.activeKeys} active</p>
             </div>
             <button onClick={() => setShowCreate(true)} className="aether-btn aether-btn-primary px-6 py-3 text-[10px] font-bold uppercase tracking-widest">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-              Khởi tạo Key mới
+              {t.apiKeys.createNew}
             </button>
           </div>
         </FadeIn>
@@ -138,14 +140,14 @@ export default function APIKeysPage() {
         <FadeIn delay={0.2}>
           <div className="aether-glass-wrapper rounded-[24px]">
             <div className="aether-glass p-6">
-              <h2 className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#818CF8] mb-5">Danh sách Khóa</h2>
+              <h2 className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#818CF8] mb-5">{t.apiKeys.keyList}</h2>
               {loading ? (
                 <div className="py-12 flex items-center justify-center">
                   <div className="w-5 h-5 rounded-full border-2 border-[#818CF8] border-t-transparent animate-spin" />
                 </div>
               ) : keys.length === 0 ? (
                 <div className="py-12 flex flex-col items-center justify-center border border-dashed border-white/5 rounded-xl text-[#A1A1AA]">
-                  <p className="text-xs font-bold uppercase tracking-widest">Chưa có API Key nào</p>
+                  <p className="text-xs font-bold uppercase tracking-widest">{t.apiKeys.empty}</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -180,10 +182,10 @@ export default function APIKeysPage() {
                               <code className="text-[11px] font-mono text-[#D4D4D8] bg-black/20 px-2.5 py-1 rounded-lg border border-white/5">
                                 gva_****...****{key.id.slice(-4)}
                               </code>
-                              <button
-                                onClick={() => copyToClipboard(key.id, "Đã sao chép Key ID")}
-                                className="p-2 rounded-lg text-[#71717A] hover:text-[#D4D4D8] hover:bg-white/5 transition-all opacity-0 group-hover:opacity-100 min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
-                                title="Sao chép Key ID"
+                                <button
+                                  onClick={() => copyToClipboard(key.id, t.apiKeys.keyIdCopied)}
+                                  className="p-2 rounded-lg text-[#71717A] hover:text-[#D4D4D8] hover:bg-white/5 transition-all opacity-0 group-hover:opacity-100 min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
+                                  title={t.apiKeys.copyKeyId}
                               >
                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" /></svg>
                               </button>
@@ -193,7 +195,7 @@ export default function APIKeysPage() {
                               <span>{key.total_requests.toLocaleString()} requests</span>
                               {daysLeft !== null && (
                                 <span className={daysLeft < 7 && key.is_active ? 'text-red-400' : ''}>
-                                  · {daysLeft === 0 ? 'Hết hạn hôm nay' : `Còn ${daysLeft} ngày`}
+                                  · {daysLeft === 0 ? t.apiKeys.expiredToday : t.apiKeys.daysLeft.replace("{n}", String(daysLeft))}
                                 </span>
                               )}
                               <span>· {formatDate(key.created_at)}</span>
@@ -201,17 +203,17 @@ export default function APIKeysPage() {
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             <button
-                              onClick={() => copyToClipboard(key.id, "Đã sao chép Key ID")}
+                              onClick={() => copyToClipboard(key.id, t.apiKeys.keyIdCopied)}
                               className="px-3 py-2 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-[#D4D4D8] hover:bg-white/10 hover:text-white transition-all"
                             >
-                              Copy ID
+                              {t.apiKeys.copyId}
                             </button>
                             {key.is_active && (
                               <button
                                 onClick={() => setShowConfirm(key.id)}
                                 className="px-3 py-2 rounded-full bg-red-500/10 border border-red-500/30 text-[10px] font-bold uppercase tracking-widest text-red-400 hover:bg-red-500/20 transition-all"
                               >
-                                Thu hồi
+                                {t.apiKeys.revoke}
                               </button>
                             )}
                           </div>
@@ -229,7 +231,7 @@ export default function APIKeysPage() {
 
         <CreateKeyModal show={showCreate} onClose={() => setShowCreate(false)} onGenerate={handleGenerate} isGenerating={isGenerating} />
         <RevokeConfirmModal show={showConfirm} onClose={() => setShowConfirm(null)} onRevoke={handleRevoke} />
-        <NewKeyResultModal keyData={newKeyData} onClose={() => setNewKeyData(null)} onCopy={(t) => copyToClipboard(t, "Đã sao chép API Key")} />
+        <NewKeyResultModal keyData={newKeyData} onClose={() => setNewKeyData(null)} onCopy={(text) => copyToClipboard(text, t.apiKeys.apiKeyCopied)} />
       </main>
     </div>
   );

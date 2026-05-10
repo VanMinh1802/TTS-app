@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { useT } from "@/shared/i18n";
 
 interface ConfirmModalProps {
   open: boolean;
@@ -17,12 +18,15 @@ export function ConfirmModal({
   open,
   title,
   message,
-  confirmLabel = "Xác nhận",
-  cancelLabel = "Hủy",
+  confirmLabel,
+  cancelLabel,
   variant = "default",
   onConfirm,
   onClose,
 }: ConfirmModalProps) {
+  const t = useT();
+  const cfmLabel = confirmLabel ?? t.common.confirm;
+  const cclLabel = cancelLabel ?? t.common.cancel;
   const isDanger = variant === "danger";
 
   return (
@@ -57,7 +61,7 @@ export function ConfirmModal({
                   onClick={onClose}
                   className="flex-1 py-3 rounded-[8px] bg-white/5 border border-white/10 text-[10px] font-medium uppercase tracking-widest text-[#D4D4D8] hover:bg-white/10 transition-colors"
                 >
-                  {cancelLabel}
+                  {cclLabel}
                 </button>
                 <button
                   onClick={onConfirm}
@@ -67,7 +71,7 @@ export function ConfirmModal({
                       : "aether-btn aether-btn-primary"
                   }`}
                 >
-                  {confirmLabel}
+                  {cfmLabel}
                 </button>
               </div>
             </div>

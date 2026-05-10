@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { FadeIn } from "@/components/motion";
+import { useT } from "@/shared/i18n";
 
 interface QuotaStatus {
   tier: string;
@@ -32,6 +33,7 @@ interface Props {
 }
 
 export default function QuotaSection({ quota, loading, formatDate, getPercentage }: Props) {
+  const t = useT();
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
 
@@ -41,9 +43,9 @@ export default function QuotaSection({ quota, loading, formatDate, getPercentage
           <div className="aether-glass-wrapper h-full rounded-[24px]">
             <div className="aether-glass p-8 h-full flex flex-col">
               <div className="flex justify-between items-center mb-10">
-                <h2 className="text-[18px] font-semibold tracking-wide text-white">Tổng quan Tài nguyên</h2>
+                <h2 className="text-[18px] font-semibold tracking-wide text-white">{t.dashboard.resourceOverview}</h2>
                 <span className="px-4 py-1.5 rounded-full border border-[#818CF8]/30 text-[#818CF8] text-[11px] font-bold tracking-widest uppercase bg-[#6366F1]/10 shadow-[0_0_15px_rgba(99,102,241,0.2)]">
-                  {loading ? "..." : quota?.tier === "pro" ? "Gói Chuyên Nghiệp" : "Gói Cơ Bản"}
+                  {loading ? "..." : quota?.tier === "pro" ? t.dashboard.proPlan : t.dashboard.basicPlan}
                 </span>
               </div>
 
@@ -51,7 +53,7 @@ export default function QuotaSection({ quota, loading, formatDate, getPercentage
                 {/* Characters */}
                 <div>
                   <div className="flex justify-between text-[11px] font-medium uppercase tracking-[0.1em] mb-2 text-[#A1A1AA]">
-                    <span>Ký tự / Tháng</span>
+                    <span>{t.dashboard.charsPerMonth}</span>
                     <span className="text-white">
                       {loading ? "..." : `${quota?.usage.characters_this_month.toLocaleString()} / ${quota?.limits.characters_per_month?.toLocaleString() || "∞"}`}
                     </span>
@@ -69,7 +71,7 @@ export default function QuotaSection({ quota, loading, formatDate, getPercentage
                 {/* Storage */}
                 <div>
                   <div className="flex justify-between text-[11px] font-medium uppercase tracking-[0.1em] mb-2 text-[#A1A1AA]">
-                    <span>Dung lượng lưu trữ</span>
+                    <span>{t.dashboard.storageQuota}</span>
                     <span className="text-white">
                       {loading ? "..." : `${quota?.usage.storage_used_mb} / ${quota?.limits.storage_mb || "∞"} MB`}
                     </span>
@@ -87,7 +89,7 @@ export default function QuotaSection({ quota, loading, formatDate, getPercentage
                 {/* API Calls */}
                 <div>
                   <div className="flex justify-between text-[11px] font-medium uppercase tracking-[0.1em] mb-2 text-[#A1A1AA]">
-                    <span>API Calls / Ngày</span>
+                    <span>{t.dashboard.apiCallsPerDay}</span>
                     <span className="text-white">
                       {loading ? "..." : `${quota?.usage.api_calls_today} / ${quota?.limits.api_calls_per_day || "∞"}`}
                     </span>
@@ -105,11 +107,11 @@ export default function QuotaSection({ quota, loading, formatDate, getPercentage
 
               <div className="mt-10 pt-6 border-t border-white/10 flex justify-between items-center">
                 <span className="text-xs font-semibold uppercase tracking-widest text-[#71717A]">
-                  Làm mới: {loading ? "..." : formatDate(quota?.reset_at || null)}
+                  {t.dashboard.refreshLabel} {loading ? "..." : formatDate(quota?.reset_at || null)}
                 </span>
                 <Link href="/pricing">
                   <button className="aether-btn aether-btn-primary px-6 py-2.5 text-xs font-bold uppercase tracking-widest">
-                    Nâng cấp Pro
+                    {t.dashboard.upgradePro}
                   </button>
                 </Link>
               </div>
@@ -133,7 +135,7 @@ export default function QuotaSection({ quota, loading, formatDate, getPercentage
                   </svg>
                 </div>
                 <h2 className="text-[20px] font-semibold tracking-wide text-white mb-1 relative z-10 group-hover:text-[#818CF8] transition-colors">TTS Studio</h2>
-                <p className="text-[11px] font-medium tracking-widest uppercase text-[#A1A1AA] relative z-10">Tổng hợp Âm thanh</p>
+                <p className="text-[11px] font-medium tracking-widest uppercase text-[#A1A1AA] relative z-10">{t.dashboard.audioSynthesis}</p>
               </div>
             </div>
           </Link>

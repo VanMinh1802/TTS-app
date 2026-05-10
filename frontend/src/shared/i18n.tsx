@@ -6,7 +6,8 @@ import enMessages from "@/messages/en.json";
 
 const DEFAULT_LOCALE = "vi";
 
-type Messages = Record<string, Record<string, string>>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Messages = Record<string, any>;
 
 const allMessages: Record<string, Messages> = {
   vi: viMessages as Messages,

@@ -6,11 +6,13 @@ import Link from "next/link";
 import { useGoogleLogin } from "@react-oauth/google";
 import { loginWithGoogle } from "@/features/auth/api/auth-api";
 import { useNotifications } from "@/shared/notifications/notification-store";
+import { useT } from "@/shared/i18n";
 import { motion } from "framer-motion";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
 function LoginForm() {
+  const t = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { notify } = useNotifications();
@@ -25,15 +27,15 @@ function LoginForm() {
 
       const cred = credentialResponse.access_token || credentialResponse.credential;
       if (!cred) {
-        setError("Không nhận được thông tin đăng nhập từ Google");
-        notify({ severity: "error", title: "Lỗi", message: "Không nhận được credential", source: "auth" });
+        setError(t.login.noGoogleInfo);
+        notify({ severity: "error", title: t.login.noCredentialTitle, message: t.login.noCredentialMsg, source: "auth" });
         setLoading(false);
         return;
       }
 
       try {
         await loginWithGoogle(cred);
-        notify({ severity: "success", title: "Thành công", message: "Xác thực thành công. Đang tải hệ thống...", source: "auth" });
+        notify({ severity: "success", title: t.login.authSuccessTitle, message: t.login.authSuccessMsg, source: "auth" });
         const callbackUrl = searchParams.get("callbackUrl");
         if (callbackUrl && callbackUrl.startsWith("/")) {
           router.push(callbackUrl);
@@ -41,15 +43,15 @@ function LoginForm() {
           router.push("/dashboard");
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Xác thực thất bại";
+        const message = err instanceof Error ? err.message : t.login.authFailed;
         setError(message);
-        notify({ severity: "error", title: "Lỗi xác thực", message, source: "auth" });
+        notify({ severity: "error", title: t.login.authErrorTitle, message, source: "auth" });
       } finally {
         setLoading(false);
       }
     },
     onError: () => {
-      setError("Google OAuth không phản hồi. Vui lòng thử lại.");
+      setError(t.login.googleNoResponse);
     },
   });
 
@@ -115,7 +117,7 @@ function LoginForm() {
             TYPE2VIBE
           </h1>
           <p className="text-[11px] font-light text-[#A1A1AA]">
-            Đăng nhập để tiếp tục sử dụng hệ thống
+            {t.login.continuePrompt}
           </p>
         </motion.div>
 
@@ -143,7 +145,7 @@ function LoginForm() {
               transition={{ duration: 0.4, delay: 0.4 }}
               className="text-base font-light tracking-wide text-[#F4F4F5] mb-1"
             >
-              Chào mừng trở lại
+              {t.login.welcomeBack}
             </motion.h2>
             <motion.p
               initial={{ opacity: 0 }}
@@ -151,7 +153,7 @@ function LoginForm() {
               transition={{ duration: 0.4, delay: 0.45 }}
               className="text-[10px] uppercase tracking-widest text-[#A1A1AA] mb-8"
             >
-              Đăng nhập bằng tài khoản Google
+              {t.login.googleSignIn}
             </motion.p>
 
             <motion.button
@@ -171,7 +173,7 @@ function LoginForm() {
               {loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-[#6366F1] border-t-transparent rounded-full animate-spin" />
-                  <span>Đang xác thực...</span>
+                  <span>{t.login.authenticating}</span>
                 </>
               ) : (
                 <>
@@ -181,7 +183,7 @@ function LoginForm() {
                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                   </svg>
-                  <span>Đăng nhập với Google</span>
+                  <span>{t.login.signInGoogle}</span>
                 </>
               )}
             </motion.button>
@@ -204,15 +206,11 @@ function LoginForm() {
               transition={{ duration: 0.4, delay: 0.6 }}
               className="w-full flex items-center justify-center gap-6 mt-8 pt-6 border-t border-white/[0.06]"
             >
-              <span
-                className="text-[10px] font-light tracking-wider text-[#71717A] hover:text-[#D4D4D8] cursor-pointer transition-colors border-b border-transparent hover:border-[#D4D4D8]/30 pb-0.5"
-              >
-                Trợ giúp
+              <span className="text-[10px] font-light tracking-wider text-[#71717A] pb-0.5">
+                {t.login.help}
               </span>
-              <span
-                className="text-[10px] font-light tracking-wider text-[#71717A] hover:text-[#D4D4D8] cursor-pointer transition-colors border-b border-transparent hover:border-[#D4D4D8]/30 pb-0.5"
-              >
-                Quyền riêng tư
+              <span className="text-[10px] font-light tracking-wider text-[#71717A] pb-0.5">
+                {t.login.privacy}
               </span>
             </motion.div>
           </div>
@@ -225,8 +223,8 @@ function LoginForm() {
           className="text-center mt-8"
         >
           <p className="text-[10px] font-light text-[#A1A1AA] tracking-wider">
-            Bằng việc đăng nhập, bạn đồng ý với{" "}
-            <span className="text-[#D4D4D8] hover:text-[#6366F1] cursor-pointer transition-colors border-b border-white/10 hover:border-[#6366F1]/50 pb-0.5">Điều khoản dịch vụ</span>
+            {t.login.agreeToTerms}{" "}
+            <span className="text-[#71717A] border-b border-white/10 pb-0.5">{t.login.termsOfService}</span>
           </p>
         </motion.div>
       </motion.div>
@@ -235,6 +233,8 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  const t = useT();
+
   if (!GOOGLE_CLIENT_ID) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 text-[#F4F4F5] font-light">
@@ -243,9 +243,9 @@ export default function LoginPage() {
             <svg className="w-10 h-10 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
             </svg>
-            <h2 className="text-[10px] font-medium uppercase tracking-[0.2em] text-red-400 mb-2">Lỗi Cấu hình Hệ thống</h2>
+            <h2 className="text-[10px] font-medium uppercase tracking-[0.2em] text-red-400 mb-2">{t.login.configErrorTitle}</h2>
             <p className="font-light text-sm text-[#D4D4D8] leading-relaxed">
-              Biến môi trường <code className="text-gray-300 font-mono text-[11px] bg-white/5 px-1.5 py-0.5 rounded border border-white/10">NEXT_PUBLIC_GOOGLE_CLIENT_ID</code> chưa được thiết lập. Hệ thống xác thực tạm thời bị vô hiệu hóa.
+              {t.login.missingClientId}
             </p>
           </div>
         </div>

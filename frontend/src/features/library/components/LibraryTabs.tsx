@@ -1,5 +1,7 @@
 'use client';
+import Link from 'next/link';
 import { LibraryTab } from '../types';
+import { useT } from "@/shared/i18n";
 
 interface Props {
   activeTab: LibraryTab;
@@ -8,19 +10,38 @@ interface Props {
   onTabChange: (tab: LibraryTab) => void;
 }
 
-const tabs: { key: LibraryTab; label: string; proOnly?: boolean }[] = [
-  { key: 'all', label: 'Tất cả' },
-  { key: 'local', label: 'Local' },
-  { key: 'cloud', label: 'Cloud', proOnly: true },
-  { key: 'synced', label: 'Đã đồng bộ', proOnly: true },
+const tabKeys: { key: LibraryTab; proOnly?: boolean }[] = [
+  { key: 'all' },
+  { key: 'local' },
+  { key: 'cloud', proOnly: true },
+  { key: 'synced', proOnly: true },
 ];
 
+const tabLabelMap: Record<LibraryTab, string> = {
+  all: 'tabAll',
+  local: 'local',
+  cloud: 'cloud',
+  synced: 'tabSynced',
+};
+
 export function LibraryTabs({ activeTab, counts, isPro, onTabChange }: Props) {
+  const t = useT();
+
+  const getLabel = (key: LibraryTab): string => {
+    switch (key) {
+      case 'all': return t.library.tabAll;
+      case 'synced': return t.library.tabSynced;
+      default: return key.charAt(0).toUpperCase() + key.slice(1);
+    }
+  };
+
   return (
     <div className="flex gap-2 border-b border-white/[0.06] pb-4">
-      {tabs.map((tab) => {
+      {tabKeys.map((tab) => {
         const disabled = tab.proOnly && !isPro;
-        return (
+        const count = counts[tab.key] ?? 0;
+
+        const button = (
           <button
             key={tab.key}
             onClick={() => !disabled && onTabChange(tab.key)}
@@ -33,10 +54,10 @@ export function LibraryTabs({ activeTab, counts, isPro, onTabChange }: Props) {
                   : 'text-[#818CF8] bg-[#6366F1]/10 border border-[#818CF8]/30 shadow-[0_0_8px_rgba(99,102,241,0.1)] hover:bg-[#6366F1]/15'
             }`}
           >
-            {tab.label}
-            {tab.key === 'synced' && counts.synced > 0 && !disabled && (
-              <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-r from-[#6366F1] to-[#C968F7] text-[#1A1A1A] text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full shadow-[0_0_8px_rgba(99,102,241,0.4)]">
-                {counts.synced}
+            {getLabel(tab.key)}
+            {count > 0 && !disabled && (
+              <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-r from-[#6366F1] to-[#C968F7] text-[#1A1A1A] text-[9px] font-bold min-w-[16px] h-4 flex items-center justify-center rounded-full shadow-[0_0_8px_rgba(99,102,241,0.4)] px-1">
+                {count}
               </span>
             )}
             {disabled && (
@@ -46,6 +67,16 @@ export function LibraryTabs({ activeTab, counts, isPro, onTabChange }: Props) {
             )}
           </button>
         );
+
+        if (disabled && tab.proOnly) {
+          return (
+            <Link key={tab.key} href="/pricing" className="inline-block">
+              {button}
+            </Link>
+          );
+        }
+
+        return button;
       })}
     </div>
   );

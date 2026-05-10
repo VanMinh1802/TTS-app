@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { apiKeyCreateSchema, type ApiKeyCreateFormData } from "@/lib/validators";
 import { FormField, getFieldErrorClass } from "@/components/form/FormField";
 import { UiSelect } from "@/components/ui/UiSelect";
+import { useT } from "@/shared/i18n";
 
 interface CreateKeyModalProps {
   show: boolean;
@@ -26,6 +27,7 @@ export function CreateKeyModal({
   onGenerate,
   isGenerating,
 }: CreateKeyModalProps) {
+  const t = useT();
   const { register, handleSubmit, formState: { errors }, control, reset } = useForm<ApiKeyCreateFormData>({
     resolver: zodResolver(apiKeyCreateSchema),
     defaultValues: { name: "", rateLimit: 100 },
@@ -61,10 +63,10 @@ export function CreateKeyModal({
             <div className="aether-glass p-8">
               <h2 className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#818CF8] mb-6 flex items-center gap-3">
                 <span className="w-4 h-[1px] bg-[#818CF8]/50"></span>
-                Khởi tạo API Key mới
+                {t.apiKeys.createModalTitle}
               </h2>
               <div className="space-y-6">
-                <FormField label="Tên định danh (Key Name)" error={errors.name?.message} required>
+                <FormField label={t.apiKeys.keyName} error={errors.name?.message} required>
                   <input
                     type="text"
                     {...register("name")}
@@ -80,7 +82,7 @@ export function CreateKeyModal({
                       value={String(field.value)}
                       onChange={(v) => field.onChange(parseInt(v))}
                       options={RATE_OPTIONS}
-                      label="Giới hạn truy vấn (Rate Limit)"
+                      label={t.apiKeys.rateLimit}
                     />
                   )}
                 />
@@ -89,14 +91,14 @@ export function CreateKeyModal({
                     onClick={handleClose}
                     className="flex-1 py-3 rounded-[8px] bg-white/5 border border-white/10 text-[10px] font-medium uppercase tracking-widest text-[#D4D4D8] hover:bg-white/10 transition-colors"
                   >
-                    Hủy bỏ
+                    {t.apiKeys.cancelCreate}
                   </button>
                   <button
                     onClick={handleSubmit(onSubmit)}
                     disabled={isGenerating}
                     className="aether-btn aether-btn-primary flex-1 py-3 text-[10px] font-medium uppercase tracking-widest disabled:opacity-50"
                   >
-                    {isGenerating ? "Đang tạo..." : "Sinh mã (Generate)"}
+                    {isGenerating ? t.apiKeys.creating : t.apiKeys.generate}
                   </button>
                 </div>
               </div>

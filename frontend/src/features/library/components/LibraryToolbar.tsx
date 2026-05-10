@@ -2,6 +2,7 @@
 import { FilterState, LibraryViewMode } from '../types';
 import { UiSelect } from '@/components/ui/UiSelect';
 import type { VoiceInfo } from '@/features/voice/hooks/useVoiceMap';
+import { useT } from "@/shared/i18n";
 
 interface Props {
   filter: FilterState;
@@ -11,10 +12,13 @@ interface Props {
   availableVoices: string[];
   totalRecords?: number;
   getVoice?: (id: string) => VoiceInfo;
+  voiceLoading?: boolean;
 }
 
-export function LibraryToolbar({ filter, onFilterChange, viewMode, onViewModeChange, availableVoices, totalRecords, getVoice }: Props) {
+export function LibraryToolbar({ filter, onFilterChange, viewMode, onViewModeChange, availableVoices, totalRecords, getVoice, voiceLoading }: Props) {
+  const t = useT();
   const resolveLabel = (voiceId: string) => {
+    if (voiceLoading) return voiceId;
     if (!getVoice) return voiceId;
     const info = getVoice(voiceId);
     return info.isPremium ? `${info.name} (PRO)` : info.name;
@@ -30,7 +34,7 @@ export function LibraryToolbar({ filter, onFilterChange, viewMode, onViewModeCha
           type="text"
           value={filter.search}
           onChange={(e) => onFilterChange({ search: e.target.value })}
-          placeholder="Tìm kiếm bản ghi..."
+          placeholder={t.library.searchPlaceholder}
           className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-[#818CF8]/50 focus:bg-white/10 text-white placeholder:text-[#A1A1AA]/50 transition-all font-normal text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]"
         />
       </div>
@@ -39,18 +43,18 @@ export function LibraryToolbar({ filter, onFilterChange, viewMode, onViewModeCha
         value={filter.voiceFilter ?? ''}
         onChange={(v) => onFilterChange({ voiceFilter: v || null })}
         options={[
-          { value: '', label: 'Tất cả giọng đọc' },
+          { value: '', label: t.library.allVoices },
           ...availableVoices.map((v) => ({ value: v, label: resolveLabel(v) })),
         ]}
-        placeholder="Tất cả giọng đọc"
+        placeholder={t.library.allVoices}
       />
 
       <UiSelect
         value={filter.sortBy}
         onChange={(v) => onFilterChange({ sortBy: v as FilterState['sortBy'] })}
         options={[
-          { value: 'newest', label: 'Mới nhất' },
-          { value: 'oldest', label: 'Cũ nhất' },
+          { value: 'newest', label: t.library.sortNewest },
+          { value: 'oldest', label: t.library.sortOldest },
           { value: 'az', label: 'A-Z' },
         ]}
       />
@@ -63,7 +67,7 @@ export function LibraryToolbar({ filter, onFilterChange, viewMode, onViewModeCha
               ? 'bg-gradient-to-r from-[#6366F1] to-[#C968F7] text-[#1A1A1A] border border-white/60 shadow-[0_0_15px_rgba(99,102,241,0.3)]'
               : 'text-[#A1A1AA] hover:text-white'
           }`}
-          title="Dạng lưới"
+          title={t.library.gridView}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
@@ -76,7 +80,7 @@ export function LibraryToolbar({ filter, onFilterChange, viewMode, onViewModeCha
               ? 'bg-gradient-to-r from-[#6366F1] to-[#C968F7] text-[#1A1A1A] border border-white/60 shadow-[0_0_15px_rgba(99,102,241,0.3)]'
               : 'text-[#A1A1AA] hover:text-white'
           }`}
-          title="Dạng danh sách"
+          title={t.library.listView}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />

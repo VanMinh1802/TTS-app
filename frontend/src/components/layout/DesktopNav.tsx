@@ -23,7 +23,7 @@ export function DesktopNav({ isLoggedIn, pathname }: { isLoggedIn: boolean; path
   return (
     <div className="hidden md:flex items-center gap-0.5">
       {items.map((item) => {
-        const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+        const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href + "/"));
         return (
           <Link
             key={item.href}

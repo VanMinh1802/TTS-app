@@ -31,6 +31,8 @@ interface ModelCacheEntry {
   voiceId: string;
   modelBuffer: ArrayBuffer;
   configText: string;
+  modelKey: string;
+  updatedAt: string;
   downloadedAt: number;
   size: number;
 }
@@ -48,7 +50,7 @@ function openModelDB(): Promise<IDBDatabase> {
   });
 }
 
-async function loadModelFromDb(voiceId: string): Promise<ModelCacheEntry | null> {
+async function loadModelFromDb(voiceId: string, expectedModelKey?: string, expectedUpdatedAt?: string): Promise<ModelCacheEntry | null> {
   try {
     const db = await openModelDB();
     return new Promise((resolve) => {
@@ -58,6 +60,14 @@ async function loadModelFromDb(voiceId: string): Promise<ModelCacheEntry | null>
         db.close();
         const entry = req.result as ModelCacheEntry | undefined;
         if (entry?.modelBuffer && entry?.configText) {
+          if (expectedModelKey && entry.modelKey !== expectedModelKey) {
+            resolve(null);
+            return;
+          }
+          if (expectedUpdatedAt && entry.updatedAt !== expectedUpdatedAt) {
+            resolve(null);
+            return;
+          }
           resolve(entry);
         } else {
           resolve(null);
@@ -68,7 +78,7 @@ async function loadModelFromDb(voiceId: string): Promise<ModelCacheEntry | null>
   } catch { return null; }
 }
 
-async function saveModelToDb(voiceId: string, modelBuffer: ArrayBuffer, configText: string): Promise<void> {
+async function saveModelToDb(voiceId: string, modelBuffer: ArrayBuffer, configText: string, modelKey: string, updatedAt: string): Promise<void> {
   try {
     const db = await openModelDB();
     return new Promise((resolve) => {
@@ -77,6 +87,8 @@ async function saveModelToDb(voiceId: string, modelBuffer: ArrayBuffer, configTe
         voiceId,
         modelBuffer,
         configText,
+        modelKey,
+        updatedAt,
         downloadedAt: Date.now(),
         size: modelBuffer.byteLength,
       };
@@ -92,8 +104,9 @@ const sessionCache = new Map<string, Promise<PiperCustomSession>>();
 let defaultVoice = '';
 let isCancelled = false;
 
-async function ensureSession(voiceId: string, modelName: string, modelKey?: string): Promise<PiperCustomSession> {
-  const cached = sessionCache.get(voiceId);
+async function ensureSession(voiceId: string, modelName: string, modelKey?: string, updatedAt?: string): Promise<PiperCustomSession> {
+  const versionKey = [voiceId, modelKey || '', updatedAt || ''].join('|');
+  const cached = sessionCache.get(versionKey);
   if (cached) return cached;
 
   const promise = (async () => {
@@ -106,7 +119,7 @@ async function ensureSession(voiceId: string, modelName: string, modelKey?: stri
       baseUrl = `${R2_PUBLIC_URL}/vi/${voiceId}`;
     }
 
-    const cachedEntry = await loadModelFromDb(voiceId);
+    const cachedEntry = await loadModelFromDb(voiceId, modelKey, updatedAt);
     if (cachedEntry) {
       self.postMessage({ type: 'progress', value: 15 });
       self.postMessage({ type: 'cache-status', fromCache: true, url: voiceId });
@@ -120,20 +133,20 @@ async function ensureSession(voiceId: string, modelName: string, modelKey?: stri
       cachedEntry?.modelBuffer, cachedEntry?.configText,
     );
 
-    // Cache model + config for next visit if not already cached
     if (!cachedEntry) {
       const modelUrl = `${baseUrl}/${encodeURIComponent(modelName)}.onnx`;
       const configUrl = `${baseUrl}/${encodeURIComponent(modelName)}.onnx.json`;
+      const cacheKey = modelKey || `vi/${voiceId}/${modelName}.onnx`;
       Promise.all([
         fetch(modelUrl).then(r => r.arrayBuffer()),
         fetch(configUrl).then(r => r.text()),
-      ]).then(([buf, cfg]) => saveModelToDb(voiceId, buf, cfg)).catch(() => {});
+      ]).then(([buf, cfg]) => saveModelToDb(voiceId, buf, cfg, cacheKey, updatedAt || '')).catch(() => {});
     }
 
     return session;
   })();
 
-  sessionCache.set(voiceId, promise);
+  sessionCache.set(versionKey, promise);
   return promise;
 }
 
@@ -159,12 +172,12 @@ self.onmessage = async function (event: MessageEvent) {
   }
 
   if (type === 'generate') {
-    const { voiceId, text, speed, dictionary, modelKey } = data;
+    const { voiceId, text, speed, dictionary, modelKey, updatedAt } = data;
     if (!voiceId) return;
     try {
       const modelName = getModelFileName(voiceId);
 
-      const session = await ensureSession(voiceId, modelName, modelKey);
+      const session = await ensureSession(voiceId, modelName, modelKey, updatedAt);
       self.postMessage({ type: 'progress', value: 50 });
 
       let processedText = text;

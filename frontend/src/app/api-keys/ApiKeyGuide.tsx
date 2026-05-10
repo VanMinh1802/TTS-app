@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FadeIn } from "@/components/motion";
+import { useT } from "@/shared/i18n";
 
 interface GuideSection {
   id: string;
@@ -487,6 +488,7 @@ if (response.ok) {
 ];
 
 export function ApiKeyGuide() {
+  const t = useT();
   const [expanded, setExpanded] = useState<string | null>("what-is");
 
   const toggleSection = (id: string) => {
@@ -500,14 +502,14 @@ export function ApiKeyGuide() {
           <div className="flex items-center gap-4 mb-2">
             <h2 className="text-[10px] md:text-[11px] font-medium uppercase tracking-[0.3em] text-[#6366F1] flex items-center gap-3">
               <span className="w-6 h-[1px] bg-[#6366F1]/50"></span>
-              Hướng dẫn & Tài liệu
+              {t.apiKeys.guideHeading}
             </h2>
             <span className="text-[9px] uppercase tracking-widest font-medium text-[#A1A1AA] bg-white/5 rounded-full px-2.5 py-0.5 border border-white/5">
-              {sections.length} chủ đề
+              {t.apiKeys.guideTopicCount.replace("{n}", String(sections.length))}
             </span>
           </div>
           <p className="text-xs font-light text-[#71717A] mb-6">
-            Hướng dẫn chi tiết cách thiết lập, sử dụng và bảo mật API Keys trong Type2Vibe.
+            {t.apiKeys.guideDesc}
           </p>
 
           <div className="space-y-2">
@@ -557,7 +559,7 @@ export function ApiKeyGuide() {
                       )}
                     </span>
                     <span className={`text-sm font-medium flex-1 text-left transition-colors ${isOpen ? "text-white" : "text-[#D4D4D8]"}`}>
-                      {section.title}
+                      {((t.apiKeys as any).guide as Record<string, string>)[section.id] || section.title}
                     </span>
                     <motion.svg
                       className="w-4 h-4 text-[#71717A] shrink-0"

@@ -104,7 +104,7 @@ export function AudioPreview({ audioUrl, loading, onDownload, onCopy, wavAvailab
               </svg>
             </motion.div>
             <p className="font-light text-[10px] uppercase tracking-[0.2em] text-[#D4D4D8]">
-              {progress < 30 ? 'Đang tải model...' : progress < 60 ? 'Đang tạo giọng đọc...' : 'Đang hoàn thiện...'} 
+              {progress < 30 ? t.studio.genProgressLoading : progress < 60 ? t.studio.genProgressSynthesizing : t.studio.genProgressFinishing} 
               {Math.round(progress)}%
             </p>
             <div className="w-full max-w-[200px] bg-white/10 rounded-full h-1.5 mt-3 overflow-hidden">
@@ -186,7 +186,7 @@ export function AudioPreview({ audioUrl, loading, onDownload, onCopy, wavAvailab
                         ? 'text-[#818CF8] bg-[#6366F1]/15 border-[#6366F1]/30'
                         : 'text-[#A1A1AA] bg-white/5 border-white/8 hover:bg-white/10 hover:text-white'
                     }`}
-                    title="Tốc độ phát"
+                    title={t.studio.playbackSpeed}
                   >
                     {speed}x
                   </button>
@@ -281,12 +281,20 @@ export function AudioPreview({ audioUrl, loading, onDownload, onCopy, wavAvailab
             animate={{ opacity: 1 }}
             className="h-36 flex flex-col items-center justify-center border border-white/10 border-dashed rounded-[16px] bg-[#0D100A]/30"
           >
-            <div className="text-[#A1A1AA] mb-3 opacity-50">
-              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-              </svg>
+            <div className={`mb-3 ${error ? 'text-red-400/60' : 'text-[#A1A1AA] opacity-50'}`}>
+              {error ? (
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+              ) : (
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                </svg>
+              )}
             </div>
-            <p className="font-light text-[10px] uppercase tracking-[0.2em] text-[#A1A1AA]">{t.studio.noAudio}</p>
+            <p className={`font-light text-[10px] uppercase tracking-[0.2em] ${error ? 'text-red-400' : 'text-[#A1A1AA]'}`}>
+              {error ? error : t.studio.noAudio}
+            </p>
           </motion.div>
         )}
       </AnimatePresence>

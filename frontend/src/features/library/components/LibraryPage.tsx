@@ -17,11 +17,13 @@ import { FormatPickerModal } from './FormatPickerModal';
 import { LibraryRecord, LibraryViewMode, LibraryTab } from '../types';
 import { notificationService } from "@/shared/notifications/notification-store";
 import { useVoiceMap } from '@/features/voice/hooks/useVoiceMap';
+import { useT } from "@/shared/i18n";
 
 export function LibraryPage() {
+  const t = useT();
   const { user } = useAuth();
   const isPro = user?.subscription_tier === 'pro' || user?.subscription_tier === 'enterprise';
-  const { voiceMap, getVoice } = useVoiceMap();
+  const { voiceMap, getVoice, loading: voiceLoading } = useVoiceMap();
   const { loading: localLoading } = useLocalLibrary();
   const { records, loading, error, refresh } = useLibraryRecords(isPro);
   const { syncProgress, startSync, isSyncing } = useLibrarySync();
@@ -75,7 +77,7 @@ export function LibraryPage() {
       refresh();
     } catch (e) {
       console.error('Delete failed:', e);
-      notificationService.notify({ severity: "error", title: "Lỗi", message: "Không thể xóa bản ghi. Vui lòng thử lại." });
+      notificationService.notify({ severity: "error", title: t.library.deleteErrorTitle, message: t.library.deleteErrorMsg });
     }
   }, [deleteTarget, deleteMode, isPro, refresh]);
 
@@ -113,6 +115,13 @@ export function LibraryPage() {
     refresh();
   }, [isPro, records, startSync, refresh]);
 
+  useEffect(() => {
+    if (!deleteTarget) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setDeleteTarget(null); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [deleteTarget]);
+
   const handleTabChange = useCallback((tab: LibraryTab) => {
     setFilter({ tab });
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; setPlayingId(null); }
@@ -128,8 +137,8 @@ export function LibraryPage() {
     return (
       <div className="aether-glass-wrapper rounded-[24px] mt-6">
         <div className="aether-glass rounded-[24px] h-48 flex flex-col items-center justify-center">
-          <p className="text-sm text-red-400 mb-2">Tải thư viện thất bại</p>
-          <button onClick={refresh} className="aether-btn aether-btn-primary text-xs px-5 py-2">Thử lại</button>
+          <p className="text-sm text-red-400 mb-2">{t.library.loadError}</p>
+          <button onClick={refresh} className="aether-btn aether-btn-primary text-xs px-5 py-2">{t.common.retry}</button>
         </div>
       </div>
     );
@@ -144,7 +153,7 @@ export function LibraryPage() {
       )}
       {!isPro && <div className="mb-4"><CloudUpgradeBanner /></div>}
       <LibraryTabs activeTab={filter.tab} counts={tabCounts} isPro={isPro} onTabChange={handleTabChange} />
-      <LibraryToolbar filter={filter} onFilterChange={setFilter} viewMode={viewMode} onViewModeChange={setViewMode} availableVoices={availableVoices} totalRecords={records.length} getVoice={getVoice} />
+      <LibraryToolbar filter={filter} onFilterChange={setFilter} viewMode={viewMode} onViewModeChange={setViewMode} availableVoices={availableVoices} totalRecords={records.length} getVoice={getVoice} voiceLoading={voiceLoading} />
       {isPro && records.filter(r => r.sync_status.local && !r.sync_status.cloud).length > 0 && (
         <div className="flex justify-end mb-4">
           <button
@@ -155,20 +164,39 @@ export function LibraryPage() {
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
             </svg>
-            {isSyncing ? 'Đang đồng bộ...' : `Đồng bộ ${records.filter(r => r.sync_status.local && !r.sync_status.cloud).length} bản ghi`}
+            {isSyncing ? t.library.syncing : t.library.syncCount.replace('{n}', String(records.filter(r => r.sync_status.local && !r.sync_status.cloud).length))}
           </button>
         </div>
       )}
       <AnimatePresence mode="wait">
         {isLoading ? (
-          <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="flex items-center justify-center py-32">
-            <motion.div className="w-1.5 h-1.5 rounded-full bg-[#6366F1] mx-1" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 2, repeat: Infinity }} />
-            <motion.div className="w-1.5 h-1.5 rounded-full bg-[#818CF8] mx-1" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 2, delay: 0.2, repeat: Infinity }} />
-            <motion.div className="w-1.5 h-1.5 rounded-full bg-[#C968F7] mx-1" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 2, delay: 0.4, repeat: Infinity }} />
+          <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="flex flex-col items-center justify-center py-32 gap-3">
+            <div className="flex items-center">
+              <motion.div className="w-1.5 h-1.5 rounded-full bg-[#6366F1] mx-1" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 2, repeat: Infinity }} />
+              <motion.div className="w-1.5 h-1.5 rounded-full bg-[#818CF8] mx-1" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 2, delay: 0.2, repeat: Infinity }} />
+              <motion.div className="w-1.5 h-1.5 rounded-full bg-[#C968F7] mx-1" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 2, delay: 0.4, repeat: Infinity }} />
+            </div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">{t.library.loading}</p>
           </motion.div>
         ) : filteredRecords.length === 0 ? (
           <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-            <LibraryEmpty />
+            {records.length === 0 ? (
+              <LibraryEmpty />
+            ) : (
+              <div className="aether-glass-wrapper rounded-[24px] mt-6">
+                <div className="aether-glass rounded-[24px] h-48 flex flex-col items-center justify-center text-center px-4">
+                  <div className="w-12 h-12 rounded-full bg-[#6366F1]/10 border border-[#818CF8]/30 flex items-center justify-center mb-3">
+                    <svg className="w-5 h-5 text-[#A1A1AA]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-sm font-bold uppercase tracking-widest text-[#D4D4D8] mb-1">{t.library.noResults}</h2>
+                  <p className="text-xs font-light text-[#A1A1AA]">
+                    {t.library.noResultsDesc}
+                  </p>
+                </div>
+              </div>
+            )}
           </motion.div>
         ) : (
           <motion.div
@@ -203,7 +231,7 @@ export function LibraryPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">Xoá bản ghi?</p>
+                  <p className="text-sm font-semibold text-white">{t.library.deleteConfirmTitle}</p>
                   <p className="text-[10px] text-[#A1A1AA]">{deleteTarget.text_content.slice(0, 60)}...</p>
                 </div>
               </div>
@@ -225,11 +253,11 @@ export function LibraryPage() {
               {/* Delete options for synced records */}
               {deleteTarget.sync_status.local && deleteTarget.sync_status.cloud && (
                 <div className="space-y-2 mb-5">
-                  <p className="text-[10px] text-[#71717A] uppercase tracking-wider mb-3">Chọn vị trí xoá:</p>
+                  <p className="text-[10px] text-[#71717A] uppercase tracking-wider mb-3">{t.library.selectDeleteLocation}</p>
                   {[
-                    { mode: 'local' as const, label: 'Xoá khỏi máy', desc: 'Giữ bản sao trên Cloud', color: 'border-orange-500/30 bg-orange-500/5 text-orange-400' },
-                    { mode: 'cloud' as const, label: 'Xoá khỏi Cloud', desc: 'Giữ bản sao trên máy', color: 'border-orange-500/30 bg-orange-500/5 text-orange-400' },
-                    { mode: 'both' as const, label: 'Xoá vĩnh viễn', desc: 'Xoá cả Local và Cloud', color: 'border-red-500/30 bg-red-500/5 text-red-400' },
+                    { mode: 'local' as const, label: t.library.deleteLocal, desc: t.library.deleteLocalDesc, color: 'border-orange-500/30 bg-orange-500/5 text-orange-400' },
+                    { mode: 'cloud' as const, label: t.library.deleteCloud, desc: t.library.deleteCloudDesc, color: 'border-orange-500/30 bg-orange-500/5 text-orange-400' },
+                    { mode: 'both' as const, label: t.library.deleteBoth, desc: t.library.deleteBothDesc, color: 'border-red-500/30 bg-red-500/5 text-red-400' },
                   ].map(opt => (
                     <button
                       key={opt.mode}
@@ -255,10 +283,10 @@ export function LibraryPage() {
               {/* Action buttons */}
               <div className="flex gap-2">
                 <button onClick={() => setDeleteTarget(null)} className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-[#A1A1AA] text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-all">
-                  Huỷ
+                  {t.common.cancel}
                 </button>
                 <button onClick={confirmDelete} className="flex-1 py-3 rounded-xl bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-bold uppercase tracking-widest hover:bg-red-500/30 transition-all">
-                  {deleteMode === 'both' ? 'Xoá vĩnh viễn' : deleteMode === 'local' ? 'Xoá khỏi máy' : 'Xoá khỏi Cloud'}
+                  {deleteMode === 'both' ? t.library.deleteBoth : deleteMode === 'local' ? t.library.deleteLocal : t.library.deleteCloud}
                 </button>
               </div>
             </div>
