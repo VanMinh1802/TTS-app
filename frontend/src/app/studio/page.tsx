@@ -151,9 +151,22 @@ export default function StudioPage() {
   useEffect(() => {
     const savedText = localStorage.getItem(STORAGE_KEY);
     const savedSpeed = localStorage.getItem(STORAGE_KEY_SPEED);
+    const savedVoice = localStorage.getItem(STORAGE_KEY_VOICE);
     if (savedText) setText(savedText);
     if (savedSpeed) setSpeed(parseFloat(savedSpeed));
+    if (savedVoice) setSelectedVoice(savedVoice);
   }, []);
+
+  useEffect(() => {
+    if (!selectedVoice && voices.length > 0) {
+      const savedVoice = localStorage.getItem(STORAGE_KEY_VOICE);
+      if (savedVoice && voices.some(v => v.id === savedVoice)) {
+        setSelectedVoice(savedVoice);
+      } else {
+        setSelectedVoice(voices[0]?.id);
+      }
+    }
+  }, [voices, selectedVoice]);
 
   const sortedVoices = useMemo(() => [...voices].sort((a, b) => a.name.localeCompare(b.name, "vi")), [voices]);
   const voiceId = useMemo(() => selectedVoice || voices[0]?.id || "baouyen", [selectedVoice, voices]);
