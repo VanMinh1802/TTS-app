@@ -74,7 +74,7 @@ export default function AdminPage() {
 
   return (
     <RequireRole roles={['admin']}>
-      <div className="min-h-[calc(100dvh-5rem)] relative text-[#F4F4F5] overflow-hidden font-light pt-4 pb-12">
+      <div className="min-h-[calc(100dvh-4rem)] relative text-[#F4F4F5] overflow-hidden font-light pt-4 pb-12">
         <div className="absolute inset-0 pointer-events-none aether-bg-gradient"></div>
         <main className="max-w-7xl w-full mx-auto px-6 relative z-10">
           <FadeIn>

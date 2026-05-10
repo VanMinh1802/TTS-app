@@ -78,7 +78,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AppProviders>
             <Navbar />
-            <main id="main-content" className="pt-20">{children}</main>
+            <main id="main-content" className="pt-16">{children}</main>
             <ToastContainer />
           </AppProviders>
         </ThemeProvider>

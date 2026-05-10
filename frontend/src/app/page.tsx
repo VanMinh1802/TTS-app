@@ -13,7 +13,7 @@ const WebGLBackground = dynamic(
 export default function Home() {
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex flex-col relative bg-[var(--color-aether-bg)] text-[#F4F4F5] overflow-hidden font-light selection:bg-[#6366F1]/30">
+    <div className="min-h-[calc(100dvh-4rem)] flex flex-col relative bg-[var(--color-aether-bg)] text-[#F4F4F5] overflow-hidden font-light selection:bg-[#6366F1]/30">
       <div className="absolute inset-0 pointer-events-none z-0 aether-bg-gradient opacity-40" />
       <WebGLBackground />
 

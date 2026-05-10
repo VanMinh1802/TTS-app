@@ -77,7 +77,7 @@ export default function VoicesPage() {
   }, [selectedVoice]);
 
   return (
-    <div className="min-h-[calc(100dvh-5rem)] relative text-[#F4F4F5] overflow-hidden font-light pt-4 pb-12">
+    <div className="min-h-[calc(100dvh-4rem)] relative text-[#F4F4F5] overflow-hidden font-light pt-4 pb-12">
       {/* Background radial gradient */}
       <div className="absolute inset-0 pointer-events-none aether-bg-gradient"></div>
       

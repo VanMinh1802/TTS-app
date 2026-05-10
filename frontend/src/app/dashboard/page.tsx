@@ -84,7 +84,7 @@ export default function DashboardPage() {
   const item = { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } };
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-12 min-h-[calc(100dvh-5rem)] pt-4">
+    <main className="max-w-7xl mx-auto px-6 py-12 min-h-[calc(100dvh-4rem)] pt-4">
       {/* Welcome */}
       <motion.div variants={container} initial="initial" animate="animate" className="mb-8">
         <motion.div variants={item} className="flex items-center justify-between">
@@ -127,7 +127,7 @@ export default function DashboardPage() {
         <motion.div variants={container} initial="initial" animate="animate" className="lg:col-span-2">
           <motion.div variants={item}>
             <div className="aether-glass-wrapper rounded-[24px] h-full">
-              <div className="aether-glass p-8 h-full flex flex-col">
+                <div className="aether-glass p-6 md:p-8 h-full flex flex-col">
                 <h2 className="text-[18px] font-semibold tracking-wide text-white mb-8">{t.dashboard.resourceOverview}</h2>
                 <div className="space-y-6 flex-1">
                   {progressRows.map((row) => (

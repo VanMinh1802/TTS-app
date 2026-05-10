@@ -53,7 +53,7 @@ export function Navbar() {
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-[#050508]/90 backdrop-blur-md border-b border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.5)] transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity group">
           <div className="flex items-center gap-1">

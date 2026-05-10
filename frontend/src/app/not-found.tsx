@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 export default function NotFound() {
   return (
-    <div className="min-h-[calc(100dvh-5rem)] flex items-center justify-center p-4 relative text-[#F4F4F5] font-light overflow-hidden">
+    <div className="min-h-[calc(100dvh-4rem)] flex items-center justify-center p-4 relative text-[#F4F4F5] font-light overflow-hidden">
       {/* Background glow */}
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 50% 50%, rgba(99,102,241,0.05) 0%, transparent 60%)' }} />
 

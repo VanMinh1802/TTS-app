@@ -77,7 +77,7 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-[calc(100dvh-5rem)] relative text-[#F4F4F5] overflow-hidden font-light pt-4 pb-12">
+    <div className="min-h-[calc(100dvh-4rem)] relative text-[#F4F4F5] overflow-hidden font-light pt-4 pb-12">
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 50% 0%, rgba(99,102,241,0.05) 0%, transparent 70%)' }} />
       <main className="max-w-7xl mx-auto px-6 relative z-10">
         <div className="text-center mb-8">
@@ -120,7 +120,7 @@ export default function PricingPage() {
                 plan.badge ? 'ring-1 ring-[#6366F1]/40 shadow-[0_0_40px_rgba(99,102,241,0.12)]' : ''
               }`}
             >
-              <div className="aether-glass rounded-[24px] p-8 h-full flex flex-col relative overflow-hidden">
+              <div className="aether-glass rounded-[24px] p-6 md:p-8 h-full flex flex-col relative overflow-hidden">
                 {plan.badge && (
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#6366F1] to-[#C968F7]" />
                 )}
