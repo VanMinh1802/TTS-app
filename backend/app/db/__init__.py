@@ -36,6 +36,8 @@ def init_db():
     try:
         with engine.connect() as conn:
             conn.execute(text("ALTER TABLE audio_records ADD COLUMN IF NOT EXISTS duration FLOAT"))
+            conn.execute(text("ALTER TABLE license_keys ADD COLUMN IF NOT EXISTS code_hash VARCHAR(64)"))
+            conn.execute(text("DELETE FROM license_keys WHERE code_hash IS NULL AND length(code) < 20"))
             conn.commit()
     except Exception:
         pass

@@ -14,7 +14,7 @@ class LicenseKey(Base):
         String(36), primary_key=True, default=lambda: str(uuid.uuid4())
     )
     code: Mapped[str] = mapped_column(String(50), unique=True, index=True)
-    code_hash: Mapped[str] = mapped_column(String(64), nullable=True, index=True)
+    code_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     duration_days: Mapped[int] = mapped_column(Integer, default=30)
     tier: Mapped[str] = mapped_column(String(50), default="pro")
     

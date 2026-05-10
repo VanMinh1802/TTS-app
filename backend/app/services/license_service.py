@@ -63,12 +63,13 @@ class LicenseService:
 
         clean_code = code.strip()
         code_hash = _hash_code(clean_code)
-        logger.info(f"Activation attempt: code_len={len(clean_code)}, hash={code_hash[:16]}...")
-        
+        logger.info(f"Activation: len={len(clean_code)}, hash={code_hash[:16]}...")
+
         all_keys = self.uow.licenses.find_all()
-        db_hashes = [k.code_hash[:16] + "..." for k in all_keys[:5]]
-        logger.info(f"DB has {len(all_keys)} keys, first 5 hashes: {db_hashes}")
-        
+        valid_hashes = [k.code_hash[:16] + "..." for k in all_keys if k.code_hash]
+        null_count = sum(1 for k in all_keys if not k.code_hash)
+        logger.info(f"DB: {len(all_keys)} keys, {null_count} NULL hashes, {len(valid_hashes)} valid: {valid_hashes[:3]}")
+
         key = self.uow.licenses.find_one(code_hash=code_hash)
 
         if not key:
