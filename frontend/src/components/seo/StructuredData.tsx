@@ -16,7 +16,8 @@ const jsonLd = [
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Type2Vibe",
-      url: "https://type2vibe.online",
+    url: "https://type2vibe.online",
+    logo: "https://type2vibe.online/logo.svg",
   },
   {
     "@context": "https://schema.org",
