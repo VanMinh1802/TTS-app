@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/api/", "/dashboard/", "/studio/", "/admin/", "/settings/", "/api-keys/"],
     },
-    sitemap: "https://type2vibe.com/sitemap.xml",
+    sitemap: "https://type2vibe.online/sitemap.xml",
   };
 }

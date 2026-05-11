@@ -34,6 +34,6 @@ describe("robots.ts", () => {
   test("points to sitemap.xml", () => {
     const result = robots();
 
-    expect(result.sitemap).toBe("https://type2vibe.com/sitemap.xml");
+    expect(result.sitemap).toBe("https://type2vibe.online/sitemap.xml");
   });
 });

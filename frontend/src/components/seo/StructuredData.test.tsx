@@ -19,10 +19,10 @@ describe("StructuredData", () => {
     const website = data.find((item: { "@type": string }) => item["@type"] === "WebSite");
     expect(website).toBeDefined();
     expect(website.name).toBe("Type2Vibe");
-    expect(website.url).toBe("https://type2vibe.com");
+    expect(website.url).toBe("https://type2vibe.online");
     expect(website.potentialAction["@type"]).toBe("SearchAction");
     expect(website.potentialAction.target).toBe(
-      "https://type2vibe.com/dictionary?q={search_term_string}"
+      "https://type2vibe.online/dictionary?q={search_term_string}"
     );
   });
 
@@ -35,7 +35,7 @@ describe("StructuredData", () => {
     const org = data.find((item: { "@type": string }) => item["@type"] === "Organization");
     expect(org).toBeDefined();
     expect(org.name).toBe("Type2Vibe");
-    expect(org.url).toBe("https://type2vibe.com");
+    expect(org.url).toBe("https://type2vibe.online");
   });
 
   test("contains WebApplication schema", () => {

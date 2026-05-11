@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://type2vibe.com";
+  const baseUrl = "https://type2vibe.online";
   const lastModified = new Date();
 
   const routes: Array<{
