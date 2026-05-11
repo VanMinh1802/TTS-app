@@ -14,7 +14,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://type2vibe.online"),
+  metadataBase: new URL("https://type2vibe.com"),
   title: {
     default: "Type2Vibe | Chuyển văn bản thành giọng nói Tiếng Việt",
     template: "%s | Type2Vibe",
@@ -30,29 +30,20 @@ export const metadata: Metadata = {
     "max-video-preview": -1,
   },
   alternates: {
-    canonical: "https://type2vibe.online",
+    canonical: "https://type2vibe.com",
   },
   openGraph: {
     title: "Type2Vibe | Đừng chỉ gõ. Hãy để văn bản cất tiếng.",
     description: "Nền tảng TTS chuyên nghiệp, tích hợp API, độ trễ cực thấp.",
-    url: "https://type2vibe.online",
+    url: "https://type2vibe.com",
     siteName: "Type2Vibe",
     locale: "vi_VN",
     type: "website",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Type2Vibe - Nền tảng TTS Tiếng Việt",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Type2Vibe | AI Text to Speech Tiếng Việt",
     description: "Nền tảng TTS chuyên nghiệp dành cho người sáng tạo và lập trình viên.",
-    images: ["/twitter-image.png"],
   },
   formatDetection: {
     telephone: false,

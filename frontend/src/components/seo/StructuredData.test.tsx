@@ -36,7 +36,6 @@ describe("StructuredData", () => {
     expect(org).toBeDefined();
     expect(org.name).toBe("Type2Vibe");
     expect(org.url).toBe("https://type2vibe.com");
-    expect(org.logo).toBe("https://type2vibe.com/og-image.png");
   });
 
   test("contains WebApplication schema", () => {

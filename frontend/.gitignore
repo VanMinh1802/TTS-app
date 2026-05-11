@@ -30,8 +30,6 @@ screenshots/
 screenshots-final/
 *.yml
 *.png
-!public/og-image.png
-!public/twitter-image.png
 homepage-dark.yml
 
 # debug
