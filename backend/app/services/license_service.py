@@ -154,5 +154,21 @@ class LicenseService:
         key = self.uow.licenses.get(license_id)
         if not key:
             raise NotFoundError("License not found")
+
+        if key.is_used and key.used_by_id:
+            licensed_user = self.uow.users.get(key.used_by_id)
+            if licensed_user and licensed_user.subscription_tier == key.tier:
+                licensed_user.subscription_tier = "free"
+                licensed_user.subscription_expires_at = None
+
+                from app.services.quota_service import QuotaService, QUOTA_LIMITS
+                quota_service = QuotaService(self.uow)
+                quota = quota_service.get_or_create_quota(licensed_user.id)
+                free_limits = QUOTA_LIMITS["free"]
+                quota.tier = "free"
+                quota.characters_limit = free_limits["characters"]
+                quota.storage_limit_mb = free_limits["storage_mb"]
+                quota.api_calls_limit = free_limits["api_calls"]
+
         self.uow.licenses.delete(key)
         self.uow.commit()
