@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     default: "Type2Vibe | Chuyển văn bản thành giọng nói Tiếng Việt",
     template: "%s | Type2Vibe",
   },
-  description: "Nền tảng TTS chuyên nghiệp dành riêng cho Tiếng Việt. Ứng dụng AI Gemini để chuẩn hóa văn bản, phát âm chuẩn xác, tích hợp API dễ dàng.",
+  description: "Nền tảng TTS chuyên nghiệp dành riêng cho Tiếng Việt. Phát âm chuẩn xác, tích hợp API dễ dàng.",
   keywords: ["TTS", "Text to Speech", "Tiếng Việt", "AI Voice", "Giọng nói nhân tạo", "Gemini"],
   authors: [{ name: "Type2Vibe Team" }],
   robots: {
