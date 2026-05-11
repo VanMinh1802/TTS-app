@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     PASSWORD_REQUIRE_NUMBER: bool = True
 
     # CORS
-    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000,https://frontend.nguyenvanminh180220.workers.dev"
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000,https://type2vibe.online,https://www.type2vibe.online,https://frontend.nguyenvanminh180220.workers.dev"
 
     @property
     def cors_origin_list(self) -> list[str]:
