@@ -89,11 +89,7 @@ function ActivateForm() {
                   <input
                     type="text"
                     {...register("code")}
-                    onInput={(e) => {
-                      const target = e.target as HTMLInputElement;
-                      target.value = target.value.toUpperCase();
-                      setActStatus("idle");
-                    }}
+                    onInput={() => setActStatus("idle")}
                     placeholder="PRO-365-XXXXXXXX"
                     className={`w-full bg-white/5 border ${getFieldErrorClass(errors.code?.message)} rounded-xl px-5 py-4 font-mono text-center tracking-[0.15em] text-sm text-white placeholder:text-[#A1A1AA]/30 outline-none focus:bg-white/10 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]`}
                   />
