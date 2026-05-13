@@ -129,6 +129,19 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
 
           if (type === 'progress') {
             setProgress(event.data.value);
+            // Reset timeout on progress to allow very long texts as long as it isn't completely frozen
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+              timeoutRef.current = setTimeout(() => {
+                if (worker.onmessage) {
+                  console.error('[TTS] Worker timeout (5m inactivity)');
+                  worker.onmessage = null;
+                  worker.onerror = null;
+                  done();
+                  reject(new Error('Speech synthesis timed out. Please try a shorter text or check your connection.'));
+                }
+              }, 300000);
+            }
           } else if (type === 'audio') {
             if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
             
@@ -196,16 +209,16 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
           }
         });
 
-        // 30 second timeout for local generation
+        // 5 minute timeout for local generation to support initial model download and slow devices
         timeoutRef.current = setTimeout(() => {
           if (worker.onmessage) {
-            console.error('[TTS] Worker timeout (30s)');
+            console.error('[TTS] Worker timeout (5m)');
             worker.onmessage = null;
             worker.onerror = null;
             done();
-            reject(new Error('Speech synthesis timed out. Please try a shorter text.'));
+            reject(new Error('Speech synthesis timed out. Please try a shorter text or check your connection.'));
           }
-        }, 30000);
+        }, 300000);
       });
     } catch (err) {
       setIsUsingWorker(false);
