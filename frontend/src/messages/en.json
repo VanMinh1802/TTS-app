@@ -517,6 +517,7 @@
       "whatIs": "What is an API Key?",
       "howToCreate": "How to Create an API Key",
       "keyFormat": "API Key Structure",
+      "clientSide": "Client-side Integration",
       "authentication": "API Authentication",
       "scopes": "Scopes & Permissions",
       "rateLimit": "Rate Limit & Quota",

@@ -513,6 +513,7 @@
       "whatIs": "API Key là gì?",
       "howToCreate": "Cách tạo API Key",
       "keyFormat": "Cấu trúc API Key",
+      "clientSide": "Tích hợp Client-side",
       "authentication": "Cách xác thực với API",
       "scopes": "Scopes và Phân quyền",
       "rateLimit": "Rate Limit & Quota",

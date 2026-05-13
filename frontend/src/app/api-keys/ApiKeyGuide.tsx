@@ -122,6 +122,45 @@ const sections: GuideSection[] = [
     ),
   },
   {
+    id: "client-side",
+    title: "Tích hợp Client-side",
+    icon: "⚛",
+    content: (
+      <div className="space-y-4 text-[#D4D4D8] font-light leading-relaxed text-sm">
+        <p>
+          Type2Vibe sử dụng kiến trúc <strong className="text-white font-medium">100% Client-side Synthesis</strong>. 
+          Văn bản của bạn không bao giờ được gửi lên máy chủ để xử lý, đảm bảo quyền riêng tư tuyệt đối.
+        </p>
+        <div className="bg-[#0D100A]/60 border border-white/5 rounded-xl p-4 space-y-3">
+          <p className="text-[10px] uppercase tracking-widest text-[#818CF8] font-medium">Quy trình tích hợp</p>
+          <ol className="text-xs space-y-3 text-[#A1A1AA]">
+            <li className="flex gap-3">
+              <span className="text-white font-mono bg-white/10 w-5 h-5 flex items-center justify-center rounded">1</span>
+              <div>
+                <p className="text-white">Lấy thông tin giọng đọc</p>
+                <p>Gọi <code className="text-[#6366F1]">GET /api/tts/voices</code> để nhận danh sách model keys.</p>
+              </div>
+            </li>
+            <li className="flex gap-3">
+              <span className="text-white font-mono bg-white/10 w-5 h-5 flex items-center justify-center rounded">2</span>
+              <div>
+                <p className="text-white">Tải mô hình (ONNX)</p>
+                <p>Sử dụng public URL từ metadata để tải file <code className="text-[#6366F1]">.onnx</code> và <code className="text-[#6366F1] font-mono">.onnx.json</code>.</p>
+              </div>
+            </li>
+            <li className="flex gap-3">
+              <span className="text-white font-mono bg-white/10 w-5 h-5 flex items-center justify-center rounded">3</span>
+              <div>
+                <p className="text-white">Tổng hợp âm thanh</p>
+                <p>Sử dụng thư viện <code className="text-white font-mono">@diffusionstudio/piper-wasm</code> trong Web Worker để sinh audio buffer.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+    ),
+  },
+  {
     id: "authentication",
     title: "Cách xác thực với API",
     icon: "&rarr;",
@@ -135,48 +174,38 @@ const sections: GuideSection[] = [
         <div className="space-y-3">
           <h4 className="text-[11px] uppercase tracking-widest text-[#818CF8] font-medium">Phương thức 1: X-API-Key Header (khuyên dùng cho API)</h4>
           <div className="bg-[#0D100A]/80 border border-white/10 rounded-xl p-4">
-            <p className="text-[10px] uppercase tracking-widest text-[#71717A] mb-3">cURL</p>
-            <pre className="text-xs font-mono text-[#D4D4D8] overflow-x-auto"><code>{`curl -X POST \\\n  "http://localhost:8000/api/tts" \\\n  -H "Content-Type: application/json" \\\n  -H "X-API-Key: gva_YOUR_KEY_ID.YOUR_SECRET" \\\n  -d '{"text": "Xin chào", "voice": "female-vi"}'`}</code></pre>
+            <p className="text-[10px] uppercase tracking-widest text-[#71717A] mb-3">cURL - Lấy danh sách giọng đọc</p>
+            <pre className="text-xs font-mono text-[#D4D4D8] overflow-x-auto"><code>{`curl -X GET \\\n  "https://type2vibe.online/api/tts/voices" \\\n  -H "X-API-Key: gva_YOUR_KEY_ID.YOUR_SECRET"`}</code></pre>
           </div>
           <div className="bg-[#0D100A]/80 border border-white/10 rounded-xl p-4">
-            <p className="text-[10px] uppercase tracking-widest text-[#71717A] mb-3">Python</p>
+            <p className="text-[10px] uppercase tracking-widest text-[#71717A] mb-3">Python - Lấy quota sử dụng</p>
             <pre className="text-xs font-mono text-[#D4D4D8] overflow-x-auto"><code>{`import requests
 
 API_KEY = "gva_YOUR_KEY_ID.YOUR_SECRET"
-BASE_URL = "http://localhost:8000/api"
+BASE_URL = "https://type2vibe.online/api"
 
-response = requests.post(
-    f"{BASE_URL}/tts",
-    headers={
-        "Content-Type": "application/json",
-        "X-API-Key": API_KEY,
-    },
-    json={"text": "Xin chào", "voice": "female-vi"},
+response = requests.get(
+    f"{BASE_URL}/quota",
+    headers={"X-API-Key": API_KEY}
 )
 
 if response.ok:
-    with open("output.wav", "wb") as f:
-        f.write(response.content)
+    print(response.json())
 else:
     print(f"Error {response.status_code}: {response.text}")`}</code></pre>
           </div>
           <div className="bg-[#0D100A]/80 border border-white/10 rounded-xl p-4">
-            <p className="text-[10px] uppercase tracking-widest text-[#71717A] mb-3">JavaScript / Node.js</p>
+            <p className="text-[10px] uppercase tracking-widest text-[#71717A] mb-3">JavaScript - Lấy danh sách giọng đọc</p>
             <pre className="text-xs font-mono text-[#D4D4D8] overflow-x-auto"><code>{`const API_KEY = "gva_YOUR_KEY_ID.YOUR_SECRET";
-const BASE_URL = "http://localhost:8000/api";
+const BASE_URL = "https://type2vibe.online/api";
 
-const response = await fetch(\`\${BASE_URL}/tts\`, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "X-API-Key": API_KEY,
-  },
-  body: JSON.stringify({ text: "Xin chào", voice: "female-vi" }),
+const response = await fetch(\`\${BASE_URL}/tts/voices\`, {
+  headers: { "X-API-Key": API_KEY }
 });
 
 if (response.ok) {
-  const audioBlob = await response.blob();
-  // Save or play the audio blob
+  const voices = await response.json();
+  console.log(voices);
 }`}</code></pre>
           </div>
         </div>
@@ -229,8 +258,8 @@ if (response.ok) {
               </tr>
             </thead>
             <tbody className="text-[#A1A1AA]">
-              <tr className="border-b border-white/5"><td className="py-2 pr-4 font-mono text-[#F4F4F5]">tts:generate</td><td className="py-2 pr-4 font-mono">/api/tts</td><td className="py-2">Tạo giọng nói từ văn bản</td></tr>
-              <tr className="border-b border-white/5"><td className="py-2 pr-4 font-mono text-[#F4F4F5]">models:read</td><td className="py-2 pr-4 font-mono">/api/models</td><td className="py-2">Đọc danh sách model TTS khả dụng</td></tr>
+              <tr className="border-b border-white/5"><td className="py-2 pr-4 font-mono text-[#F4F4F5]">tts:generate</td><td className="py-2 pr-4 font-mono">/api/tts/convert-to-mp3</td><td className="py-2">Các công cụ hỗ trợ audio</td></tr>
+              <tr className="border-b border-white/5"><td className="py-2 pr-4 font-mono text-[#F4F4F5]">voices:read</td><td className="py-2 pr-4 font-mono">/api/tts/voices</td><td className="py-2">Đọc metadata giọng đọc cho client-side synthesis</td></tr>
               <tr className="border-b border-white/5"><td className="py-2 pr-4 font-mono text-[#F4F4F5]">voices:read</td><td className="py-2 pr-4 font-mono">/api/voices</td><td className="py-2">Đọc danh sách giọng đọc</td></tr>
               <tr className="border-b border-white/5"><td className="py-2 pr-4 font-mono text-[#F4F4F5]">audio:upload</td><td className="py-2 pr-4 font-mono">/api/audio</td><td className="py-2">Upload file audio</td></tr>
               <tr className="border-b border-white/5"><td className="py-2 pr-4 font-mono text-[#F4F4F5]">library</td><td className="py-2 pr-4 font-mono">/api/library</td><td className="py-2">Quản lý thư viện audio cá nhân</td></tr>

@@ -14,6 +14,7 @@ from app.models.user import APIKey, User
 from app.models.audio_record import AudioRecord
 from app.models.license import LicenseKey
 from app.models.activation_log import ActivationLog
+from app.models.revoked_token import RevokedToken
 
 __all__ = [
     "Base",
@@ -27,4 +28,5 @@ __all__ = [
     "AudioRecord",
     "LicenseKey",
     "ActivationLog",
+    "RevokedToken",
 ]

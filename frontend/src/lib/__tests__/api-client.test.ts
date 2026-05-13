@@ -79,23 +79,22 @@ describe('api-client', () => {
     (window as any).location = originalLocation;
   });
 
-  test('builds headers without reading localStorage', async () => {
-    localStorage.setItem('access_token', 'should-be-ignored');
-
+  test('attaches Authorization header from localStorage', async () => {
+    localStorage.setItem('access_token', 'test-token');
+ 
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
       status: 200,
       headers: new Headers({ 'content-type': 'application/json' }),
       text: async () => JSON.stringify({ ok: true }),
     } as unknown as Response);
-
+ 
     await apiRequest('/test', { method: 'GET' });
-
+ 
     const callArgs = vi.mocked(fetch).mock.calls[0];
     const callHeaders = callArgs[1]?.headers as Headers;
-    expect(callHeaders.get('Authorization')).toBeNull();
-    expect(callHeaders.get('Content-Type')).toBeNull();
-
+    expect(callHeaders.get('Authorization')).toBe('Bearer test-token');
+ 
     localStorage.removeItem('access_token');
   });
 

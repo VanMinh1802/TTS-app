@@ -1,6 +1,7 @@
 """Application configuration settings."""
 from functools import lru_cache
 
+from typing import Any, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -98,6 +99,20 @@ class Settings(BaseSettings):
     REDIS_MAX_CONNECTIONS: int = 50
     REDIS_RETRY_ON_TIMEOUT: bool = True
     REDIS_HEALTH_CHECK_INTERVAL: int = 30
+
+    def model_post_init(self, __context: Any) -> None:
+        """Warn if production CORS uses HTTPS but cookies are insecure."""
+        has_https_origin = any(
+            o.startswith("https://") for o in self.cors_origin_list
+        )
+        if has_https_origin and not self.AUTH_COOKIE_SECURE:
+            import warnings
+            warnings.warn(
+                "CORS origins contain HTTPS URLs but AUTH_COOKIE_SECURE=False. "
+                "Cookies will not work in production. Set AUTH_COOKIE_SECURE=True.",
+                UserWarning,
+                stacklevel=2,
+            )
 
 
 def _validate_required(settings: Settings) -> None:

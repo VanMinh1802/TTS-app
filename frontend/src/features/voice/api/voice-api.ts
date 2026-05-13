@@ -1,11 +1,7 @@
-import { ApiError, apiRequest } from "@/lib/api-client";
+import { apiRequest } from "@/lib/api-client";
 import {
-  ttsGenerateRequestSchema,
-  ttsGenerateResponseSchema,
   ttsVoicesResponseSchema,
   type StudioVoice,
-  type TTSGenerateRequest,
-  type TTSGenerateResponse,
 } from "../types/voice-types";
 
 let cachedStudioVoices: Promise<StudioVoice[]> | null = null;
@@ -24,17 +20,4 @@ export const getStudioVoices = async (): Promise<StudioVoice[]> => {
   })();
 
   return cachedStudioVoices;
-};
-
-export const generateTts = async (payload: TTSGenerateRequest, signal?: AbortSignal): Promise<TTSGenerateResponse> => {
-  const validatedPayload = ttsGenerateRequestSchema.parse(payload);
-
-  const raw = await apiRequest<TTSGenerateResponse>("/tts/generate", {
-    method: "POST",
-    body: JSON.stringify(validatedPayload),
-    signal,
-  });
-
-  const parsed = ttsGenerateResponseSchema.safeParse(raw);
-  return parsed.success ? parsed.data : (raw as TTSGenerateResponse);
 };
