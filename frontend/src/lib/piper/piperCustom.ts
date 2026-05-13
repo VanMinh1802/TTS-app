@@ -60,6 +60,8 @@ export async function loadCustomPiper(
 
   if (wasmBaseUrl) {
     ort.env.wasm.wasmPaths = wasmBaseUrl;
+  } else {
+    ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.1/dist/";
   }
 
   let modelBuffer: ArrayBuffer;

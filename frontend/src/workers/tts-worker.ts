@@ -128,29 +128,40 @@ async function ensureSession(voiceId: string, modelName: string, modelKey?: stri
       baseUrl = `${R2_PUBLIC_URL}/vi/${voiceId}`;
     }
 
-    const cachedEntry = await loadModelFromDb(voiceId, modelKey, updatedAt);
+    let cachedEntry = await loadModelFromDb(voiceId, modelKey, updatedAt);
     if (cachedEntry) {
       self.postMessage({ type: 'progress', value: 15 });
       self.postMessage({ type: 'cache-status', fromCache: true, url: voiceId });
     } else {
       self.postMessage({ type: 'progress', value: 5 });
       self.postMessage({ type: 'cache-status', fromCache: false, url: voiceId });
+
+      try {
+        const modelUrl = `${baseUrl}/${encodeURIComponent(effectiveModelName)}.onnx`;
+        const configUrl = `${baseUrl}/${encodeURIComponent(effectiveModelName)}.onnx.json`;
+        const cacheKey = modelKey || `vi/${voiceId}/${effectiveModelName}.onnx`;
+        
+        const [modelRes, configRes] = await Promise.all([
+          fetch(modelUrl),
+          fetch(configUrl),
+        ]);
+        
+        if (modelRes.ok && configRes.ok) {
+          const modelBuffer = await modelRes.arrayBuffer();
+          const configText = await configRes.text();
+          
+          await saveModelToDb(voiceId, modelBuffer, configText, cacheKey, updatedAt || '');
+          cachedEntry = { modelBuffer, configText } as ModelCacheEntry;
+        }
+      } catch (err) {
+        console.error('Failed to download model to cache', err);
+      }
     }
 
     const session = await loadCustomPiper(
       baseUrl, effectiveModelName, undefined, PIPER_PHONEMIZE_PATHS,
       cachedEntry?.modelBuffer, cachedEntry?.configText,
     );
-
-    if (!cachedEntry) {
-      const modelUrl = `${baseUrl}/${encodeURIComponent(effectiveModelName)}.onnx`;
-      const configUrl = `${baseUrl}/${encodeURIComponent(effectiveModelName)}.onnx.json`;
-      const cacheKey = modelKey || `vi/${voiceId}/${effectiveModelName}.onnx`;
-      Promise.all([
-        fetch(modelUrl).then(r => r.arrayBuffer()),
-        fetch(configUrl).then(r => r.text()),
-      ]).then(([buf, cfg]) => saveModelToDb(voiceId, buf, cfg, cacheKey, updatedAt || '')).catch(() => {});
-    }
 
     return session;
   })();
@@ -181,6 +192,7 @@ self.onmessage = async function (event: MessageEvent) {
   }
 
   if (type === 'generate') {
+    isCancelled = false;
     const { voiceId, text, speed, dictionary, modelKey, updatedAt } = data;
     if (!voiceId) return;
     try {
