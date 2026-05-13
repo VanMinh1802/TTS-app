@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { generateTts } from '@/features/voice/api/voice-api';
 import { apiRequest } from '@/lib/api-client';
 import type { TTSGenerateRequest, TTSGenerateResponse } from '@/features/voice/types/voice-types';
 
@@ -14,6 +13,10 @@ interface UseTtsGenerateReturn {
   cancelGeneration: () => void;
 }
 
+/**
+ * Converts WAV data URL to MP3 using server-side endpoint.
+ * Note: This sends audio data to server, not text content.
+ */
 async function convertToMp3(wavDataUrl: string): Promise<string | null> {
   try {
     const resp = await apiRequest<{ mp3_url?: string }>('/tts/convert-to-mp3', {
@@ -26,6 +29,10 @@ async function convertToMp3(wavDataUrl: string): Promise<string | null> {
   }
 }
 
+/**
+ * Hook for local client-side TTS generation using Web Workers and Piper ONNX.
+ * Privacy-hardened: Never falls back to server-side synthesis.
+ */
 export function useTtsGenerate(): UseTtsGenerateReturn {
   const [progress, setProgress] = useState(0);
   const [isUsingWorker, setIsUsingWorker] = useState(false);
@@ -107,16 +114,11 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
 
     abortRef.current?.abort();
     abortRef.current = new AbortController();
-    const signal = abortRef.current.signal;
-
+    
     try {
       const worker = getWorker();
       if (!worker) {
-        setIsUsingWorker(false);
-        const serverResponse = await generateTts(request, signal);
-        return new Promise<TTSGenerateResponse>((resolve) => {
-          resolveWithMp3(resolve, serverResponse.audio_url, serverResponse.duration, request.voice_id);
-        });
+        throw new Error('Speech synthesis is not supported in this browser environment');
       }
 
       return new Promise((resolve, reject) => {
@@ -125,17 +127,18 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
         worker.onmessage = (event: MessageEvent) => {
           const { type } = event.data;
 
-          if (type === 'cache-status') {
-          } else if (type === 'progress') {
+          if (type === 'progress') {
             setProgress(event.data.value);
           } else if (type === 'audio') {
             if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
+            
             const rawBuffer = event.data.buffer as ArrayBuffer;
             const dataView = new DataView(rawBuffer);
             const sampleRate = dataView.getUint32(24, true);
             const channels = dataView.getUint16(22, true);
             const bitsPerSample = dataView.getUint16(34, true);
             let wavDuration = 0;
+            
             if (sampleRate && channels && bitsPerSample) {
               let offset = 12;
               while (offset + 8 <= rawBuffer.byteLength) {
@@ -160,28 +163,26 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
             };
             reader.readAsDataURL(blob);
 
+            // Record quota usage locally
             apiRequest('/quota/record', {
               method: 'POST',
               body: JSON.stringify({ characters: request.text.length, api_calls: 1 }),
               allowEmpty: true,
             }).catch(() => {});
+
           } else if (type === 'error') {
             if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
-            console.warn('[TTS] Worker error, falling back to server:', event.data.message);
-            setIsUsingWorker(false);
-            generateTts(request, signal).then((resp) => {
-              resolveWithMp3(resolve, resp.audio_url, resp.duration, request.voice_id).finally(done);
-            }).catch(reject);
+            console.error('[TTS] Worker error:', event.data.message);
+            done();
+            reject(new Error(event.data.message || 'Speech synthesis failed'));
           }
         };
 
-        worker.onerror = () => {
+        worker.onerror = (e) => {
           if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
-          console.warn('[TTS] Worker crashed, falling back to server');
-          setIsUsingWorker(false);
-          generateTts(request, signal).then((resp) => {
-            resolveWithMp3(resolve, resp.audio_url, resp.duration, request.voice_id).finally(done);
-          }).catch(reject);
+          console.error('[TTS] Worker crashed:', e);
+          done();
+          reject(new Error('Speech synthesis engine crashed'));
         };
 
         worker.postMessage({
@@ -195,25 +196,21 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
           }
         });
 
+        // 30 second timeout for local generation
         timeoutRef.current = setTimeout(() => {
           if (worker.onmessage) {
-            console.warn('[TTS] Worker timeout (30s), falling back to server');
+            console.error('[TTS] Worker timeout (30s)');
             worker.onmessage = null;
             worker.onerror = null;
-            setIsUsingWorker(false);
-            generateTts(request, signal).then((resp) => {
-              resolveWithMp3(resolve, resp.audio_url, resp.duration, request.voice_id).finally(done);
-            }).catch(reject);
+            done();
+            reject(new Error('Speech synthesis timed out. Please try a shorter text.'));
           }
         }, 30000);
       });
-    } catch {
+    } catch (err) {
       setIsUsingWorker(false);
       setGenerating(false);
-      const serverResponse = await generateTts(request, signal);
-      return new Promise<TTSGenerateResponse>((resolve) => {
-        resolveWithMp3(resolve, serverResponse.audio_url, serverResponse.duration, request.voice_id);
-      });
+      throw err;
     }
   }, [getWorker, resolveWithMp3]);
 
