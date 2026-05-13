@@ -11,7 +11,6 @@ from app.api.models import router as models_router, router_audio
 from app.api.quota import router as quota_router
 from app.api.analytics import router as analytics_router
 from app.api.tts import router as tts_router
-from app.api.normalize import router as normalize_router
 from app.api.dictionary import router as dictionary_router
 from app.api.language import router as language_router
 from app.api.voices import router as voices_router
@@ -90,7 +89,6 @@ app.include_router(router_audio, prefix=settings.API_V1_PREFIX)
 app.include_router(quota_router, prefix=settings.API_V1_PREFIX)
 app.include_router(analytics_router, prefix=settings.API_V1_PREFIX)
 app.include_router(tts_router, prefix=settings.API_V1_PREFIX)
-app.include_router(normalize_router, prefix=settings.API_V1_PREFIX)
 app.include_router(dictionary_router, prefix=settings.API_V1_PREFIX)
 app.include_router(language_router, prefix=settings.API_V1_PREFIX)
 app.include_router(voices_router, prefix=settings.API_V1_PREFIX)

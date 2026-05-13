@@ -80,3 +80,12 @@ export function getRecordDuration(record: LibraryRecord): number | null {
     return null;
   }
 }
+
+/**
+ * Compute the badge status string for a library record based on its sync state.
+ */
+export function computeStatusBadge(syncStatus: SyncStatus): "synced" | "local" | "cloud" {
+  if (syncStatus.local && syncStatus.cloud) return "synced";
+  if (syncStatus.local) return "local";
+  return "cloud";
+}
