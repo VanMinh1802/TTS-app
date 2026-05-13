@@ -1,6 +1,8 @@
 import { notificationService } from "@/shared/notifications/notification-store";
 
-const DEFAULT_API_URL = "http://localhost:8000/api";
+const DEFAULT_API_URL = process.env.NODE_ENV === 'production' 
+  ? "https://tts-app-imdy.onrender.com/api" 
+  : "http://localhost:8000/api";
 
 export class ApiError extends Error {
   status: number;

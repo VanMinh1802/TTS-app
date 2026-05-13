@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
@@ -8,7 +8,7 @@ import { notificationService } from "@/shared/notifications/notification-store";
 import { useT } from "@/shared/i18n";
 import { useAuth } from "@/features/auth";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'production' ? "https://tts-app-imdy.onrender.com/api" : "http://localhost:8000/api");
 
 interface Voice {
   id: string;
