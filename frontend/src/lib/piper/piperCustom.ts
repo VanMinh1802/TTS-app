@@ -129,60 +129,92 @@ export async function loadCustomPiper(
     return Array.isArray(value) ? (value[0] ?? 0) : value;
   }
 
-  /** Run Piper WASM phonemizer (loaded from CDN); returns phoneme_ids or null if unavailable. */
+  // === Cached Piper WASM phonemizer (loaded once, reused for all chunks) ===
+  let cachedWasmModule: { callMain: (args: string[]) => void } | null = null;
+  let wasmModulePromise: Promise<{ callMain: (args: string[]) => void } | null> | null = null;
+
+  // Mutable callback reference: the WASM module's `print` closure reads from this
+  // variable on every call, so we can swap the handler without re-instantiating.
+  let activePrintCallback: ((data: string) => void) | null = null;
+
+  /** Load or return cached Piper WASM phonemizer module. */
+  async function getOrLoadPiperWasm(): Promise<{ callMain: (args: string[]) => void } | null> {
+    if (cachedWasmModule) return cachedWasmModule;
+    if (wasmModulePromise) return wasmModulePromise;
+    if (!piperPhonemizePaths) return null;
+
+    wasmModulePromise = (async () => {
+      try {
+        const phonemizeChunkUrl =
+          "https://cdn.jsdelivr.net/npm/@mintplex-labs/piper-tts-web@1.0.4/dist/piper-o91UDS6e.js";
+        const mod = await import(/* webpackIgnore: true */ phonemizeChunkUrl);
+        const createPiperPhonemize =
+          typeof mod.default === "function"
+            ? mod.default
+            : (
+                mod as {
+                  createPiperPhonemize?: (opts: unknown) => Promise<unknown>;
+                }
+              ).createPiperPhonemize;
+        if (typeof createPiperPhonemize !== "function") return null;
+
+        // The print closure delegates to activePrintCallback, which we swap per-call.
+        // This is the correct pattern because Emscripten captures the closure at init time.
+        const wasmModule = (await createPiperPhonemize({
+          print(data: string) {
+            if (activePrintCallback) activePrintCallback(data);
+          },
+          printErr() { /* ignore */ },
+          locateFile(url: string) {
+            if (url.endsWith(".wasm")) return piperPhonemizePaths!.piperWasm;
+            if (url.endsWith(".data")) return piperPhonemizePaths!.piperData;
+            return url;
+          },
+        })) as { callMain: (args: string[]) => void };
+
+        cachedWasmModule = wasmModule;
+        return wasmModule;
+      } catch {
+        return null;
+      }
+    })();
+
+    return wasmModulePromise;
+  }
+
+  /** Run Piper WASM phonemizer using cached module; returns phoneme_ids or null. */
   async function runPiperPhonemize(text: string): Promise<number[] | null> {
     if (!piperPhonemizePaths) return null;
-    // Increase timeout for long text (2000+ characters can take longer to process)
     const timeoutMs = 60000;
     try {
-      const phonemizeChunkUrl =
-        "https://cdn.jsdelivr.net/npm/@mintplex-labs/piper-tts-web@1.0.4/dist/piper-o91UDS6e.js";
-      const mod = await import(/* webpackIgnore: true */ phonemizeChunkUrl);
-      const createPiperPhonemize =
-        typeof mod.default === "function"
-          ? mod.default
-          : (
-              mod as {
-                createPiperPhonemize?: (opts: unknown) => Promise<unknown>;
-              }
-            ).createPiperPhonemize;
-      if (typeof createPiperPhonemize !== "function") return null;
+      const wasmModule = await getOrLoadPiperWasm();
+      if (!wasmModule) return null;
+
       let resolvePhonemeIds: (ids: number[]) => void;
-      const idsPromise = new Promise<number[]>((resolve) => {
-        resolvePhonemeIds = resolve;
-      });
+      const idsPromise = new Promise<number[]>((resolve) => { resolvePhonemeIds = resolve; });
       const timeoutPromise = new Promise<number[] | null>((_, reject) => {
         setTimeout(() => reject(new Error("Phonemizer timeout")), timeoutMs);
       });
-      const wasmModule = (await createPiperPhonemize({
-        print(data: string) {
-          try {
-            const parsed = JSON.parse(data) as { phoneme_ids?: number[] };
-            if (Array.isArray(parsed.phoneme_ids))
-              resolvePhonemeIds(parsed.phoneme_ids);
-          } catch {
-            // ignore
-          }
-        },
-        printErr() {
-          // ignore
-        },
-        locateFile(url: string) {
-          if (url.endsWith(".wasm")) return piperPhonemizePaths.piperWasm;
-          if (url.endsWith(".data")) return piperPhonemizePaths.piperData;
-          return url;
-        },
-      })) as { callMain: (args: string[]) => void };
+
+      // Set the mutable callback BEFORE calling callMain
+      activePrintCallback = (data: string) => {
+        try {
+          const parsed = JSON.parse(data) as { phoneme_ids?: number[] };
+          if (Array.isArray(parsed.phoneme_ids)) resolvePhonemeIds(parsed.phoneme_ids);
+        } catch { /* ignore */ }
+      };
+
       wasmModule.callMain([
-        "-l",
-        espeakVoice,
-        "--input",
-        JSON.stringify([{ text }]),
-        "--espeak_data",
-        "/espeak-ng-data",
+        "-l", espeakVoice,
+        "--input", JSON.stringify([{ text }]),
+        "--espeak_data", "/espeak-ng-data",
       ]);
-      return await Promise.race([idsPromise, timeoutPromise]);
+
+      const result = await Promise.race([idsPromise, timeoutPromise]);
+      activePrintCallback = null; // clean up
+      return result;
     } catch {
+      activePrintCallback = null;
       return null;
     }
   }
@@ -233,10 +265,11 @@ export async function loadCustomPiper(
   /**
    * Split text into chunks (by sentences or paragraphs) for processing.
    * Each chunk is processed separately and concatenated.
+   * Larger chunk size (800) reduces overhead from phonemizer calls.
    */
   function splitTextIntoChunks(
     text: string,
-    maxChunkSize: number = 500,
+    maxChunkSize: number = 800,
   ): string[] {
     // Split by common sentence endings first
     const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
@@ -294,7 +327,7 @@ export async function loadCustomPiper(
     const onProgress = options?.onProgress;
 
     // Use chunking for long text to avoid memory issues
-    const chunks = splitTextIntoChunks(trimmed, 500);
+    const chunks = splitTextIntoChunks(trimmed, 800);
 
     if (chunks.length === 1) {
       // Single chunk - process normally
@@ -302,18 +335,35 @@ export async function loadCustomPiper(
       return processSingleChunk(chunks[0], lengthScale, speakerId);
     }
 
-    // Multiple chunks - process each and concatenate
+    // === Performance optimization: pre-compute ALL phoneme IDs first ===
+    // This warms the WASM phonemizer cache on the first call and subsequent
+    // calls reuse the cached module, avoiding repeated WASM instantiation.
+    onProgress?.(20); // Starting phonemization
+
+    // Pre-warm the WASM phonemizer module (loads once, cached for all chunks)
+    if (effectivePhonemeType === "espeak") {
+      await getOrLoadPiperWasm();
+    }
+
+    const allPhonemeIds: number[][] = [];
+    for (let i = 0; i < chunks.length; i++) {
+      const ids = await getPhonemeIds(chunks[i]);
+      allPhonemeIds.push(ids);
+      // Progress: 20-40% for phonemization
+      onProgress?.(20 + Math.round(((i + 1) / chunks.length) * 20));
+    }
+
+    // === Run ONNX inference with pre-computed phoneme IDs ===
     const audioChunks: Float32Array[] = [];
     const totalChunks = chunks.length;
 
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i];
-      // Progress: 40-80% based on chunk progress
-      const chunkProgress = 40 + Math.round((i / totalChunks) * 40);
+    for (let i = 0; i < totalChunks; i++) {
+      // Progress: 40-85% based on chunk progress
+      const chunkProgress = 40 + Math.round((i / totalChunks) * 45);
       onProgress?.(chunkProgress);
 
-      const audioChunk = await processSingleChunk(
-        chunk,
+      const audioChunk = await processPrecomputedChunk(
+        allPhonemeIds[i],
         lengthScale,
         speakerId,
       );
@@ -345,12 +395,30 @@ export async function loadCustomPiper(
     speakerId: number,
   ): Promise<Float32Array> {
     const phonemeIds = await getPhonemeIds(textChunk);
+    return processPrecomputedChunk(phonemeIds, lengthScale, speakerId);
+  }
+
+  /**
+   * Run ONNX inference with pre-computed phoneme IDs.
+   * Avoids redundant phonemization when IDs are already available.
+   * Uses pre-allocated BigInt64Array instead of map() to reduce GC pressure.
+   */
+  async function processPrecomputedChunk(
+    phonemeIds: number[],
+    lengthScale: number,
+    speakerId: number,
+  ): Promise<Float32Array> {
+    // Pre-allocate BigInt64Array directly instead of phonemeIds.map(BigInt)
+    const bigIntIds = new BigInt64Array(phonemeIds.length);
+    for (let i = 0; i < phonemeIds.length; i++) {
+      bigIntIds[i] = BigInt(phonemeIds[i]);
+    }
 
     const Tensor = ort.Tensor;
     const inputs: Record<string, InstanceType<typeof Tensor>> = {
       input: new Tensor(
         "int64",
-        new BigInt64Array(phonemeIds.map((id) => BigInt(id))),
+        bigIntIds,
         [1, phonemeIds.length],
       ),
       input_lengths: new Tensor(

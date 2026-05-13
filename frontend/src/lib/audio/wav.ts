@@ -132,17 +132,14 @@ export function encodeWav(
   writeString(36, "data");
   view.setUint32(40, dataSize, true);
 
-  const int16Array = new Int16Array(float32Array.length);
+  // Optimized: write samples directly via Int16Array view over the buffer
+  // This avoids per-sample DataView.setInt16 calls (eliminates N function calls)
+  const int16View = new Int16Array(buffer, 44, float32Array.length);
   for (let i = 0; i < float32Array.length; i++) {
     const sample = Math.max(-1, Math.min(1, float32Array[i]!));
     // Symmetric mapping: -1.0 → -32768, 1.0 → 32767
-    int16Array[i] =
+    int16View[i] =
       sample < 0 ? Math.round(sample * 32768) : Math.round(sample * 32767);
-  }
-
-  const dataView = new DataView(buffer, 44);
-  for (let i = 0; i < int16Array.length; i++) {
-    dataView.setInt16(i * 2, int16Array[i]!, true);
   }
 
   return buffer;

@@ -221,7 +221,9 @@ self.onmessage = async function (event: MessageEvent) {
         },
       });
       self.postMessage({ type: 'progress', value: 95 });
-      self.postMessage({ type: 'audio', buffer: encodeWav(float32Audio, session.sampleRate) });
+      // Use Transferable to zero-copy the buffer to main thread (avoids cloning large audio data)
+      const wavBuffer = encodeWav(float32Audio, session.sampleRate);
+      self.postMessage({ type: 'audio', buffer: wavBuffer }, { transfer: [wavBuffer] });
       self.postMessage({ type: 'progress', value: 100 });
 
     } catch (error) {
