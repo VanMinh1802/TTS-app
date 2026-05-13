@@ -3,7 +3,7 @@ from typing import Optional
 
 
 SCOPE_MAP: dict[str, str] = {
-    "/api/tts": "tts:generate",
+    "/api/tts": "tts:generate",  # covers /tts/voices and /tts/convert-to-mp3
     "/api/models": "models:read",
     "/api/audio": "audio:upload",
     "/api/library": "library",

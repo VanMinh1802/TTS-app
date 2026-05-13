@@ -70,19 +70,23 @@ describe('useTtsGenerate privacy hardening', () => {
     
     const request = { text: 'Private sensitive text', voice_id: 'voice-1' };
     
-    const promise = result.current.clientGenerate(request as any);
+    let caughtError: any;
+    const promise = result.current.clientGenerate(request as any).catch(e => {
+      caughtError = e;
+    });
 
     // Wait for worker to be created and handlers set
     await vi.waitFor(() => {
         if (!mockWorker || !mockWorker.onerror) throw new Error('Worker/onerror not ready');
     });
 
-    // Simulate worker crash
+    // Simulate worker crash inside act to capture all state updates
     await act(async () => {
       mockWorker.onerror(new ErrorEvent('error', { message: 'Worker crashed' }));
+      await promise;
     });
 
-    await expect(promise).rejects.toThrow();
+    expect(caughtError).toBeTruthy();
     expect(generateTts).not.toHaveBeenCalled();
   });
 });
