@@ -94,9 +94,19 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
   const togglePreviewPlayback = useCallback(async () => {
     if (!audioContextRef.current) return;
     if (audioContextRef.current.state === 'running') {
-      await audioContextRef.current.suspend();
-      setIsPreviewPlaying(false);
-      isPreviewPlayingRef.current = false;
+      if (allChunksReceivedRef.current) {
+        // Generation is complete. User wants to stop preview.
+        // Close the streaming context and yield to the standard static player.
+        await audioContextRef.current.close().catch(() => {});
+        setStreamingStatus('saved');
+        setIsPreviewPlaying(false);
+        isPreviewPlayingRef.current = false;
+      } else {
+        // Generation still ongoing, just pause the preview.
+        await audioContextRef.current.suspend();
+        setIsPreviewPlaying(false);
+        isPreviewPlayingRef.current = false;
+      }
     } else if (audioContextRef.current.state === 'suspended') {
       await audioContextRef.current.resume();
       setIsPreviewPlaying(true);
