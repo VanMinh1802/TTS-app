@@ -276,7 +276,9 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
           }, 300000);
         };
 
-        const BUFFER_CHUNKS = 2;
+        // A single chunk is ~800 characters (approx 1 minute of audio).
+        // Buffering 1 chunk is more than enough to ensure gapless playback.
+        const BUFFER_CHUNKS = 1;
 
         worker.onmessage = (event: MessageEvent) => {
           const { type } = event.data;
