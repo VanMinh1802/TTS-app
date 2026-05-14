@@ -256,7 +256,11 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
       }
 
       return new Promise((resolve, reject) => {
-        const done = () => { setIsUsingWorker(false); setGenerating(false); };
+        const done = () => { 
+          setIsUsingWorker(false); 
+          setGenerating(false); 
+          if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
+        };
 
         const resetTimeout = () => {
           if (timeoutRef.current) clearTimeout(timeoutRef.current);

@@ -238,13 +238,12 @@ self.onmessage = async function (event: MessageEvent) {
         if (isCancelled) return;
 
         // Send full concatenated audio for history/download
-        self.postMessage({ type: 'progress', value: 95 });
+        self.postMessage({ type: 'progress', value: 100 });
         const fullWav = encodeWav(float32Audio, session.sampleRate);
         self.postMessage(
           { type: 'stream-complete', buffer: fullWav },
           { transfer: [fullWav] }
         );
-        self.postMessage({ type: 'progress', value: 100 });
 
       } else {
         // === NON-STREAMING MODE (existing flow, unchanged) ===
@@ -254,11 +253,10 @@ self.onmessage = async function (event: MessageEvent) {
             self.postMessage({ type: 'progress', value: 30 + Math.round(p * 0.65) });
           },
         });
-        self.postMessage({ type: 'progress', value: 95 });
+        self.postMessage({ type: 'progress', value: 100 });
         // Use Transferable to zero-copy the buffer to main thread (avoids cloning large audio data)
         const wavBuffer = encodeWav(float32Audio, session.sampleRate);
         self.postMessage({ type: 'audio', buffer: wavBuffer }, { transfer: [wavBuffer] });
-        self.postMessage({ type: 'progress', value: 100 });
       }
 
     } catch (error) {
