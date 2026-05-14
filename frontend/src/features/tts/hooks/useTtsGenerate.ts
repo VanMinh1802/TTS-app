@@ -207,6 +207,10 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
     source.onended = () => {
       chunksPlayedRef.current += 1;
       
+      if (chunksPlayedRef.current < totalChunksRef.current) {
+        setStreamingProgress({ current: chunksPlayedRef.current + 1, total: totalChunksRef.current });
+      }
+      
       if (chunkQueueRef.current.length > 0) {
         const nextChunk = chunkQueueRef.current.shift()!;
         scheduleChunk(nextChunk);
@@ -282,7 +286,6 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
             const { buffer, index, total } = event.data;
             totalChunksRef.current = total;
             setStreamingStatus('streaming');
-            setStreamingProgress({ current: index + 1, total });
             resetTimeout();
 
             if (!playbackStartedRef.current) {
@@ -290,11 +293,14 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
               chunkQueueRef.current.push(buffer);
               if (chunkQueueRef.current.length >= BUFFER_CHUNKS) {
                 playbackStartedRef.current = true;
+                setStreamingProgress({ current: 1, total: totalChunksRef.current });
                 // Schedule all buffered chunks for gapless playback
                 while (chunkQueueRef.current.length > 0) {
                   const chunk = chunkQueueRef.current.shift()!;
                   scheduleChunk(chunk);
                 }
+              } else {
+                setStreamingProgress({ current: 0, total: totalChunksRef.current });
               }
             } else {
               // Playback already started — schedule immediately
@@ -311,6 +317,7 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
             // If playback hasn't started (e.g., only 1 chunk), flush queue now
             if (!playbackStartedRef.current && chunkQueueRef.current.length > 0) {
               playbackStartedRef.current = true;
+              setStreamingProgress({ current: 1, total: totalChunksRef.current });
               while (chunkQueueRef.current.length > 0) {
                 const chunk = chunkQueueRef.current.shift()!;
                 scheduleChunk(chunk);
