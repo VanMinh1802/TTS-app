@@ -199,7 +199,7 @@ self.onmessage = async function (event: MessageEvent) {
       const modelName = getModelFileName(voiceId);
 
       const session = await ensureSession(voiceId, modelName, modelKey, updatedAt);
-      self.postMessage({ type: 'progress', value: 50 });
+      self.postMessage({ type: 'progress', value: 30 });
 
       let processedText = text;
       if (dictionary && dictionary.length > 0) {
@@ -214,17 +214,52 @@ self.onmessage = async function (event: MessageEvent) {
 
       if (isCancelled) return;
 
-      const float32Audio = await session.predict(processedText, {
-        lengthScale: (speed && speed > 0) ? speed : 1.0,
-        onProgress: (p: number) => {
-          self.postMessage({ type: 'progress', value: 50 + Math.round(p * 0.45) });
-        },
-      });
-      self.postMessage({ type: 'progress', value: 95 });
-      // Use Transferable to zero-copy the buffer to main thread (avoids cloning large audio data)
-      const wavBuffer = encodeWav(float32Audio, session.sampleRate);
-      self.postMessage({ type: 'audio', buffer: wavBuffer }, { transfer: [wavBuffer] });
-      self.postMessage({ type: 'progress', value: 100 });
+      const STREAMING_THRESHOLD = 1000;
+      const shouldStream = processedText.length > STREAMING_THRESHOLD;
+
+      if (shouldStream) {
+        // === STREAMING MODE: send each chunk's WAV immediately ===
+        const float32Audio = await session.predict(processedText, {
+          lengthScale: (speed && speed > 0) ? speed : 1.0,
+          onProgress: (p: number) => {
+            self.postMessage({ type: 'progress', value: 30 + Math.round(p * 0.60) });
+          },
+          onChunkReady: (chunkAudio: Float32Array, chunkIndex: number, totalChunks: number) => {
+            if (isCancelled) return;
+            // Send each chunk's WAV immediately for streaming playback
+            const wavBuffer = encodeWav(chunkAudio, session.sampleRate);
+            self.postMessage(
+              { type: 'stream-chunk', buffer: wavBuffer, index: chunkIndex, total: totalChunks },
+              { transfer: [wavBuffer] }
+            );
+          },
+        });
+
+        if (isCancelled) return;
+
+        // Send full concatenated audio for history/download
+        self.postMessage({ type: 'progress', value: 95 });
+        const fullWav = encodeWav(float32Audio, session.sampleRate);
+        self.postMessage(
+          { type: 'stream-complete', buffer: fullWav },
+          { transfer: [fullWav] }
+        );
+        self.postMessage({ type: 'progress', value: 100 });
+
+      } else {
+        // === NON-STREAMING MODE (existing flow, unchanged) ===
+        const float32Audio = await session.predict(processedText, {
+          lengthScale: (speed && speed > 0) ? speed : 1.0,
+          onProgress: (p: number) => {
+            self.postMessage({ type: 'progress', value: 30 + Math.round(p * 0.65) });
+          },
+        });
+        self.postMessage({ type: 'progress', value: 95 });
+        // Use Transferable to zero-copy the buffer to main thread (avoids cloning large audio data)
+        const wavBuffer = encodeWav(float32Audio, session.sampleRate);
+        self.postMessage({ type: 'audio', buffer: wavBuffer }, { transfer: [wavBuffer] });
+        self.postMessage({ type: 'progress', value: 100 });
+      }
 
     } catch (error) {
       self.postMessage({ type: 'error', message: error instanceof Error ? error.message : 'Unknown worker error' });

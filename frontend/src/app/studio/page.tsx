@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FadeIn } from "@/components/motion";
@@ -44,7 +44,7 @@ export default function StudioPage() {
   const pendingNavRef = useRef<((...args: any[]) => void) | null>(null);
 
   const { saveLocalRecord, records: libraryRecords } = useLocalLibrary();
-  const { clientGenerate, progress, isUsingWorker, generating: hookGenerating, prefetchModel, cancelGeneration } = useTtsGenerate();
+  const { clientGenerate, progress, isUsingWorker, generating: hookGenerating, prefetchModel, cancelGeneration, streamingStatus, streamingProgress } = useTtsGenerate();
 
   // Navigation warning when generating (browser + client-side)
   useEffect(() => {
@@ -371,6 +371,8 @@ export default function StudioPage() {
                   mp3Size={audioUrl ? Math.round((audioUrl.split(',')[1] || '').length * 0.75) : undefined}
                   wavSize={currentWavUrl ? Math.round((currentWavUrl.split(',')[1] || '').length * 0.75) : undefined}
                   error={error}
+                  streamingStatus={streamingStatus}
+                  streamingProgress={streamingProgress}
                 />
               </div>
             </FadeIn>

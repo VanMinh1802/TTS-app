@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { useTtsGenerate } from '../useTtsGenerate';
-import { generateTts } from '@/features/voice/api/voice-api';
+import * as voiceApi from '@/features/voice/api/voice-api';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock the API client and voice API
@@ -31,7 +31,7 @@ describe('useTtsGenerate privacy hardening', () => {
     } as any;
     
     // Mock generateTts to return a dummy response
-    (generateTts as any).mockResolvedValue({
+    (voiceApi as any).generateTts.mockResolvedValue({
       audio_url: 'http://server-fallback.wav',
       duration: 10
     });
@@ -61,7 +61,7 @@ describe('useTtsGenerate privacy hardening', () => {
     await promise;
 
     // After hardening, generateTts should NOT have been called
-    expect(generateTts).not.toHaveBeenCalled();
+    expect((voiceApi as any).generateTts).not.toHaveBeenCalled();
     expect(caughtError?.message || '').toContain('Model load failed');
   });
 
@@ -87,6 +87,7 @@ describe('useTtsGenerate privacy hardening', () => {
     });
 
     expect(caughtError).toBeTruthy();
-    expect(generateTts).not.toHaveBeenCalled();
+    expect((voiceApi as any).generateTts).not.toHaveBeenCalled();
   });
 });
+

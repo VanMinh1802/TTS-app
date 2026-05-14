@@ -37,6 +37,7 @@ export interface PiperCustomSession {
       speakerId?: number;
       lengthScale?: number;
       onProgress?: (progress: number) => void;
+      onChunkReady?: (chunkAudio: Float32Array, chunkIndex: number, totalChunks: number) => void;
     },
   ): Promise<Float32Array>;
   sampleRate: number;
@@ -317,6 +318,7 @@ export async function loadCustomPiper(
       speakerId?: number;
       lengthScale?: number;
       onProgress?: (progress: number) => void;
+      onChunkReady?: (chunkAudio: Float32Array, chunkIndex: number, totalChunks: number) => void;
     },
   ): Promise<Float32Array> {
     const trimmed = text.trim();
@@ -325,6 +327,7 @@ export async function loadCustomPiper(
     const lengthScale = 1 / (options?.lengthScale ?? lengthScaleDefault);
     const speakerId = options?.speakerId ?? 0;
     const onProgress = options?.onProgress;
+    const onChunkReady = options?.onChunkReady;
 
     // Use chunking for long text to avoid memory issues
     const chunks = splitTextIntoChunks(trimmed, 800);
@@ -368,6 +371,9 @@ export async function loadCustomPiper(
         speakerId,
       );
       audioChunks.push(audioChunk);
+
+      // Notify caller that this chunk's audio is ready (for streaming)
+      onChunkReady?.(audioChunk, i, totalChunks);
     }
 
     // Concatenate all chunks

@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiRequest } from '@/lib/api-client';
 import type { TTSGenerateRequest, TTSGenerateResponse } from '@/features/voice/types/voice-types';
 
+export type StreamingStatus = 'idle' | 'streaming' | 'saving' | 'saved' | 'save-failed';
+
 interface UseTtsGenerateReturn {
   clientGenerate: (request: TTSGenerateRequest) => Promise<TTSGenerateResponse>;
   progress: number;
@@ -11,11 +13,14 @@ interface UseTtsGenerateReturn {
   generating: boolean;
   prefetchModel: (voiceId: string) => void;
   cancelGeneration: () => void;
+  streamingStatus: StreamingStatus;
+  streamingProgress: { current: number; total: number } | null;
 }
 
 /**
  * Converts WAV data URL to MP3 using server-side endpoint.
  * Note: This sends audio data to server, not text content.
+ * Only used for non-streaming (short text) mode.
  */
 async function convertToMp3(wavDataUrl: string): Promise<string | null> {
   try {
@@ -30,16 +35,66 @@ async function convertToMp3(wavDataUrl: string): Promise<string | null> {
 }
 
 /**
+ * Parse WAV duration from raw ArrayBuffer by reading the WAV header.
+ */
+function parseWavDuration(rawBuffer: ArrayBuffer): number {
+  try {
+    const dataView = new DataView(rawBuffer);
+    const sampleRate = dataView.getUint32(24, true);
+    const channels = dataView.getUint16(22, true);
+    const bitsPerSample = dataView.getUint16(34, true);
+    if (!sampleRate || !channels || !bitsPerSample) return 0;
+
+    let offset = 12;
+    while (offset + 8 <= rawBuffer.byteLength) {
+      const chunkId = String.fromCharCode(
+        dataView.getUint8(offset), dataView.getUint8(offset + 1),
+        dataView.getUint8(offset + 2), dataView.getUint8(offset + 3)
+      );
+      const chunkSize = dataView.getUint32(offset + 4, true);
+      if (chunkId === 'data') {
+        return Math.round((chunkSize / (sampleRate * channels * (bitsPerSample / 8))) * 10) / 10;
+      }
+      offset += 8 + chunkSize;
+    }
+  } catch { /* ignore */ }
+  return 0;
+}
+
+/**
  * Hook for local client-side TTS generation using Web Workers and Piper ONNX.
  * Privacy-hardened: Never falls back to server-side synthesis.
+ * Supports streaming audio playback for long text (> 1000 chars).
  */
 export function useTtsGenerate(): UseTtsGenerateReturn {
   const [progress, setProgress] = useState(0);
   const [isUsingWorker, setIsUsingWorker] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [streamingStatus, setStreamingStatus] = useState<StreamingStatus>('idle');
+  const [streamingProgress, setStreamingProgress] = useState<{ current: number; total: number } | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Streaming playback refs
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const chunkQueueRef = useRef<ArrayBuffer[]>([]);
+  const scheduledEndTimeRef = useRef<number>(0);
+  const playbackStartedRef = useRef<boolean>(false);
+  const allChunksReceivedRef = useRef<boolean>(false);
+
+  const cleanupStreaming = useCallback(() => {
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close().catch(() => {});
+    }
+    audioContextRef.current = null;
+    chunkQueueRef.current = [];
+    scheduledEndTimeRef.current = 0;
+    playbackStartedRef.current = false;
+    allChunksReceivedRef.current = false;
+    setStreamingStatus('idle');
+    setStreamingProgress(null);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -56,8 +111,9 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
         workerRef.current.terminate();
         workerRef.current = null;
       }
+      cleanupStreaming();
     };
-  }, []);
+  }, [cleanupStreaming]);
 
   const getWorker = useCallback(() => {
     if (!workerRef.current && typeof Worker !== 'undefined') {
@@ -86,9 +142,49 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+    cleanupStreaming();
     setProgress(0);
     setGenerating(false);
     setIsUsingWorker(false);
+  }, [cleanupStreaming]);
+
+  /**
+   * Schedule a WAV chunk for gapless playback using AudioContext.
+   * Uses sample-accurate scheduling to ensure zero gaps between chunks.
+   */
+  const scheduleChunk = useCallback(async (wavBuffer: ArrayBuffer) => {
+    let audioCtx = audioContextRef.current;
+    if (!audioCtx || audioCtx.state === 'closed') {
+      audioCtx = new AudioContext();
+      audioContextRef.current = audioCtx;
+      scheduledEndTimeRef.current = audioCtx.currentTime;
+    }
+
+    // Resume if suspended (e.g., tab was inactive)
+    if (audioCtx.state === 'suspended') {
+      await audioCtx.resume();
+    }
+
+    // .slice(0) to avoid "detached ArrayBuffer" errors
+    const audioBuffer = await audioCtx.decodeAudioData(wavBuffer.slice(0));
+    const source = audioCtx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(audioCtx.destination);
+
+    // Schedule at exact end of previous chunk — zero gap
+    const startTime = Math.max(audioCtx.currentTime, scheduledEndTimeRef.current);
+    source.start(startTime);
+    scheduledEndTimeRef.current = startTime + audioBuffer.duration;
+
+    // Dynamic buffering: when this chunk ends, play next from queue if available
+    source.onended = () => {
+      if (chunkQueueRef.current.length > 0) {
+        const nextChunk = chunkQueueRef.current.shift()!;
+        scheduleChunk(nextChunk);
+      }
+      // If queue empty and all chunks received: playback complete
+      // (AudioContext will be closed when stream-complete sets audioUrl)
+    };
   }, []);
 
   const resolveWithMp3 = useCallback(async (
@@ -111,6 +207,7 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
     setProgress(0);
     setIsUsingWorker(true);
     setGenerating(true);
+    cleanupStreaming();
 
     abortRef.current?.abort();
     abortRef.current = new AbortController();
@@ -124,49 +221,111 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
       return new Promise((resolve, reject) => {
         const done = () => { setIsUsingWorker(false); setGenerating(false); };
 
+        const resetTimeout = () => {
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          timeoutRef.current = setTimeout(() => {
+            if (worker.onmessage) {
+              console.error('[TTS] Worker timeout (5m inactivity)');
+              worker.onmessage = null;
+              worker.onerror = null;
+              cleanupStreaming();
+              done();
+              reject(new Error('Speech synthesis timed out. Please try a shorter text or check your connection.'));
+            }
+          }, 300000);
+        };
+
+        const BUFFER_CHUNKS = 2;
+
         worker.onmessage = (event: MessageEvent) => {
           const { type } = event.data;
 
           if (type === 'progress') {
             setProgress(event.data.value);
-            // Reset timeout on progress to allow very long texts as long as it isn't completely frozen
-            if (timeoutRef.current) {
-              clearTimeout(timeoutRef.current);
-              timeoutRef.current = setTimeout(() => {
-                if (worker.onmessage) {
-                  console.error('[TTS] Worker timeout (5m inactivity)');
-                  worker.onmessage = null;
-                  worker.onerror = null;
-                  done();
-                  reject(new Error('Speech synthesis timed out. Please try a shorter text or check your connection.'));
+            resetTimeout();
+
+          } else if (type === 'stream-chunk') {
+            // === STREAMING: received one chunk's WAV audio ===
+            const { buffer, index, total } = event.data;
+            setStreamingStatus('streaming');
+            setStreamingProgress({ current: index + 1, total });
+            resetTimeout();
+
+            if (!playbackStartedRef.current) {
+              // Buffer phase: collect chunks until we have enough to start
+              chunkQueueRef.current.push(buffer);
+              if (chunkQueueRef.current.length >= BUFFER_CHUNKS) {
+                playbackStartedRef.current = true;
+                // Schedule all buffered chunks for gapless playback
+                while (chunkQueueRef.current.length > 0) {
+                  const chunk = chunkQueueRef.current.shift()!;
+                  scheduleChunk(chunk);
                 }
-              }, 300000);
+              }
+            } else {
+              // Playback already started — schedule immediately
+              scheduleChunk(buffer);
             }
+
+          } else if (type === 'stream-complete') {
+            // === STREAMING COMPLETE: received full concatenated WAV ===
+            if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
+
+            allChunksReceivedRef.current = true;
+            const fullBuffer = event.data.buffer as ArrayBuffer;
+
+            // If playback hasn't started (e.g., only 1 chunk), flush queue now
+            if (!playbackStartedRef.current && chunkQueueRef.current.length > 0) {
+              playbackStartedRef.current = true;
+              while (chunkQueueRef.current.length > 0) {
+                const chunk = chunkQueueRef.current.shift()!;
+                scheduleChunk(chunk);
+              }
+            }
+
+            // Save to library (full client-side WAV, NO server MP3 conversion)
+            setStreamingStatus('saving');
+
+            const wavDuration = parseWavDuration(fullBuffer);
+            const blob = new Blob([fullBuffer], { type: 'audio/wav' });
+            const reader = new FileReader();
+            reader.onload = () => {
+              const wavDataUrl = reader.result as string;
+
+              // Close AudioContext, transition to static <audio> player
+              if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+                audioContextRef.current.close().catch(() => {});
+              }
+
+              setStreamingStatus('saved');
+              done();
+              resolve({
+                audio_url: wavDataUrl,
+                duration: wavDuration,
+                voice_id: request.voice_id,
+                audio_wav: wavDataUrl,
+              });
+            };
+            reader.onerror = () => {
+              setStreamingStatus('save-failed');
+              done();
+              reject(new Error('Failed to process audio for library'));
+            };
+            reader.readAsDataURL(blob);
+
+            // Record quota usage locally
+            apiRequest('/quota/record', {
+              method: 'POST',
+              body: JSON.stringify({ characters: request.text.length, api_calls: 1 }),
+              allowEmpty: true,
+            }).catch(() => {});
+
           } else if (type === 'audio') {
+            // === NON-STREAMING: received full audio (short text) ===
             if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
             
             const rawBuffer = event.data.buffer as ArrayBuffer;
-            const dataView = new DataView(rawBuffer);
-            const sampleRate = dataView.getUint32(24, true);
-            const channels = dataView.getUint16(22, true);
-            const bitsPerSample = dataView.getUint16(34, true);
-            let wavDuration = 0;
-            
-            if (sampleRate && channels && bitsPerSample) {
-              let offset = 12;
-              while (offset + 8 <= rawBuffer.byteLength) {
-                const chunkId = String.fromCharCode(
-                  dataView.getUint8(offset), dataView.getUint8(offset + 1),
-                  dataView.getUint8(offset + 2), dataView.getUint8(offset + 3)
-                );
-                const chunkSize = dataView.getUint32(offset + 4, true);
-                if (chunkId === 'data') {
-                  wavDuration = Math.round((chunkSize / (sampleRate * channels * (bitsPerSample / 8))) * 10) / 10;
-                  break;
-                }
-                offset += 8 + chunkSize;
-              }
-            }
+            const wavDuration = parseWavDuration(rawBuffer);
 
             const blob = new Blob([rawBuffer], { type: 'audio/wav' });
             const reader = new FileReader();
@@ -186,6 +345,7 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
           } else if (type === 'error') {
             if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
             console.error('[TTS] Worker error:', event.data.message);
+            cleanupStreaming();
             done();
             reject(new Error(event.data.message || 'Speech synthesis failed'));
           }
@@ -194,6 +354,7 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
         worker.onerror = (e) => {
           if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
           console.error('[TTS] Worker crashed:', e);
+          cleanupStreaming();
           done();
           reject(new Error('Speech synthesis engine crashed'));
         };
@@ -209,23 +370,20 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
           }
         });
 
-        // 5 minute timeout for local generation to support initial model download and slow devices
-        timeoutRef.current = setTimeout(() => {
-          if (worker.onmessage) {
-            console.error('[TTS] Worker timeout (5m)');
-            worker.onmessage = null;
-            worker.onerror = null;
-            done();
-            reject(new Error('Speech synthesis timed out. Please try a shorter text or check your connection.'));
-          }
-        }, 300000);
+        // 5 minute timeout for local generation
+        resetTimeout();
       });
     } catch (err) {
       setIsUsingWorker(false);
       setGenerating(false);
+      cleanupStreaming();
       throw err;
     }
-  }, [getWorker, resolveWithMp3]);
+  }, [getWorker, resolveWithMp3, scheduleChunk, cleanupStreaming]);
 
-  return { clientGenerate, progress, isUsingWorker, generating, prefetchModel, cancelGeneration };
+  return {
+    clientGenerate, progress, isUsingWorker, generating,
+    prefetchModel, cancelGeneration,
+    streamingStatus, streamingProgress,
+  };
 }
