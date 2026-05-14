@@ -72,14 +72,6 @@ export const PreviewPanel = React.memo(function PreviewPanel({
               exit={{ opacity: 0, scale: 0.98 }}
               className="h-32 mb-4 flex flex-col justify-between p-4 border border-white/10 border-dashed rounded-[16px] bg-[#0D100A]/50 relative overflow-hidden"
             >
-              {/* Background Generation Progress Fill */}
-              <motion.div
-                className="absolute inset-y-0 left-0 bg-white/5 pointer-events-none"
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-              />
-
               {/* Top part: Live Preview Controls */}
               <div className="flex items-center justify-between relative z-10 w-full">
                 <div className="flex items-center gap-3">
