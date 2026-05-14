@@ -75,20 +75,23 @@ export const PreviewPanel = React.memo(function PreviewPanel({
             >
               {/* Waveform */}
               <div className="flex items-center justify-center gap-[3px] h-8 mb-4">
-                {Array.from({ length: 16 }).map((_, i) => (
-                  <motion.span
+                {Array.from({ length: 16 }).map((_, i) => {
+                  const isActuallyPlaying = isPreviewPlaying && (streamingProgress?.current ?? 0) > 0;
+                  return (
+                    <motion.span
                     key={i}
                     className="w-[3px] rounded-full bg-[#C968F7]"
                     animate={{
-                      height: isPreviewPlaying ? [8, 14 + Math.sin(i * 1.5) * 12, 6, 18, 8] : 4,
-                      opacity: isPreviewPlaying ? [0.4, 1, 0.5, 0.8, 0.4] : 0.3,
+                      height: isActuallyPlaying ? [8, 14 + Math.sin(i * 1.5) * 12, 6, 18, 8] : 4,
+                      opacity: isActuallyPlaying ? [0.4, 1, 0.5, 0.8, 0.4] : 0.3,
                     }}
                     transition={{
                       height: { duration: 0.6 + i * 0.04, repeat: Infinity, repeatType: 'mirror' },
                       opacity: { duration: 0.8 + i * 0.05, repeat: Infinity, repeatType: 'mirror' },
                     }}
                   />
-                ))}
+                  );
+                })}
               </div>
 
               {/* Status Text & Controls */}
