@@ -270,7 +270,7 @@ export async function loadCustomPiper(
    */
   function splitTextIntoChunks(
     text: string,
-    maxChunkSize: number = 800,
+    maxChunkSize: number = 400,
   ): string[] {
     // Split by common sentence endings first
     const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
@@ -329,8 +329,8 @@ export async function loadCustomPiper(
     const onProgress = options?.onProgress;
     const onChunkReady = options?.onChunkReady;
 
-    // Use chunking for long text to avoid memory issues
-    const chunks = splitTextIntoChunks(trimmed, 800);
+    // Use chunking for long text to avoid memory issues and enable fast streaming
+    const chunks = splitTextIntoChunks(trimmed, 400);
 
     if (chunks.length === 1) {
       // Single chunk - process normally
@@ -338,35 +338,30 @@ export async function loadCustomPiper(
       return processSingleChunk(chunks[0], lengthScale, speakerId);
     }
 
-    // === Performance optimization: pre-compute ALL phoneme IDs first ===
-    // This warms the WASM phonemizer cache on the first call and subsequent
-    // calls reuse the cached module, avoiding repeated WASM instantiation.
-    onProgress?.(20); // Starting phonemization
+    // === Performance optimization: Pipeline phonemization and inference ===
+    // This allows the first chunk to be emitted immediately without waiting for the rest
+    onProgress?.(20); // Starting processing
 
     // Pre-warm the WASM phonemizer module (loads once, cached for all chunks)
     if (effectivePhonemeType === "espeak") {
       await getOrLoadPiperWasm();
     }
 
-    const allPhonemeIds: number[][] = [];
-    for (let i = 0; i < chunks.length; i++) {
-      const ids = await getPhonemeIds(chunks[i]);
-      allPhonemeIds.push(ids);
-      // Progress: 20-40% for phonemization
-      onProgress?.(20 + Math.round(((i + 1) / chunks.length) * 20));
-    }
-
-    // === Run ONNX inference with pre-computed phoneme IDs ===
     const audioChunks: Float32Array[] = [];
     const totalChunks = chunks.length;
 
     for (let i = 0; i < totalChunks; i++) {
-      // Progress: 40-85% based on chunk progress
-      const chunkProgress = 40 + Math.round((i / totalChunks) * 45);
-      onProgress?.(chunkProgress);
+      // Base progress for this chunk starts at 20, ends at 90.
+      const chunkStartProgress = 20 + Math.round((i / totalChunks) * 70);
+      onProgress?.(chunkStartProgress);
+
+      const ids = await getPhonemeIds(chunks[i]);
+
+      const phonemizeDoneProgress = chunkStartProgress + Math.round(15 / totalChunks);
+      onProgress?.(phonemizeDoneProgress);
 
       const audioChunk = await processPrecomputedChunk(
-        allPhonemeIds[i],
+        ids,
         lengthScale,
         speakerId,
       );
