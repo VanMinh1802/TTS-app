@@ -89,7 +89,6 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
   // To synchronize playback completion with hook resolution
   const totalChunksRef = useRef<number>(0);
   const chunksPlayedRef = useRef<number>(0);
-  const deferredResolveRef = useRef<(() => void) | null>(null);
   const isPreviewPlayingRef = useRef<boolean>(true);
 
   const togglePreviewPlayback = useCallback(async () => {
@@ -116,7 +115,6 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
     allChunksReceivedRef.current = false;
     totalChunksRef.current = 0;
     chunksPlayedRef.current = 0;
-    deferredResolveRef.current = null;
     isPreviewPlayingRef.current = true;
     setStreamingStatus('idle');
     setStreamingProgress(null);
@@ -214,10 +212,10 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
         scheduleChunk(nextChunk);
       } else if (allChunksReceivedRef.current && chunksPlayedRef.current >= totalChunksRef.current) {
         // If queue empty and all chunks received AND played: playback is fully complete
-        if (deferredResolveRef.current) {
-          deferredResolveRef.current();
-          deferredResolveRef.current = null;
+        if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+          audioContextRef.current.close().catch(() => {});
         }
+        setStreamingStatus('saved');
       }
     };
   }, []);
@@ -328,29 +326,28 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
             reader.onload = () => {
               const wavDataUrl = reader.result as string;
 
-              // Prepare the final transition
-              const finishGeneration = () => {
-                // Close AudioContext, transition to static <audio> player
+              // 1. Generation is completely done on the backend.
+              // Resolve immediately so the main UI can transition to the static audio player.
+              done();
+              resolve({
+                audio_url: wavDataUrl,
+                duration: wavDuration,
+                voice_id: request.voice_id,
+                audio_wav: wavDataUrl,
+              });
+
+              // 2. Manage the live preview playback state.
+              if (chunksPlayedRef.current >= totalChunksRef.current) {
+                // Playback already finished while we were saving. Close it down.
                 if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
                   audioContextRef.current.close().catch(() => {});
                 }
-
                 setStreamingStatus('saved');
-                done();
-                resolve({
-                  audio_url: wavDataUrl,
-                  duration: wavDuration,
-                  voice_id: request.voice_id,
-                  audio_wav: wavDataUrl,
-                });
-              };
-
-              // If playback has already finished (or never started correctly), resolve immediately
-              if (chunksPlayedRef.current >= totalChunksRef.current) {
-                finishGeneration();
               } else {
-                // Defer resolution until playback finishes (onended callback will trigger this)
-                deferredResolveRef.current = finishGeneration;
+                // Playback is still ongoing! 
+                // Revert status to 'streaming' so the Preview UI stays visible while playing.
+                // The onended callback will handle closing it when done.
+                setStreamingStatus('streaming');
               }
             };
             reader.onerror = () => {

@@ -163,7 +163,7 @@ export const PreviewPanel = React.memo(function PreviewPanel({
           onCopy={onCopy} 
           onDownload={onDownload} 
           progress={progress} 
-          autoPlay={autoPlay} 
+          autoPlay={autoPlay && streamingStatus !== 'streaming'} 
           onPlayingChange={handlePlayingChange} 
           wavAvailable={wavAvailable} 
           mp3Size={mp3Size} 
