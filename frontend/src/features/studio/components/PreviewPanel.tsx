@@ -63,75 +63,75 @@ export const PreviewPanel = React.memo(function PreviewPanel({
           </UiChip>
         </div>
 
-        {/* Unified Streaming & Saving Box */}
+        {/* Unified Streaming & Saving Box (Compact Banner) */}
         <AnimatePresence mode="wait">
           {(streamingStatus === 'streaming' || streamingStatus === 'saving') && (
             <motion.div
               key="streaming-box"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="h-28 mb-3 flex flex-col items-center justify-center border border-[#C968F7]/30 rounded-[16px] bg-[#0D100A]/60 relative overflow-hidden shadow-[0_0_15px_rgba(201,104,247,0.1)]"
+              exit={{ opacity: 0, y: -10 }}
+              className="h-14 mb-4 flex items-center justify-between px-4 border border-[#C968F7]/30 rounded-[12px] bg-[#0D100A]/80 relative overflow-hidden shadow-[0_0_15px_rgba(201,104,247,0.15)]"
             >
-              {/* Waveform */}
-              <div className="flex items-center justify-center gap-[3px] h-8 mb-4">
-                {Array.from({ length: 16 }).map((_, i) => {
-                  const isActuallyPlaying = isPreviewPlaying && (streamingProgress?.current ?? 0) > 0;
-                  return (
-                    <motion.span
-                    key={i}
-                    className="w-[3px] rounded-full bg-[#C968F7]"
-                    animate={{
-                      height: isActuallyPlaying ? [8, 14 + Math.sin(i * 1.5) * 12, 6, 18, 8] : 4,
-                      opacity: isActuallyPlaying ? [0.4, 1, 0.5, 0.8, 0.4] : 0.3,
-                    }}
-                    transition={{
-                      height: { duration: 0.6 + i * 0.04, repeat: Infinity, repeatType: 'mirror' },
-                      opacity: { duration: 0.8 + i * 0.05, repeat: Infinity, repeatType: 'mirror' },
-                    }}
-                  />
-                  );
-                })}
-              </div>
+              {/* Background Progress Fill */}
+              <motion.div
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#C968F7]/10 to-[#6366F1]/10 pointer-events-none"
+                initial={{ width: 0 }}
+                animate={{ 
+                  width: streamingStatus === 'saving' 
+                    ? '100%' 
+                    : `${streamingProgress ? (streamingProgress.current / streamingProgress.total) * 100 : 0}%` 
+                }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              />
 
-              {/* Status Text & Controls */}
-              <div className="flex items-center gap-3">
+              {/* Left: Controls & Status Text */}
+              <div className="flex items-center gap-3 relative z-10">
                 {streamingStatus === 'streaming' && (
                   <button
                     onClick={onTogglePreview}
-                    className="h-6 w-6 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                    className="h-8 w-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors shadow-sm"
                   >
                     {isPreviewPlaying ? (
-                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg>
+                      <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg>
                     ) : (
-                      <svg className="w-3 h-3 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                      <svg className="w-3.5 h-3.5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                     )}
                   </button>
                 )}
                 {streamingStatus === 'saving' && (
-                  <span className="animate-spin h-3.5 w-3.5 border-2 border-[#C968F7] border-t-transparent rounded-full" />
+                  <div className="h-8 w-8 flex items-center justify-center">
+                    <span className="animate-spin h-4 w-4 border-2 border-[#C968F7] border-t-transparent rounded-full" />
+                  </div>
                 )}
-                <p className="text-[11px] uppercase tracking-[0.1em] text-[#D4D4D8] font-medium">
+                <p className="text-[12px] uppercase tracking-wider text-[#E4E4E7] font-semibold">
                   {streamingStatus === 'streaming' 
                     ? streamingProgress?.current === 0
                       ? 'Đang đệm âm thanh...'
-                      : `Đang phát trực tiếp... ${streamingProgress ? `(Đoạn ${streamingProgress.current}/${streamingProgress.total})` : ''}`
-                    : 'Đang lưu vào thư viện...'}
+                      : `Live Preview ${streamingProgress ? `(${streamingProgress.current}/${streamingProgress.total})` : ''}`
+                    : 'Đang lưu thư viện...'}
                 </p>
               </div>
 
-              {/* Progress Bar (Bottom edge) */}
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/5">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-[#C968F7] to-[#6366F1]"
-                  initial={{ width: 0 }}
-                  animate={{ 
-                    width: streamingStatus === 'saving' 
-                      ? '100%' 
-                      : `${streamingProgress ? (streamingProgress.current / streamingProgress.total) * 100 : 0}%` 
-                  }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
-                />
+              {/* Right: Waveform */}
+              <div className="flex items-center gap-[3px] h-6 relative z-10">
+                {Array.from({ length: 12 }).map((_, i) => {
+                  const isActuallyPlaying = isPreviewPlaying && (streamingProgress?.current ?? 0) > 0;
+                  return (
+                    <motion.span
+                      key={i}
+                      className="w-[2.5px] rounded-full bg-[#C968F7]"
+                      animate={{
+                        height: isActuallyPlaying ? [4, 10 + Math.sin(i * 1.5) * 8, 4, 12, 4] : 3,
+                        opacity: isActuallyPlaying ? [0.4, 1, 0.5, 0.8, 0.4] : 0.3,
+                      }}
+                      transition={{
+                        height: { duration: 0.6 + i * 0.04, repeat: Infinity, repeatType: 'mirror' },
+                        opacity: { duration: 0.8 + i * 0.05, repeat: Infinity, repeatType: 'mirror' },
+                      }}
+                    />
+                  );
+                })}
               </div>
             </motion.div>
           )}
@@ -169,7 +169,12 @@ export const PreviewPanel = React.memo(function PreviewPanel({
           onDownload={onDownload} 
           progress={progress} 
           autoPlay={autoPlay && streamingStatus !== 'streaming'} 
-          onPlayingChange={handlePlayingChange} 
+          onPlayingChange={(playing) => {
+            handlePlayingChange(playing);
+            if (playing && isPreviewPlaying && onTogglePreview) {
+              onTogglePreview();
+            }
+          }} 
           wavAvailable={wavAvailable} 
           mp3Size={mp3Size} 
           wavSize={wavSize}
