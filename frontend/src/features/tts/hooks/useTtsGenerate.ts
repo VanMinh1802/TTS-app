@@ -82,6 +82,11 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
   const scheduledEndTimeRef = useRef<number>(0);
   const playbackStartedRef = useRef<boolean>(false);
   const allChunksReceivedRef = useRef<boolean>(false);
+  
+  // To synchronize playback completion with hook resolution
+  const totalChunksRef = useRef<number>(0);
+  const chunksPlayedRef = useRef<number>(0);
+  const deferredResolveRef = useRef<(() => void) | null>(null);
 
   const cleanupStreaming = useCallback(() => {
     if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
@@ -92,6 +97,9 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
     scheduledEndTimeRef.current = 0;
     playbackStartedRef.current = false;
     allChunksReceivedRef.current = false;
+    totalChunksRef.current = 0;
+    chunksPlayedRef.current = 0;
+    deferredResolveRef.current = null;
     setStreamingStatus('idle');
     setStreamingProgress(null);
   }, []);
@@ -178,12 +186,18 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
 
     // Dynamic buffering: when this chunk ends, play next from queue if available
     source.onended = () => {
+      chunksPlayedRef.current += 1;
+      
       if (chunkQueueRef.current.length > 0) {
         const nextChunk = chunkQueueRef.current.shift()!;
         scheduleChunk(nextChunk);
+      } else if (allChunksReceivedRef.current && chunksPlayedRef.current >= totalChunksRef.current) {
+        // If queue empty and all chunks received AND played: playback is fully complete
+        if (deferredResolveRef.current) {
+          deferredResolveRef.current();
+          deferredResolveRef.current = null;
+        }
       }
-      // If queue empty and all chunks received: playback complete
-      // (AudioContext will be closed when stream-complete sets audioUrl)
     };
   }, []);
 
@@ -247,6 +261,7 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
           } else if (type === 'stream-chunk') {
             // === STREAMING: received one chunk's WAV audio ===
             const { buffer, index, total } = event.data;
+            totalChunksRef.current = total;
             setStreamingStatus('streaming');
             setStreamingProgress({ current: index + 1, total });
             resetTimeout();
@@ -292,19 +307,30 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
             reader.onload = () => {
               const wavDataUrl = reader.result as string;
 
-              // Close AudioContext, transition to static <audio> player
-              if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-                audioContextRef.current.close().catch(() => {});
-              }
+              // Prepare the final transition
+              const finishGeneration = () => {
+                // Close AudioContext, transition to static <audio> player
+                if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+                  audioContextRef.current.close().catch(() => {});
+                }
 
-              setStreamingStatus('saved');
-              done();
-              resolve({
-                audio_url: wavDataUrl,
-                duration: wavDuration,
-                voice_id: request.voice_id,
-                audio_wav: wavDataUrl,
-              });
+                setStreamingStatus('saved');
+                done();
+                resolve({
+                  audio_url: wavDataUrl,
+                  duration: wavDuration,
+                  voice_id: request.voice_id,
+                  audio_wav: wavDataUrl,
+                });
+              };
+
+              // If playback has already finished (or never started correctly), resolve immediately
+              if (chunksPlayedRef.current >= totalChunksRef.current) {
+                finishGeneration();
+              } else {
+                // Defer resolution until playback finishes (onended callback will trigger this)
+                deferredResolveRef.current = finishGeneration;
+              }
             };
             reader.onerror = () => {
               setStreamingStatus('save-failed');
