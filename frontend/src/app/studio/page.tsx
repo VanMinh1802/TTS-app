@@ -44,7 +44,7 @@ export default function StudioPage() {
   const pendingNavRef = useRef<((...args: any[]) => void) | null>(null);
 
   const { saveLocalRecord, records: libraryRecords } = useLocalLibrary();
-  const { clientGenerate, progress, isUsingWorker, generating: hookGenerating, prefetchModel, cancelGeneration, streamingStatus, streamingProgress } = useTtsGenerate();
+  const { clientGenerate, progress, isUsingWorker, generating: hookGenerating, prefetchModel, cancelGeneration, streamingStatus, streamingProgress, isPreviewPlaying, togglePreviewPlayback } = useTtsGenerate();
 
   // Navigation warning when generating (browser + client-side)
   useEffect(() => {
@@ -373,6 +373,8 @@ export default function StudioPage() {
                   error={error}
                   streamingStatus={streamingStatus}
                   streamingProgress={streamingProgress}
+                  isPreviewPlaying={isPreviewPlaying}
+                  onTogglePreview={togglePreviewPlayback}
                 />
               </div>
             </FadeIn>

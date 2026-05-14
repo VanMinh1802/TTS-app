@@ -9,7 +9,7 @@ import type { StreamingStatus } from "@/features/tts/hooks/useTtsGenerate";
 
 export const PreviewPanel = React.memo(function PreviewPanel({ 
   audioUrl, onCopy, onDownload, loading, progress, autoPlay, wavAvailable, mp3Size, wavSize, error,
-  streamingStatus, streamingProgress,
+  streamingStatus, streamingProgress, isPreviewPlaying, onTogglePreview
 }: { 
   audioUrl: string | null; 
   onCopy: () => Promise<void>; 
@@ -23,6 +23,8 @@ export const PreviewPanel = React.memo(function PreviewPanel({
   error?: string | null;
   streamingStatus?: StreamingStatus;
   streamingProgress?: { current: number; total: number } | null;
+  isPreviewPlaying?: boolean;
+  onTogglePreview?: () => void;
 }) {
   const t = useT();
   const [isPlaying, setIsPlaying] = useState(false);
@@ -78,8 +80,8 @@ export const PreviewPanel = React.memo(function PreviewPanel({
                     key={i}
                     className="w-[3px] rounded-full bg-[#C968F7]"
                     animate={{
-                      height: [8, 14 + Math.sin(i * 1.5) * 12, 6, 18, 8],
-                      opacity: [0.4, 1, 0.5, 0.8, 0.4],
+                      height: isPreviewPlaying ? [8, 14 + Math.sin(i * 1.5) * 12, 6, 18, 8] : 4,
+                      opacity: isPreviewPlaying ? [0.4, 1, 0.5, 0.8, 0.4] : 0.3,
                     }}
                     transition={{
                       height: { duration: 0.6 + i * 0.04, repeat: Infinity, repeatType: 'mirror' },
@@ -89,8 +91,20 @@ export const PreviewPanel = React.memo(function PreviewPanel({
                 ))}
               </div>
 
-              {/* Status Text */}
-              <div className="flex items-center gap-2">
+              {/* Status Text & Controls */}
+              <div className="flex items-center gap-3">
+                {streamingStatus === 'streaming' && (
+                  <button
+                    onClick={onTogglePreview}
+                    className="h-6 w-6 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                  >
+                    {isPreviewPlaying ? (
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg>
+                    ) : (
+                      <svg className="w-3 h-3 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    )}
+                  </button>
+                )}
                 {streamingStatus === 'saving' && (
                   <span className="animate-spin h-3.5 w-3.5 border-2 border-[#C968F7] border-t-transparent rounded-full" />
                 )}
@@ -143,21 +157,19 @@ export const PreviewPanel = React.memo(function PreviewPanel({
           </motion.div>
         )}
 
-        <div className={streamingStatus === 'streaming' || streamingStatus === 'saving' ? 'hidden' : 'block'}>
-          <AudioPreview 
-            audioUrl={audioUrl} 
-            loading={loading && streamingStatus === 'idle'} 
-            onCopy={onCopy} 
-            onDownload={onDownload} 
-            progress={progress} 
-            autoPlay={autoPlay} 
-            onPlayingChange={handlePlayingChange} 
-            wavAvailable={wavAvailable} 
-            mp3Size={mp3Size} 
-            wavSize={wavSize}
-            error={error}
-          />
-        </div>
+        <AudioPreview 
+          audioUrl={audioUrl} 
+          loading={loading} 
+          onCopy={onCopy} 
+          onDownload={onDownload} 
+          progress={progress} 
+          autoPlay={autoPlay} 
+          onPlayingChange={handlePlayingChange} 
+          wavAvailable={wavAvailable} 
+          mp3Size={mp3Size} 
+          wavSize={wavSize}
+          error={error}
+        />
         
         <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-2">
           <p className="text-[11px] font-medium uppercase tracking-[0.15em] text-[#A1A1AA]">{t.studio.previewHint}</p>

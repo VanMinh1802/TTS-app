@@ -15,6 +15,8 @@ interface UseTtsGenerateReturn {
   cancelGeneration: () => void;
   streamingStatus: StreamingStatus;
   streamingProgress: { current: number; total: number } | null;
+  isPreviewPlaying: boolean;
+  togglePreviewPlayback: () => void;
 }
 
 /**
@@ -72,6 +74,7 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
   const [generating, setGenerating] = useState(false);
   const [streamingStatus, setStreamingStatus] = useState<StreamingStatus>('idle');
   const [streamingProgress, setStreamingProgress] = useState<{ current: number; total: number } | null>(null);
+  const [isPreviewPlaying, setIsPreviewPlaying] = useState(true);
   const workerRef = useRef<Worker | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -87,6 +90,20 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
   const totalChunksRef = useRef<number>(0);
   const chunksPlayedRef = useRef<number>(0);
   const deferredResolveRef = useRef<(() => void) | null>(null);
+  const isPreviewPlayingRef = useRef<boolean>(true);
+
+  const togglePreviewPlayback = useCallback(async () => {
+    if (!audioContextRef.current) return;
+    if (audioContextRef.current.state === 'running') {
+      await audioContextRef.current.suspend();
+      setIsPreviewPlaying(false);
+      isPreviewPlayingRef.current = false;
+    } else if (audioContextRef.current.state === 'suspended') {
+      await audioContextRef.current.resume();
+      setIsPreviewPlaying(true);
+      isPreviewPlayingRef.current = true;
+    }
+  }, []);
 
   const cleanupStreaming = useCallback(() => {
     if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
@@ -100,8 +117,10 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
     totalChunksRef.current = 0;
     chunksPlayedRef.current = 0;
     deferredResolveRef.current = null;
+    isPreviewPlayingRef.current = true;
     setStreamingStatus('idle');
     setStreamingProgress(null);
+    setIsPreviewPlaying(true);
   }, []);
 
   useEffect(() => {
@@ -168,9 +187,11 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
       scheduledEndTimeRef.current = audioCtx.currentTime;
     }
 
-    // Resume if suspended (e.g., tab was inactive)
-    if (audioCtx.state === 'suspended') {
+    // Resume if suspended and we want to play, or suspend if we want to pause
+    if (audioCtx.state === 'suspended' && isPreviewPlayingRef.current) {
       await audioCtx.resume();
+    } else if (audioCtx.state === 'running' && !isPreviewPlayingRef.current) {
+      await audioCtx.suspend();
     }
 
     // .slice(0) to avoid "detached ArrayBuffer" errors
@@ -411,5 +432,6 @@ export function useTtsGenerate(): UseTtsGenerateReturn {
     clientGenerate, progress, isUsingWorker, generating,
     prefetchModel, cancelGeneration,
     streamingStatus, streamingProgress,
+    isPreviewPlaying, togglePreviewPlayback,
   };
 }
