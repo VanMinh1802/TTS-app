@@ -110,7 +110,9 @@ export const PreviewPanel = React.memo(function PreviewPanel({
                 )}
                 <p className="text-[11px] uppercase tracking-[0.1em] text-[#D4D4D8] font-medium">
                   {streamingStatus === 'streaming' 
-                    ? `Đang phát trực tiếp... ${streamingProgress ? `(Đoạn ${streamingProgress.current}/${streamingProgress.total})` : ''}`
+                    ? streamingProgress?.current === 0
+                      ? 'Đang đệm âm thanh...'
+                      : `Đang phát trực tiếp... ${streamingProgress ? `(Đoạn ${streamingProgress.current}/${streamingProgress.total})` : ''}`
                     : 'Đang lưu vào thư viện...'}
                 </p>
               </div>
