@@ -77,7 +77,7 @@ export const PreviewPanel = React.memo(function PreviewPanel({
                   )}
 
                   <div className="flex flex-col">
-                    <p className="text-[13px] font-semibold text-[#E4E4E7] tracking-wide">
+                    <p className="text-[13px] font-bold text-white tracking-wide drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
                       {streamingStatus === 'streaming' 
                         ? streamingProgress?.current === 0 ? 'Đang chuẩn bị âm thanh...' : 'Live Preview'
                         : streamingStatus === 'saving' ? 'Đang lưu vào thư viện...' : 'Đang xử lý nội dung...'}
@@ -172,9 +172,11 @@ export const PreviewPanel = React.memo(function PreviewPanel({
           )}
         </AnimatePresence>
         
-        <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-2">
-          <p className="text-[11px] font-medium uppercase tracking-[0.15em] text-[#A1A1AA]">{t.studio.previewHint}</p>
-        </div>
+        {!(loading || streamingStatus === 'streaming' || streamingStatus === 'saving') && (
+          <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-2">
+            <p className="text-[11px] font-medium uppercase tracking-[0.15em] text-[#A1A1AA]">{t.studio.previewHint}</p>
+          </div>
+        )}
       </div>
     </div>
   );
