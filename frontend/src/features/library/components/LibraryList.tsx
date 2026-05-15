@@ -29,8 +29,8 @@ export function LibraryList({ records, onPlay, onDelete, onDownload, onUploadToC
   if (records.length === 0) return null;
 
   return (
-    <div className="aether-glass-wrapper rounded-[24px] mt-4 overflow-x-auto">
-      <div className="aether-glass rounded-[24px] overflow-hidden">
+    <div className="aether-glass-wrapper rounded-[24px] mt-4">
+      <div className="aether-glass rounded-[24px] overflow-x-auto custom-scrollbar">
         <div className="flex items-center gap-4 px-6 py-4 border-b border-white/[0.06]">
           <div className="w-11 shrink-0" />
           <div className="flex-1 min-w-0 text-[10px] font-bold uppercase tracking-[0.15em] text-[#818CF8]">{t.library.colContent}</div>
