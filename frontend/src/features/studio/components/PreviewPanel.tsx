@@ -82,6 +82,9 @@ export const PreviewPanel = React.memo(function PreviewPanel({
                         ? streamingProgress?.current === 0 ? 'Đang chuẩn bị âm thanh...' : 'Live Preview'
                         : streamingStatus === 'saving' ? 'Đang lưu vào thư viện...' : 'Đang xử lý nội dung...'}
                     </p>
+                    {progress === 100 && streamingStatus === 'streaming' && isPreviewPlaying && (
+                      <p className="text-[10px] text-[#A1A1AA] font-medium mt-0.5 animate-pulse">Bấm dừng để tải xuống ngay</p>
+                    )}
                   </div>
                 </div>
 
