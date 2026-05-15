@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -92,7 +92,7 @@ export function AudioPreview({ audioUrl, loading, onDownload, onCopy, wavAvailab
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="h-28 flex flex-col items-center justify-center border border-white/10 border-dashed rounded-[16px] bg-[#0D100A]/50"
+            className="h-28 flex flex-col items-center justify-center border border-[#6366F1]/20 border-dashed rounded-[16px] bg-[#6366F1]/5"
           >
             <motion.div
               animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
@@ -116,8 +116,9 @@ export function AudioPreview({ audioUrl, loading, onDownload, onCopy, wavAvailab
             key="audio"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="rounded-[16px] border border-white/10 bg-[#0D100A]/50 p-4"
+            className="aether-glass-wrapper rounded-[16px] w-full"
           >
+            <div className="aether-glass rounded-[16px] p-4">
             <audio
               ref={audioRef}
               className="hidden"
@@ -131,7 +132,7 @@ export function AudioPreview({ audioUrl, loading, onDownload, onCopy, wavAvailab
             />
 
             {/* Custom Audio Player */}
-            <div className="rounded-[14px] border border-[#6366F1]/15 bg-[#0A0A10] p-4">
+            <div className="rounded-[14px] border border-[#6366F1]/20 bg-[#6366F1]/5 p-4 mt-2">
               {/* Seek Bar */}
               <div
                 className="relative h-2 bg-white/8 rounded-full cursor-pointer group/seek mb-4"
@@ -273,13 +274,15 @@ export function AudioPreview({ audioUrl, loading, onDownload, onCopy, wavAvailab
                 <span className="text-xs font-semibold text-[#D4D4D8] group-hover:text-white transition-colors">{t.studio.copyLink}</span>
               </button>
             </div>
+            </div>
+            </div>
           </motion.div>
         ) : (
           <motion.div
             key="empty"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="h-36 flex flex-col items-center justify-center border border-white/10 border-dashed rounded-[16px] bg-[#0D100A]/30"
+            className="h-36 flex flex-col items-center justify-center border border-[#6366F1]/20 border-dashed rounded-[16px] bg-[#6366F1]/5"
           >
             <div className={`mb-3 ${error ? 'text-red-400/60' : 'text-[#A1A1AA] opacity-50'}`}>
               {error ? (

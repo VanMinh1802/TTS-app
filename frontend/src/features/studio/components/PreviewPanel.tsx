@@ -43,7 +43,7 @@ export const PreviewPanel = React.memo(function PreviewPanel({
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
-              className="h-32 mb-4 flex flex-col justify-between p-4 border border-white/10 border-dashed rounded-[16px] bg-[#0D100A]/50 relative overflow-hidden"
+              className="h-32 mb-4 flex flex-col justify-between p-4 border border-[#6366F1]/20 border-dashed rounded-[16px] bg-[#6366F1]/5 relative overflow-hidden"
             >
               {/* Top part: Live Preview Controls */}
               <div className="flex items-center justify-between relative z-10 w-full">
