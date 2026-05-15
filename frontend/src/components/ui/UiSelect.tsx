@@ -101,7 +101,7 @@ export function UiSelect({ value, onChange, options, placeholder, className = ''
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={undefined}
           transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
-          className="z-[100] overflow-hidden rounded-xl border border-white/[0.08] shadow-[0_15px_40px_-8px_rgba(0,0,0,0.6)] bg-[#0A0A0F]"
+          className="z-[100] max-h-[220px] overflow-y-auto custom-scrollbar rounded-xl border border-white/[0.08] shadow-[0_15px_40px_-8px_rgba(0,0,0,0.6)] bg-[#0A0A0F]"
           style={dropdownStyle}
         >
           {options.map((option, i) => (
