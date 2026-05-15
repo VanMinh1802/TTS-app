@@ -23,12 +23,12 @@ export function TextInput({ value, onChange, onOverLimit }: TextInputProps) {
     <div className="flex flex-col h-full group/input">
       <div className="flex flex-col h-full relative transition-all duration-300">
         <div className="aether-glass-wrapper rounded-[24px] h-full flex flex-col">
-          <div className="aether-glass rounded-[24px] flex flex-col h-full">
+          <div className="aether-glass rounded-[24px] flex flex-col h-full overflow-hidden focus-within:ring-2 focus-within:ring-[#6366F1]/50 transition-shadow">
             <textarea
               value={value}
               onChange={(e) => onChange(e.target.value.slice(0, maxChars))}
               maxLength={maxChars}
-              className="w-full flex-1 min-h-[240px] md:min-h-[360px] px-4 pt-8 pb-4 bg-transparent rounded-t-[24px] font-medium text-[16px] tracking-wide resize-none focus:outline-none focus:ring-2 focus:ring-[#6366F1]/50 text-white placeholder:text-[#A1A1AA] transition-all leading-relaxed drop-shadow-sm"
+              className="w-full flex-1 min-h-[240px] md:min-h-[360px] px-4 pt-8 pb-4 bg-transparent rounded-t-[24px] font-medium text-[16px] tracking-wide resize-none focus:outline-none text-white placeholder:text-[#A1A1AA] transition-all leading-relaxed drop-shadow-sm custom-scrollbar"
               placeholder={t.studio.textInputPlaceholder}
               role="textbox"
             />
