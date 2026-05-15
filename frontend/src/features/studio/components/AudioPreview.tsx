@@ -275,7 +275,6 @@ export function AudioPreview({ audioUrl, loading, onDownload, onCopy, wavAvailab
               </button>
             </div>
             </div>
-            </div>
           </motion.div>
         ) : (
           <motion.div
