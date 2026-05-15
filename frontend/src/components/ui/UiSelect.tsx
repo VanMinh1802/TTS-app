@@ -101,28 +101,30 @@ export function UiSelect({ value, onChange, options, placeholder, className = ''
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={undefined}
           transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
-          className="z-[100] rounded-xl border border-white/[0.08] shadow-[0_15px_40px_-8px_rgba(0,0,0,0.6)] bg-[#0A0A0F] custom-scrollbar"
-          style={{ ...dropdownStyle, maxHeight: '250px', overflowY: 'auto' }}
+          className="z-[100] rounded-xl border border-white/[0.08] shadow-[0_15px_40px_-8px_rgba(0,0,0,0.6)] bg-[#0A0A0F] overflow-hidden"
+          style={dropdownStyle}
         >
-          {options.map((option, i) => (
-            <button
-              key={option.value}
-              type="button"
-              disabled={option.disabled}
-              onMouseDown={(e) => { e.preventDefault(); if (!option.disabled) { onChange(option.value); setOpen(false); } }}
-              className={clsx(
-                'w-full text-left px-5 py-2.5 text-sm transition-all duration-150',
-                i > 0 && 'border-t border-white/[0.04]',
-                option.value === value && !option.disabled
-                  ? 'text-[#C4B99A] bg-[#6366F1]/10 font-medium'
-                  : option.disabled
-                    ? 'text-[#333333] cursor-not-allowed'
-                    : 'text-[#A1A1AA] hover:text-[#D4D4D8] hover:bg-white/[0.03]'
-              )}
-            >
-              {option.label}
-            </button>
-          ))}
+          <div className="custom-scrollbar" style={{ maxHeight: '250px', overflowY: 'auto' }}>
+            {options.map((option, i) => (
+              <button
+                key={option.value}
+                type="button"
+                disabled={option.disabled}
+                onMouseDown={(e) => { e.preventDefault(); if (!option.disabled) { onChange(option.value); setOpen(false); } }}
+                className={clsx(
+                  'w-full text-left px-5 py-2.5 text-sm transition-all duration-150',
+                  i > 0 && 'border-t border-white/[0.04]',
+                  option.value === value && !option.disabled
+                    ? 'text-[#C4B99A] bg-[#6366F1]/10 font-medium'
+                    : option.disabled
+                      ? 'text-[#333333] cursor-not-allowed'
+                      : 'text-[#A1A1AA] hover:text-[#D4D4D8] hover:bg-white/[0.03]'
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </motion.div>,
         document.body
       )}
