@@ -127,7 +127,7 @@ export function VoiceSelector({ voices, selectedVoice, onSelect, isPro = false, 
               <button
                 type="button"
                 onClick={handleTogglePreview}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-semibold tracking-wide transition-all duration-300 active:scale-[0.96] whitespace-nowrap shrink-0 ${
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[11px] font-semibold tracking-wide transition-all duration-300 active:scale-[0.96] whitespace-nowrap shrink-0 ${
                   playing
                     ? 'bg-gradient-to-r from-[#6366F1] to-[#C968F7] text-white border border-white/20 shadow-[0_0_16px_rgba(99,102,241,0.35)]'
                     : 'bg-white/5 border border-white/10 text-[#D4D4D8] hover:bg-white/10 hover:border-white/20 hover:text-white'
@@ -155,7 +155,7 @@ export function VoiceSelector({ voices, selectedVoice, onSelect, isPro = false, 
             {lockedByTier && (
               <Link
                 href="/pricing"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-bold tracking-wide whitespace-nowrap shrink-0 bg-gradient-to-r from-amber-500/20 to-amber-600/10 border border-amber-500/40 text-amber-300 hover:text-white hover:from-amber-500/30 hover:to-amber-600/20 hover:border-amber-400/60 hover:shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all duration-300 active:scale-[0.96]"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-[11px] font-bold tracking-wide whitespace-nowrap shrink-0 bg-gradient-to-r from-amber-500/20 to-amber-600/10 border border-amber-500/40 text-amber-300 hover:text-white hover:from-amber-500/30 hover:to-amber-600/20 hover:border-amber-400/60 hover:shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all duration-300 active:scale-[0.96]"
               >
                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />

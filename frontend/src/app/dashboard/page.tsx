@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
@@ -84,7 +84,7 @@ export default function DashboardPage() {
   const item = { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } };
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-12 min-h-[calc(100dvh-4rem)] pt-4">
+    <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 min-h-[calc(100dvh-4rem)] pt-4">
       {/* Welcome */}
       <motion.div variants={container} initial="initial" animate="animate" className="mb-8">
         <motion.div variants={item} className="flex items-center justify-between">
@@ -108,7 +108,7 @@ export default function DashboardPage() {
           {stats.map((stat) => (
             <motion.div key={stat.label} variants={item}>
               <div className="aether-glass-wrapper rounded-[24px] h-full transition-transform duration-300 hover:-translate-y-1">
-                <div className="aether-glass p-8 h-full flex flex-col justify-between">
+                <div className="aether-glass p-6 md:p-8 h-full flex flex-col justify-between">
                   <p className="text-[12px] font-semibold uppercase tracking-widest text-[#818CF8] mb-2">{stat.label}</p>
                   <CounterText
                     value={stat.value}
@@ -158,7 +158,7 @@ export default function DashboardPage() {
         <motion.div variants={item}>
           <Link href="/studio" className="block h-full group">
             <div className="aether-glass-wrapper rounded-[24px] h-full transition-transform duration-500 group-hover:-translate-y-2">
-              <div className="aether-glass p-8 h-full flex flex-col items-center justify-center text-center relative overflow-hidden">
+              <div className="aether-glass p-6 md:p-8 h-full flex flex-col items-center justify-center text-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-[#6366F1]/0 to-[#6366F1]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <div className="w-14 h-14 rounded-full border border-[#818CF8]/30 bg-[#6366F1]/10 flex items-center justify-center mb-4 relative z-10 group-hover:border-[#818CF8]/60 group-hover:bg-[#6366F1]/20 group-hover:shadow-[0_0_30px_rgba(99,102,241,0.3)] transition-all duration-500">
                   <svg className="w-6 h-6 text-[#818CF8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">

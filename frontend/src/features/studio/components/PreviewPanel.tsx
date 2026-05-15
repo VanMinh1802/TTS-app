@@ -51,7 +51,7 @@ export const PreviewPanel = React.memo(function PreviewPanel({
                   {streamingStatus === 'streaming' ? (
                     <button
                       onClick={onTogglePreview}
-                      className="h-9 w-9 flex items-center justify-center rounded-full bg-[#C968F7]/15 hover:bg-[#C968F7]/25 border border-[#C968F7]/30 transition-all shadow-[0_0_10px_rgba(201,104,247,0.2)]"
+                      className="h-10 w-10 md:h-9 md:w-9 flex items-center justify-center rounded-full bg-[#C968F7]/15 hover:bg-[#C968F7]/25 border border-[#C968F7]/30 transition-all shadow-[0_0_10px_rgba(201,104,247,0.2)]"
                     >
                       {isPreviewPlaying ? (
                         <svg className="w-4 h-4 text-[#C968F7]" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg>
@@ -60,11 +60,11 @@ export const PreviewPanel = React.memo(function PreviewPanel({
                       )}
                     </button>
                   ) : streamingStatus === 'saving' ? (
-                    <div className="h-9 w-9 flex items-center justify-center bg-white/5 rounded-full border border-white/10">
+                    <div className="h-10 w-10 md:h-9 md:w-9 flex items-center justify-center bg-white/5 rounded-full border border-white/10">
                       <span className="animate-spin h-4 w-4 border-2 border-[#F59E0B] border-t-transparent rounded-full" />
                     </div>
                   ) : (
-                    <div className="h-9 w-9 flex items-center justify-center bg-white/5 rounded-full border border-white/10">
+                    <div className="h-10 w-10 md:h-9 md:w-9 flex items-center justify-center bg-white/5 rounded-full border border-white/10">
                       <motion.div
                         animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
                         transition={{ duration: 1.5, repeat: Infinity }}
