@@ -166,7 +166,7 @@ export default function SystemLogs() {
       {/* Drawer Component */}
       <AnimatePresence>
         {selectedLog && (
-          <div className="fixed inset-0 z-[100] flex justify-end">
+          <div className="fixed inset-0 z-[9999] flex justify-end">
             {/* Backdrop */}
             <motion.div 
               initial={{ opacity: 0 }}
