@@ -16,72 +16,62 @@ logger = logging.getLogger(__name__)
 
 class LoggingMiddleware(BaseHTTPMiddleware):
     """Middleware to log all API requests."""
-
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         if not request.url.path.startswith("/api"):
             return await call_next(request)
 
         start_time = time.time()
         error_message = None
+        status_code = 500
 
         try:
             response = await call_next(request)
             status_code = response.status_code
+            return response
         except Exception as e:
-            status_code = 500
             error_message = str(e)
             raise
         finally:
             request_metadata = normalize_request_metadata(request)
+            latency_ms = int((time.time() - start_time) * 1000)
 
-        latency_ms = int((time.time() - start_time) * 1000)
-
-        db_gen = get_db()
-        db = None
-        try:
-            db = next(db_gen)
-            uow = UnitOfWork(db)
-            service = AnalyticsService(uow)
-            service.log_request(
-                method=request.method,
-                path=request.url.path,
-                status_code=response.status_code,
-                latency_ms=latency_ms,
-                user_id=request_metadata["user_id"],
-                ip_address=request_metadata["ip_address"],
-                user_agent=request_metadata["user_agent"],
-            )
-
-            # Check if this is a critical error
-            if status_code >= 500:
-                alert = SystemAlert(
-                    severity='CRITICAL',
-                    message=f"Server Error ({status_code}) on {request.method} {request.url.path}",
-                    details={
-                        "path": request.url.path,
-                        "method": request.method,
-                        "latency_ms": latency_ms,
-                        "user_id": request_metadata.get("user_id"),
-                        "ip_address": request_metadata.get("ip_address"),
-                        "error": error_message
-                    }
-                )
-                db.add(alert)
-                db.commit()
-
-        except Exception as e:
-            logger.warning(f"Failed to log request: {e}")
-        finally:
+            db_gen = get_db()
+            db = None
             try:
-                if db is not None:
-                    db.close()
+                db = next(db_gen)
+                uow = UnitOfWork(db)
+                service = AnalyticsService(uow)
+                service.log_request(
+                    method=request.method,
+                    path=request.url.path,
+                    status_code=status_code,
+                    latency_ms=latency_ms,
+                    user_id=request_metadata.get("user_id"),
+                    ip_address=request_metadata.get("ip_address"),
+                    user_agent=request_metadata.get("user_agent"),
+                )
+
+                # Check if this is a critical error
+                if status_code >= 500:
+                    alert = SystemAlert(
+                        severity='CRITICAL',
+                        message=f"Server Error ({status_code}) on {request.method} {request.url.path}",
+                        details={
+                            "path": request.url.path,
+                            "method": request.method,
+                            "latency_ms": latency_ms,
+                            "user_id": request_metadata.get("user_id"),
+                            "ip_address": request_metadata.get("ip_address"),
+                            "error": error_message
+                        }
+                    )
+                    db.add(alert)
+                    db.commit()
+            except Exception as e:
+                logger.warning(f"Failed to log request: {e}")
             finally:
-                db_gen.close()
-        
-        # If response was successfully retrieved, return it
-        # If an exception was raised, it will propagate up before reaching this point
-        if 'response' in locals():
-            return response
-        
-        # Fallback (should not be reached due to raise)
-        return Response("Internal Server Error", status_code=500)
+                try:
+                    if db is not None:
+                        db.close()
+                finally:
+                    db_gen.close()
