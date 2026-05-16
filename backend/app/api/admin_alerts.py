@@ -25,3 +25,17 @@ def mark_read(db: Session = Depends(get_db), _: User = Depends(require_admin)):
         alert.is_read = True
     db.commit()
     return {"status": "success", "marked_count": len(unread_alerts)}
+
+@router.delete("/{alert_id}")
+def delete_alert(alert_id: str, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    alert = db.query(SystemAlert).filter(SystemAlert.id == alert_id).first()
+    if alert:
+        db.delete(alert)
+        db.commit()
+    return {"status": "success"}
+
+@router.delete("/")
+def clear_all_alerts(db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    db.query(SystemAlert).delete()
+    db.commit()
+    return {"status": "success"}

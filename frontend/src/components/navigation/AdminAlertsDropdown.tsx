@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiRequest } from "@/lib/api-client";
 import { useAuth } from "@/features/auth";
-import { Bell } from "lucide-react";
+import { Bell, Trash2, X } from "lucide-react";
 
 interface Alert {
   id: string;
@@ -57,6 +57,25 @@ export function AdminAlertsDropdown() {
     }
   };
 
+  const deleteAlert = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await apiRequest(`/admin/alerts/${id}`, { method: "DELETE" });
+      setAlerts(alerts.filter(a => a.id !== id));
+    } catch (err) {
+      console.error("Failed to delete alert", err);
+    }
+  };
+
+  const clearAllAlerts = async () => {
+    try {
+      await apiRequest("/admin/alerts", { method: "DELETE" });
+      setAlerts([]);
+    } catch (err) {
+      console.error("Failed to clear all alerts", err);
+    }
+  };
+
   if (!user?.is_admin) return null;
 
   const unreadCount = alerts.filter((a) => !a.is_read).length;
@@ -86,14 +105,24 @@ export function AdminAlertsDropdown() {
               <div className="aether-glass overflow-hidden flex flex-col max-h-[500px]">
                 <div className="px-4 py-3 border-b border-white/10 flex justify-between items-center bg-black/20">
                   <h3 className="text-xs font-bold uppercase tracking-widest text-white">System Alerts</h3>
-                  {unreadCount > 0 && (
-                    <button 
-                      onClick={markAllAsRead}
-                      className="text-[10px] text-[#818CF8] hover:text-white transition-colors uppercase tracking-widest font-bold"
-                    >
-                      Mark Read
-                    </button>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {unreadCount > 0 && (
+                      <button 
+                        onClick={markAllAsRead}
+                        className="text-[10px] text-[#818CF8] hover:text-white transition-colors uppercase tracking-widest font-bold"
+                      >
+                        Mark Read
+                      </button>
+                    )}
+                    {alerts.length > 0 && (
+                      <button 
+                        onClick={clearAllAlerts}
+                        className="text-[10px] text-red-400 hover:text-red-300 transition-colors uppercase tracking-widest font-bold"
+                      >
+                        Clear All
+                      </button>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="overflow-y-auto custom-scrollbar flex-1">
@@ -104,9 +133,17 @@ export function AdminAlertsDropdown() {
                       {alerts.map((alert) => (
                         <div 
                           key={alert.id} 
-                          className={`p-4 transition-colors ${!alert.is_read ? 'bg-white/[0.02]' : 'opacity-70'} hover:bg-white/[0.04]`}
+                          className={`group relative p-4 transition-colors ${!alert.is_read ? 'bg-white/[0.02]' : 'opacity-70'} hover:bg-white/[0.04]`}
                         >
-                          <div className="flex items-center gap-2 mb-2">
+                          <button
+                            onClick={(e) => deleteAlert(alert.id, e)}
+                            className="absolute top-3 right-3 p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                            title="Xóa cảnh báo này"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                          
+                          <div className="flex items-center gap-2 mb-2 pr-6">
                             <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest border ${
                               alert.severity === 'CRITICAL' ? 'bg-red-500/10 text-red-400 border-red-500/30' : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30'
                             }`}>
