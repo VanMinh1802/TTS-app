@@ -17,6 +17,9 @@ from app.api.voices import router as voices_router
 from app.api.auth import router as auth_router
 from app.api.license import router as license_router
 from app.api.library import router as library_router
+from app.api.admin_users import router as admin_users_router
+from app.api.admin_logs import router as admin_logs_router
+from app.api.admin_alerts import router as admin_alerts_router
 from app.core.redis import init_redis, close_redis
 from app.db import init_db
 from app.core.settings import settings
@@ -95,6 +98,9 @@ app.include_router(voices_router, prefix=settings.API_V1_PREFIX)
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(library_router, prefix=settings.API_V1_PREFIX)
 app.include_router(license_router, prefix=settings.API_V1_PREFIX)
+app.include_router(admin_users_router, prefix=settings.API_V1_PREFIX)
+app.include_router(admin_logs_router, prefix=settings.API_V1_PREFIX)
+app.include_router(admin_alerts_router, prefix=f"{settings.API_V1_PREFIX}/admin/alerts")
 
 
 @app.get("/")

@@ -15,6 +15,7 @@ from app.models.audio_record import AudioRecord
 from app.models.license import LicenseKey
 from app.models.activation_log import ActivationLog
 from app.models.revoked_token import RevokedToken
+from app.models.system_alert import SystemAlert
 
 __all__ = [
     "Base",
@@ -29,4 +30,5 @@ __all__ = [
     "LicenseKey",
     "ActivationLog",
     "RevokedToken",
+    "SystemAlert",
 ]
