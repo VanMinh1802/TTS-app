@@ -158,7 +158,16 @@ class LibraryService:
         if not record:
             raise NotFoundError("Không tìm thấy file âm thanh (Record not found).")
 
-        r2_key = f"audio/{user_id}/{record_id}.wav"
+        # Derive R2 key from stored URL to handle both .wav and .mp3
+        if record.file_url:
+            # Extract the path portion: "audio/{user_id}/{record_id}.{ext}"
+            url_path = record.file_url.rsplit("/", 2)
+            if len(url_path) >= 2:
+                r2_key = "/".join(url_path[-2:])  # "audio/user_id/record_id.ext"
+            else:
+                r2_key = f"audio/{user_id}/{record_id}.wav"
+        else:
+            r2_key = f"audio/{user_id}/{record_id}.wav"
         try:
             r2_library_service.delete_file(r2_key)
         except Exception as e:

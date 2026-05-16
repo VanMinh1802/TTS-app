@@ -1,9 +1,9 @@
 """Audio Record model for Library."""
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
-from sqlalchemy import Column, String, Text, Integer, Float, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models import Base
 
@@ -13,14 +13,15 @@ class AudioRecord(Base):
     
     __tablename__ = "audio_records"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    voice_id = Column(String(50), nullable=False)
-    text_content = Column(Text, nullable=False)
-    file_url = Column(String(512), nullable=False)
-    file_size_bytes = Column(Integer, nullable=False, default=0)
-    duration = Column(Float, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    voice_id: Mapped[str] = mapped_column(String(50), nullable=False)
+    text_content: Mapped[str] = mapped_column(Text, nullable=False)
+    file_url: Mapped[str] = mapped_column(String(512), nullable=False)
+    file_size_bytes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    duration: Mapped[float] = mapped_column(Float, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     
-    # Relationship (assuming User model has back_populates if needed, but not strictly required here)
+    # Relationship
     user = relationship("User", backref="audio_records")
+

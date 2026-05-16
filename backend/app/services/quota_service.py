@@ -1,24 +1,15 @@
 """Quota service for user quota management."""
 import logging
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from typing import Optional
 
 from app.core.settings import settings
 from app.core.uow import UnitOfWork
 from app.models.quota import UserQuota, UsageHistory
 
-logger = logging.getLogger(__name__)
+from app.core.constants import QUOTA_LIMITS
 
-QUOTA_LIMITS = {
-    "free": {"characters": 5000, "storage_mb": 100, "api_calls": 100},
-    "basic": {"characters": 50000, "storage_mb": 1024, "api_calls": 1000},
-    "pro": {"characters": 200000, "storage_mb": 5120, "api_calls": 5000},
-    "enterprise": {
-        "characters": None,
-        "storage_mb": 51200,
-        "api_calls": None,
-    },
-}
+logger = logging.getLogger(__name__)
 
 
 class QuotaService:
@@ -126,7 +117,7 @@ class QuotaService:
     def reset_daily_quota(self, user_id: str) -> None:
         quota = self.get_or_create_quota(user_id)
         quota.api_calls_today = 0
-        quota.last_reset_at = datetime.utcnow()
+        quota.last_reset_at = datetime.now(timezone.utc)
         self.uow.commit()
 
     def get_usage_history(

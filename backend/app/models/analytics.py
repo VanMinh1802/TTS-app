@@ -1,5 +1,5 @@
 """Analytics models for request logging and usage tracking."""
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from sqlalchemy import Column, Integer, String, DateTime, Date, ForeignKey, Index
 from app.models import Base
 
@@ -9,7 +9,7 @@ class RequestLog(Base):
     __tablename__ = "request_logs"
 
     id = Column(Integer, primary_key=True, index=True)
-    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     method = Column(String(10), nullable=False)
     path = Column(String(255), nullable=False, index=True)
     status_code = Column(Integer, nullable=False)

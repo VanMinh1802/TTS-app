@@ -65,6 +65,8 @@ async def close_redis() -> None:
     global redis_client
     global redis_sync_client
 
+    had_connections = bool(redis_client or redis_sync_client)
+
     if redis_client:
         await redis_client.close()
         redis_client = None
@@ -73,7 +75,7 @@ async def close_redis() -> None:
         redis_sync_client.close()
         redis_sync_client = None
 
-    if redis_client or redis_sync_client:
+    if had_connections:
         logger.info("Redis connection closed")
 
 

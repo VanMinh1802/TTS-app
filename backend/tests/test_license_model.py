@@ -27,8 +27,11 @@ def test_license_key_creation(db_session):
     db_session.commit()
     db_session.refresh(user)
 
+    import hashlib
+    code = "PRO-1M-TEST1234"
     key = LicenseKey(
-        code="PRO-1M-TEST1234",
+        code=code,
+        code_hash=hashlib.sha256(code.encode()).hexdigest(),
         duration_days=30,
         tier="pro",
         created_by_id=user.id

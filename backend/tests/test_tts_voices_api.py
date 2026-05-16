@@ -2,7 +2,7 @@
 
 
 def test_tts_voice_list_excludes_default_alias_duplicate(client, monkeypatch):
-    import app.services.tts_service as tts_svc
+    import app.api.tts as tts_router
 
     test_models = {
         "ngochuyen": {"name": "Ngọc Huyền", "path": "vi/ngochuyen/ngochuyen.onnx", "sample_url": "https://cdn.example.com/vi/ngochuyen/sample.wav"},
@@ -12,7 +12,7 @@ def test_tts_voice_list_excludes_default_alias_duplicate(client, monkeypatch):
         "vi_male": {"name": "Mạnh Dũng", "path": "vi/manhdung/manhdung.onnx", "sample_url": "https://cdn.example.com/vi/manhdung/sample.wav"},
     }
 
-    monkeypatch.setattr(tts_svc, "_get_models", lambda: test_models)
+    monkeypatch.setattr(tts_router, "_get_models", lambda: test_models)
 
     response = client.get("/api/tts/voices")
 

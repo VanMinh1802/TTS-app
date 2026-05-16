@@ -1,6 +1,6 @@
 """Quota database models."""
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
@@ -30,10 +30,10 @@ class UserQuota(Base):
     storage_limit_mb: Mapped[int] = mapped_column(Integer, default=100)
     api_calls_today: Mapped[int] = mapped_column(Integer, default=0)
     api_calls_limit: Mapped[int] = mapped_column(Integer, default=100)
-    last_reset_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    last_reset_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
     )
 
     def __repr__(self) -> str:

@@ -4,20 +4,31 @@ from unittest.mock import MagicMock
 from fastapi import status
 from fastapi.testclient import TestClient
 
+from app.api.auth import get_current_user
 from app.api.quota import get_quota_service
 from app.main import app
 from app.schemas.quota import QuotaStatusResponse
 from app.services.quota_service import QuotaService
 
 
+class FakeUser:
+    id = "test-user-1"
+    email = "test@example.com"
+    subscription_tier = "free"
+
+
 class TestQuotaStatus:
 
     def test_get_quota(self, client):
         """Test getting quota."""
-        response = client.get("/api/quota")
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
-        assert "tier" in data
+        app.dependency_overrides[get_current_user] = lambda: FakeUser()
+        try:
+            response = client.get("/api/quota")
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+            assert "tier" in data
+        finally:
+            app.dependency_overrides.pop(get_current_user, None)
 
     def test_quota_status_response_accepts_nullable_limits(self):
         """Test quota schema accepts unlimited limits."""
@@ -46,11 +57,15 @@ class TestQuotaUsage:
 
     def test_get_usage_history(self, client):
         """Test getting usage history."""
-        response = client.get("/api/quota/usage")
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
-        assert "history" in data
-        assert isinstance(data["history"], list)
+        app.dependency_overrides[get_current_user] = lambda: FakeUser()
+        try:
+            response = client.get("/api/quota/usage")
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+            assert "history" in data
+            assert isinstance(data["history"], list)
+        finally:
+            app.dependency_overrides.pop(get_current_user, None)
 
     def test_quota_service_allows_unlimited_limits(self):
         """Test quota checks work for unlimited tiers."""
@@ -84,6 +99,10 @@ class TestQuotaReset:
 
     def test_reset_quota(self, client):
         """Test resetting quota."""
-        response = client.post("/api/quota/reset")
-        assert response.status_code == status.HTTP_200_OK
-        assert response.json()["status"] == "success"
+        app.dependency_overrides[get_current_user] = lambda: FakeUser()
+        try:
+            response = client.post("/api/quota/reset")
+            assert response.status_code == status.HTTP_200_OK
+            assert response.json()["status"] == "success"
+        finally:
+            app.dependency_overrides.pop(get_current_user, None)
