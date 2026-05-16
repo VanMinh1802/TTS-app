@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { apiRequest } from "@/lib/api-client";
 import { UiSelect } from "@/components/ui/UiSelect";
 
@@ -105,15 +106,19 @@ export default function SystemLogs() {
               {logs.length === 0 ? (
                 <tr><td colSpan={6} className="py-8 text-center text-xs text-[#71717A]">Không có dữ liệu log</td></tr>
               ) : (
-                logs.map((log: any) => (
-                  <tr 
-                    key={log.id} 
-                    className="border-b border-white/[0.03] hover:bg-white/[0.05] transition-colors cursor-pointer"
-                    onClick={() => setSelectedLog(log)}
-                  >
-                    <td className="py-2 px-3 text-[11px] text-[#A1A1AA] font-mono">
-                      {new Date(log.timestamp + (!log.timestamp.includes('Z') ? 'Z' : '')).toLocaleString("vi-VN")}
-                    </td>
+                <AnimatePresence mode="popLayout">
+                  {logs.map((log: any, index: number) => (
+                    <motion.tr 
+                      key={log.id} 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2, delay: index * 0.02 }}
+                      className="border-b border-white/[0.03] hover:bg-white/[0.05] transition-colors cursor-pointer"
+                      onClick={() => setSelectedLog(log)}
+                    >
+                      <td className="py-2 px-3 text-[11px] text-[#A1A1AA] font-mono">
+                        {new Date(log.timestamp + (!log.timestamp.includes('Z') ? 'Z' : '')).toLocaleString("vi-VN")}
+                      </td>
                     <td className="py-2 px-3 text-[11px] text-[#A1A1AA] font-mono truncate max-w-[300px]">
                       <span className="px-1.5 py-0.5 rounded text-[9px] bg-white/10 mr-2 font-bold text-[#D4D4D8] uppercase tracking-wider">{log.method}</span>
                       {log.path}
@@ -130,8 +135,9 @@ export default function SystemLogs() {
                     <td className="py-2 px-3 text-[10px] text-[#71717A] font-mono">
                       {log.user_email ? log.user_email : (log.user_id ? log.user_id.slice(0, 8) + "..." : log.ip_address || "Unknown")}
                     </td>
-                  </tr>
-                ))
+                  </motion.tr>
+                ))}
+              </AnimatePresence>
               )}
             </tbody>
           </table>
@@ -158,17 +164,28 @@ export default function SystemLogs() {
       </div>
 
       {/* Drawer Component */}
-      {selectedLog && (
-        <div className="fixed inset-0 z-[100] flex justify-end">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer" 
-            onClick={() => setSelectedLog(null)}
-          />
-          
-          {/* Drawer Panel */}
-          <aside className="relative w-full max-w-md bg-[#0A0A0F] border-l border-white/10 h-full overflow-y-auto flex flex-col transform transition-transform duration-300">
-            <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
+      <AnimatePresence>
+        {selectedLog && (
+          <div className="fixed inset-0 z-[100] flex justify-end">
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer" 
+              onClick={() => setSelectedLog(null)}
+            />
+            
+            {/* Drawer Panel */}
+            <motion.aside 
+              initial={{ x: "100%", opacity: 0.5 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0.5 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="relative w-full max-w-md bg-[#0A0A0F] border-l border-white/10 h-full overflow-y-auto flex flex-col shadow-2xl"
+            >
+              <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
               <h3 className="text-lg font-semibold text-white">Chi tiết Request</h3>
               <button 
                 onClick={() => setSelectedLog(null)}
@@ -257,9 +274,10 @@ export default function SystemLogs() {
                 )}
               </div>
             </div>
-          </aside>
+          </motion.aside>
         </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 }
