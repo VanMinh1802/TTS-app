@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/features/auth";
 import { DesktopNav, authNavItems } from "./DesktopNav";
 import { SkeletonNavbar } from "./SkeletonNavbar";
-import { AdminAlertsDropdown } from "./AdminAlertsDropdown";
+import { AdminAlertsDropdown } from "@/components/navigation/AdminAlertsDropdown";
 import { useT } from "@/shared/i18n";
 
 export function Navbar() {
