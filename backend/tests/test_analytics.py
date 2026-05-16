@@ -187,8 +187,14 @@ class TestLoggingMiddleware:
         """Test metadata normalization is shared and consistent."""
         from app.services.analytics_service import normalize_request_metadata
 
+        class DummyState:
+            pass
+
         request = MagicMock()
-        request.state.user = MagicMock(id="user-2")
+        request.state = DummyState()
+        request.state.user = MagicMock()
+        request.state.user.__dict__["id"] = "user-2"
+        
         request.client = MagicMock(host="10.0.0.2")
         request.headers = {"X-Forwarded-For": "198.51.100.4, 10.0.0.2", "User-Agent": "abc"}
         request.method = "POST"
