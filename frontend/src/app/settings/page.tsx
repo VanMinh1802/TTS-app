@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { FadeIn } from "@/components/motion";
 import { useAuth } from "@/features/auth";
 import { useT } from "@/shared/i18n";
 
 export default function SettingsPage() {
   const t = useT();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
 
@@ -17,6 +18,21 @@ export default function SettingsPage() {
       setName(user.name || user.email.split("@")[0]);
     }
   }, [user]);
+
+  const tierLabel = user?.subscription_tier === "pro"
+    ? t.dashboard.proPlan
+    : user?.subscription_tier === "enterprise"
+      ? "Enterprise"
+      : t.dashboard.basicPlan;
+
+  const expiresAt = user?.subscription_expires_at
+    ? new Date(user.subscription_expires_at).toLocaleDateString("vi-VN")
+    : null;
+
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = "/login";
+  };
 
   return (
     <div className="min-h-[calc(100dvh-4rem)] relative text-[#F4F4F5] overflow-hidden font-light pt-4 pb-12">
@@ -33,6 +49,7 @@ export default function SettingsPage() {
         </FadeIn>
 
         <div className="space-y-6">
+          {/* Profile Card */}
           <FadeIn delay={0.1}>
             <div className="aether-glass-wrapper rounded-[24px]">
               <div className="aether-glass rounded-[24px] p-8">
@@ -44,6 +61,9 @@ export default function SettingsPage() {
                     <h2 className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#818CF8]">{t.settings.personalProfile}</h2>
                     <p className="text-xs text-[#A1A1AA]">{email}</p>
                   </div>
+                  <span className="ml-auto text-[9px] font-bold uppercase tracking-widest text-[#71717A] bg-white/5 border border-white/10 rounded-full px-3 py-1">
+                    {t.settings.googleManaged}
+                  </span>
                 </div>
                 <div className="space-y-5">
                   <div className="space-y-1.5">
@@ -72,6 +92,78 @@ export default function SettingsPage() {
                       <svg className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#A1A1AA]/40" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+          </FadeIn>
+
+          {/* Subscription Card */}
+          <FadeIn delay={0.2}>
+            <div className="aether-glass-wrapper rounded-[24px]">
+              <div className="aether-glass rounded-[24px] p-8">
+                <h2 className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#818CF8] mb-5">{t.settings.subscription}</h2>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#6366F1]/20 to-[#C968F7]/20 border border-[#6366F1]/30 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-[#818CF8]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-white">{tierLabel}</span>
+                        <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                          user?.subscription_tier === "pro"
+                            ? "bg-gradient-to-r from-[#6366F1]/20 to-[#C968F7]/20 text-[#C968F7] border border-[#C968F7]/30"
+                            : "bg-white/5 text-[#71717A] border border-white/10"
+                        }`}>
+                          {user?.subscription_tier === "pro" ? "PRO" : "FREE"}
+                        </span>
+                      </div>
+                      {expiresAt && (
+                        <p className="text-[11px] text-[#A1A1AA] mt-0.5">
+                          Hết hạn: {expiresAt}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {user?.subscription_tier !== "pro" && (
+                    <Link
+                      href="/pricing"
+                      className="aether-btn aether-btn-primary text-[10px] !py-2.5 !px-6"
+                    >
+                      {t.settings.upgradePlan}
+                    </Link>
+                  )}
+                  {user?.subscription_tier === "pro" && (
+                    <Link
+                      href="/pricing"
+                      className="aether-btn text-[10px] !py-2.5 !px-6"
+                    >
+                      {t.settings.managePlan}
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          </FadeIn>
+
+          {/* Danger Zone */}
+          <FadeIn delay={0.3}>
+            <div className="aether-glass-wrapper rounded-[24px]">
+              <div className="aether-glass rounded-[24px] p-8">
+                <h2 className="text-[11px] font-bold uppercase tracking-[0.15em] text-red-400/80 mb-5">{t.settings.dangerZone}</h2>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-white">{t.settings.logout}</p>
+                    <p className="text-[11px] text-[#A1A1AA] mt-0.5">{t.settings.logoutDesc}</p>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="text-[10px] font-bold uppercase tracking-widest px-6 py-2.5 rounded-full border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 transition-all duration-200"
+                  >
+                    {t.settings.logout}
+                  </button>
                 </div>
               </div>
             </div>

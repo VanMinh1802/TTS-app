@@ -301,7 +301,21 @@
     "accountSettings": "Account Settings",
     "personalProfile": "Personal Profile",
     "fullName": "Full Name",
-    "emailLabel": "Email"
+    "emailLabel": "Email",
+    "subscription": "Subscription",
+    "currentPlan": "Current Plan",
+    "upgradePlan": "Upgrade Plan",
+    "managePlan": "Manage Plan",
+    "preferences": "Interface Preferences",
+    "language": "Language",
+    "theme": "Theme",
+    "themeDark": "Dark",
+    "themeLight": "Light",
+    "themeSystem": "System",
+    "dangerZone": "Danger Zone",
+    "logout": "Log out",
+    "logoutDesc": "Sign out from your account on this device",
+    "googleManaged": "Managed by Google"
   },
   "voices": {
     "pageTitle": "Voice Library",

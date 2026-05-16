@@ -297,7 +297,21 @@
     "accountSettings": "Cài đặt Tài khoản",
     "personalProfile": "Hồ sơ Cá nhân",
     "fullName": "Họ và tên",
-    "emailLabel": "Email"
+    "emailLabel": "Email",
+    "subscription": "Gói đăng ký",
+    "currentPlan": "Gói hiện tại",
+    "upgradePlan": "Nâng cấp gói",
+    "managePlan": "Quản lý gói",
+    "preferences": "Tuỳ chỉnh giao diện",
+    "language": "Ngôn ngữ",
+    "theme": "Giao diện",
+    "themeDark": "Tối",
+    "themeLight": "Sáng",
+    "themeSystem": "Hệ thống",
+    "dangerZone": "Vùng nguy hiểm",
+    "logout": "Đăng xuất",
+    "logoutDesc": "Đăng xuất khỏi tài khoản trên thiết bị này",
+    "googleManaged": "Quản lý qua Google"
   },
   "voices": {
     "pageTitle": "Thư viện giọng nói",

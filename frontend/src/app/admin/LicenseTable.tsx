@@ -78,7 +78,7 @@ export default function LicenseTable({ licenses, onDelete }: Props) {
                           {lic.tier}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-[11px] text-[#D4D4D8]">{lic.duration_days} {t.admin.days.replace("{n}", String(lic.duration_days))}</td>
+                      <td className="py-3 px-4 text-[11px] text-[#D4D4D8]">{t.admin.days.replace("{n}", String(lic.duration_days))}</td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-1.5">
                           <span className={`w-1.5 h-1.5 rounded-full ${lic.is_used ? 'bg-gray-500' : 'bg-[#6366F1] shadow-[0_0_5px_rgba(99,102,241,0.8)]'}`}></span>

@@ -56,7 +56,7 @@ export default function DictionaryPage() {
             <h1 className="text-4xl md:text-5xl leading-tight py-0 tracking-tight font-bold bg-gradient-to-b from-white to-[#A78BFA] bg-clip-text text-transparent">
               {t.dictionary.heading}
             </h1>
-            <p className="text-xs font-light text-[#A1A1AA] mt-2">{entries.length} {t.dictionary.entryCount.replace("{count}", String(entries.length))}</p>
+            <p className="text-xs font-light text-[#A1A1AA] mt-2">{t.dictionary.entryCount.replace("{count}", String(entries.length))}</p>
           </div>
         </FadeIn>
 
