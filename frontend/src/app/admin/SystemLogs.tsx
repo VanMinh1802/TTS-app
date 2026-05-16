@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiRequest } from "@/lib/api-client";
 import { UiSelect } from "@/components/ui/UiSelect";
@@ -163,121 +164,124 @@ export default function SystemLogs() {
         </div>
       </div>
 
-      {/* Drawer Component */}
-      <AnimatePresence>
-        {selectedLog && (
-          <div className="fixed inset-0 z-[9999] flex justify-end">
-            {/* Backdrop */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer" 
-              onClick={() => setSelectedLog(null)}
-            />
-            
-            {/* Drawer Panel */}
-            <motion.aside 
-              initial={{ x: "100%", opacity: 0.5 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "100%", opacity: 0.5 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-md bg-[#0A0A0F] border-l border-white/10 h-full overflow-y-auto flex flex-col shadow-2xl"
-            >
-              <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
-              <h3 className="text-lg font-semibold text-white">Chi tiết Request</h3>
-              <button 
+      {/* Drawer Component rendered via Portal to escape all stacking contexts */}
+      {typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {selectedLog && (
+            <div className="fixed inset-0 z-[99999] flex justify-end">
+              {/* Backdrop */}
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer" 
                 onClick={() => setSelectedLog(null)}
-                className="text-[#A1A1AA] hover:text-white transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10"
+              />
+              
+              {/* Drawer Panel */}
+              <motion.aside 
+                initial={{ x: "100%", opacity: 0.5 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: "100%", opacity: 0.5 }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="relative w-full max-w-md bg-[#0A0A0F] border-l border-white/10 h-full overflow-y-auto flex flex-col shadow-2xl"
               >
-                ✕
-              </button>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              {/* Status & Time */}
-              <div className="flex items-center gap-4">
-                <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
-                  selectedLog.status_code >= 500 ? "bg-red-500/10 text-red-400 border-red-500/20" :
-                  selectedLog.status_code >= 400 ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" :
-                  "bg-green-500/10 text-green-400 border-green-500/20"
-                }`}>
-                  {selectedLog.status_code}
-                </span>
-                <span className="text-[#A1A1AA] text-sm">
-                  {new Date(selectedLog.timestamp + (!selectedLog.timestamp.includes('Z') ? 'Z' : '')).toLocaleString("vi-VN")}
-                </span>
+                <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
+                <h3 className="text-lg font-semibold text-white">Chi tiết Request</h3>
+                <button 
+                  onClick={() => setSelectedLog(null)}
+                  className="text-[#A1A1AA] hover:text-white transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10"
+                >
+                  ✕
+                </button>
               </div>
-
-              {/* Details */}
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between items-end mb-1">
-                    <label className="text-xs text-[#71717A] uppercase tracking-wider block">Path</label>
-                    <button 
-                      onClick={() => navigator.clipboard.writeText(selectedLog.path)}
-                      className="text-[10px] text-[#818CF8] hover:text-white transition-colors"
-                    >
-                      COPY
-                    </button>
-                  </div>
-                  <div className="bg-black/40 border border-white/5 rounded p-3 text-sm text-[#D4D4D8] break-all font-mono">
-                    <span className="text-[#818CF8] font-bold mr-2">{selectedLog.method}</span>
-                    {selectedLog.path}
-                  </div>
+              
+              <div className="p-6 space-y-6">
+                {/* Status & Time */}
+                <div className="flex items-center gap-4">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                    selectedLog.status_code >= 500 ? "bg-red-500/10 text-red-400 border-red-500/20" :
+                    selectedLog.status_code >= 400 ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" :
+                    "bg-green-500/10 text-green-400 border-green-500/20"
+                  }`}>
+                    {selectedLog.status_code}
+                  </span>
+                  <span className="text-[#A1A1AA] text-sm">
+                    {new Date(selectedLog.timestamp + (!selectedLog.timestamp.includes('Z') ? 'Z' : '')).toLocaleString("vi-VN")}
+                  </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                {/* Details */}
+                <div className="space-y-4">
                   <div>
                     <div className="flex justify-between items-end mb-1">
-                      <label className="text-xs text-[#71717A] uppercase tracking-wider block">User Email</label>
-                    </div>
-                    <div className="text-sm text-white break-all font-mono">
-                      {selectedLog.user_email || 'N/A'}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="text-xs text-[#71717A] uppercase tracking-wider block">IP Address</label>
+                      <label className="text-xs text-[#71717A] uppercase tracking-wider block">Path</label>
                       <button 
-                        onClick={() => navigator.clipboard.writeText(selectedLog.ip_address || '')}
+                        onClick={() => navigator.clipboard.writeText(selectedLog.path)}
                         className="text-[10px] text-[#818CF8] hover:text-white transition-colors"
                       >
                         COPY
                       </button>
                     </div>
-                    <div className="text-sm text-white break-all font-mono">{selectedLog.ip_address || 'N/A'}</div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs text-[#71717A] uppercase tracking-wider block mb-1">Latency</label>
-                    <div className="text-sm text-white">{selectedLog.latency_ms?.toFixed(2) || selectedLog.latency_ms} ms</div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="text-xs text-[#71717A] uppercase tracking-wider block">User ID</label>
-                    </div>
-                    <div className="text-sm text-white break-all font-mono">{selectedLog.user_id ? `${selectedLog.user_id.slice(0, 16)}...` : 'N/A'}</div>
-                  </div>
-                </div>
-
-                {selectedLog.error_message && (
-                  <div>
-                    <label className="text-xs text-[#71717A] uppercase tracking-wider block mb-1 text-red-400">Error Message</label>
-                    <div className="bg-red-500/10 border border-red-500/20 rounded p-3 text-sm text-red-400 break-all">
-                      {selectedLog.error_message}
+                    <div className="bg-black/40 border border-white/5 rounded p-3 text-sm text-[#D4D4D8] break-all font-mono">
+                      <span className="text-[#818CF8] font-bold mr-2">{selectedLog.method}</span>
+                      {selectedLog.path}
                     </div>
                   </div>
-                )}
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="flex justify-between items-end mb-1">
+                        <label className="text-xs text-[#71717A] uppercase tracking-wider block">User Email</label>
+                      </div>
+                      <div className="text-sm text-white break-all font-mono">
+                        {selectedLog.user_email || 'N/A'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between items-end mb-1">
+                        <label className="text-xs text-[#71717A] uppercase tracking-wider block">IP Address</label>
+                        <button 
+                          onClick={() => navigator.clipboard.writeText(selectedLog.ip_address || '')}
+                          className="text-[10px] text-[#818CF8] hover:text-white transition-colors"
+                        >
+                          COPY
+                        </button>
+                      </div>
+                      <div className="text-sm text-white break-all font-mono">{selectedLog.ip_address || 'N/A'}</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs text-[#71717A] uppercase tracking-wider block mb-1">Latency</label>
+                      <div className="text-sm text-white">{selectedLog.latency_ms?.toFixed(2) || selectedLog.latency_ms} ms</div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between items-end mb-1">
+                        <label className="text-xs text-[#71717A] uppercase tracking-wider block">User ID</label>
+                      </div>
+                      <div className="text-sm text-white break-all font-mono">{selectedLog.user_id ? `${selectedLog.user_id.slice(0, 16)}...` : 'N/A'}</div>
+                    </div>
+                  </div>
+
+                  {selectedLog.error_message && (
+                    <div>
+                      <label className="text-xs text-[#71717A] uppercase tracking-wider block mb-1 text-red-400">Error Message</label>
+                      <div className="bg-red-500/10 border border-red-500/20 rounded p-3 text-sm text-red-400 break-all">
+                        {selectedLog.error_message}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </motion.aside>
-        </div>
-        )}
-      </AnimatePresence>
+            </motion.aside>
+          </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }
