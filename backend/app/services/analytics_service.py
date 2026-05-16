@@ -10,8 +10,10 @@ from app.models.analytics import RequestLog, UsageSnapshot
 def normalize_request_metadata(request) -> dict:
     """Extract request metadata in one place."""
     user_id = None
-    if hasattr(request.state, "user") and request.state.user:
-        user_id = getattr(request.state.user, "id", None)
+    if hasattr(request.state, "user_id") and request.state.user_id:
+        user_id = request.state.user_id
+    elif hasattr(request.state, "user") and request.state.user:
+        user_id = request.state.user.__dict__.get("id")
 
     client_ip = request.client.host if request.client else None
     x_forwarded_for = request.headers.get("X-Forwarded-For")
@@ -59,8 +61,9 @@ class AnalyticsService:
         ).scalar() or 0
 
     def get_total_users(self) -> int:
+        from app.models.user import User
         return self.uow.request_logs.session.execute(
-            select(func.count(func.distinct(RequestLog.user_id)))
+            select(func.count(User.id))
         ).scalar() or 0
 
     def get_average_latency(self) -> float:
@@ -96,19 +99,22 @@ class AnalyticsService:
         return [{"path": r.path, "count": r.count} for r in results]
 
     def get_top_users(self, limit: int = 10) -> List[Dict[str, Any]]:
+        from app.models.user import User
         results = (
             self.uow.request_logs.session.execute(
                 select(
                     RequestLog.user_id,
+                    User.email,
                     func.count(RequestLog.id).label("requests")
                 )
+                .join(User, RequestLog.user_id == User.id, isouter=True)
                 .where(RequestLog.user_id.isnot(None))
-                .group_by(RequestLog.user_id)
+                .group_by(RequestLog.user_id, User.email)
                 .order_by(func.count(RequestLog.id).desc())
                 .limit(limit)
             ).all()
         )
-        return [{"user_id": r.user_id, "requests": r.requests} for r in results]
+        return [{"user_id": r.user_id, "email": r.email or r.user_id, "requests": r.requests} for r in results]
 
     def update_usage(
         self,

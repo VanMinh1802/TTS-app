@@ -68,20 +68,33 @@ def get_activation_logs(
     current_user: User = Depends(get_admin_user),
     uow: UnitOfWork = Depends(get_uow),
 ):
-    query = uow.session.query(ActivationLog).order_by(ActivationLog.created_at.desc())
+    from app.models.license import LicenseKey
+    query = uow.session.query(
+        ActivationLog, 
+        User.email.label("user_email"),
+        LicenseKey.code.label("license_code"),
+        LicenseKey.tier.label("license_tier")
+    )\
+        .outerjoin(User, ActivationLog.user_id == User.id)\
+        .outerjoin(LicenseKey, ActivationLog.code_hash == LicenseKey.code_hash)\
+        .order_by(ActivationLog.created_at.desc())
+    
     if success_only:
         query = query.filter(ActivationLog.success == True)
-    logs = query.limit(min(limit, 500)).all()
+    results = query.limit(min(limit, 500)).all()
+    
     return [
         {
             "id": log.id,
             "user_id": log.user_id,
-            "code_hash": log.code_hash[:12] + "...",
+            "user_email": email,
+            "license_code": code if code else f"Hash: {log.code_hash[:12]}...",
+            "license_tier": tier if tier else "N/A",
             "success": log.success,
             "ip_address": log.ip_address,
             "created_at": log.created_at.isoformat(),
         }
-        for log in logs
+        for log, email, code, tier in results
     ]
 
 @router.post("/subscriptions/activate")

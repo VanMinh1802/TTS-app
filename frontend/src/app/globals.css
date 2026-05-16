@@ -295,6 +295,16 @@ body {
 .light .border-white\/10 { border-color: rgba(99, 102, 241, 0.12) !important; }
 .light .border-white\/5 { border-color: rgba(99, 102, 241, 0.06) !important; }
 
+/* ---- Date input calendar icon (Default Dark Mode) ---- */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.5;
+  cursor: pointer;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 0.8;
+}
+
 /* ---- Light mode: inputs ---- */
 .light input,
 .light select,
@@ -310,6 +320,9 @@ body {
   border-color: #6366F1 !important;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
   outline: none !important;
+}
+.light input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0);
 }
 
 /* ---- Light mode: hover states ---- */

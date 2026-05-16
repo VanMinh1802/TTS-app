@@ -109,6 +109,7 @@ def get_current_user(
         try:
             user = auth_service.get_current_user(token)
             request.state.user = user
+            request.state.user_id = user.id
             return user
         except ServiceError:
             raise HTTPException(
@@ -122,6 +123,7 @@ def get_current_user(
         user = auth_service.validate_api_key(x_api_key, path=request.url.path)
         if user:
             request.state.user = user
+            request.state.user_id = user.id
             key_id = x_api_key[4:].split(".", 1)[0]
             key = auth_service.uow.api_keys.get(key_id)
             if key:

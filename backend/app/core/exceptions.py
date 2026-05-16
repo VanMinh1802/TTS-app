@@ -153,15 +153,21 @@ async def rate_limit_exception_handler(request: Request, exc: HTTPException) -> 
     )
 
 
-async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Handle unhandled exceptions."""
-    logger.error(f"Unhandled exception: {exc}", exc_info=True)
+async def generic_exception_handler(request: Request, exc: Exception):
+    """Handle uncaught exceptions with generic message to avoid leaking internals."""
+    # Use standard logger, but log full stacktrace
+    import logging
+    logger = logging.getLogger("app.core.exceptions")
+    logger.error(f"Unhandled exception on {request.method} {request.url}: {exc}", exc_info=True)
+    
+    import traceback
     
     return JSONResponse(
         status_code=500,
         content={
             "error": "internal_server_error",
-            "message": BACKEND_MESSAGES["errors"]["internal_server_error"],
+            "message": "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.",
+            "detail": traceback.format_exc()
         },
     )
 

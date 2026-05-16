@@ -12,6 +12,7 @@ interface ConfirmModalProps {
   variant?: "danger" | "default";
   onConfirm: () => void;
   onClose: () => void;
+  children?: React.ReactNode;
 }
 
 export function ConfirmModal({
@@ -23,6 +24,7 @@ export function ConfirmModal({
   variant = "default",
   onConfirm,
   onClose,
+  children,
 }: ConfirmModalProps) {
   const t = useT();
   const cfmLabel = confirmLabel ?? t.common.confirm;
@@ -56,6 +58,7 @@ export function ConfirmModal({
               <p className="font-light text-sm text-[#F4F4F5] mb-6 leading-relaxed">
                 {message}
               </p>
+              {children && <div className="mb-6">{children}</div>}
               <div className="flex gap-4">
                 <button
                   onClick={onClose}
